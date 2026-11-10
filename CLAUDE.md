@@ -49,6 +49,12 @@ O dono do projeto não escreve código: todo o código é gerado, testado automa
 ## Password
 - Cada utilizador muda a própria password em `/perfil/password` (confirma a atual). Depois a sessão termina
   (`Sessoes.terminar`) e entra-se com a nova; os cookies remember-me dos outros dispositivos deixam de valer.
+- Password esquecida: o Admin gera na carta do jogador um link (`POST /jogadores/{id}/link-password`, só ADMIN) e
+  envia-o (copiar/WhatsApp). A página pública `/redefinir-password?token=` pede a nova password duas vezes.
+  Token AES-256-GCM (`CifraToken`, contexto próprio: um convite não serve aqui) com
+  `v1|userId|expiraEpoch|impressão do hash|admin`; nada guardado na base de dados. Uso único: quando a password
+  muda, a impressão deixa de corresponder. Validade `futapp.password.link-validade-horas` (24). Não para o próprio
+  Admin nem para contas bloqueadas. Auditoria: `GERACAO_LINK_PASSWORD`, `REDEFINICAO_PASSWORD`.
 
 ## Carta do jogador
 - `Utilizador.alcunha` + `Caracterizacao` (@Embeddable): posição, posição secundária, pé, 5 atributos 1–10. Só o nome é obrigatório.
@@ -106,5 +112,6 @@ Cumulativas: `JOGADOR`, `ORGANIZADOR`, `ADMIN`. Convidado = inscrição sem cont
 - Fatia 1 (M0 + M1): admin no arranque, registo só por convite, bloqueio de membros, mudar password, carta do jogador, equipas (Fase 2), registo do jogo (Fase 3), votação (Fase 4), fecho do jogo e estatísticas (Fase 5), login, roles, criar jogo, convocatória (12 vagas, espera a partir do 13º, cancelamentos registados, fecho manual), partilha WhatsApp, auditoria com limpeza.
 - Pendente: convidados passarem a utilizadores (ligar o histórico do convidado à nova conta).
 - Jogo cancelado e convidados nas estatísticas.
+- Redefinição de password por link gerado pelo Admin.
 - Próxima milestone (ver a especificação): jogos por temporada (Admin, dropdown), temporadas, convidados → utilizadores,
-  reposição de password, imagem do resumo, revogar convites, publicar num alojamento, M4, M5.
+  imagem do resumo, revogar convites, publicar num alojamento, M4, M5.

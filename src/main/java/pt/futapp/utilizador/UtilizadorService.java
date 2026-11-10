@@ -36,17 +36,19 @@ public class UtilizadorService implements UserDetailsService {
     private final ApplicationEventPublisher eventos;
     private final Clock clock;
     private final ConviteService convites;
+    private final LinkPasswordService linksPassword;
     private final JogoService jogos;
     private final Formatos fmt;
 
     public UtilizadorService(UtilizadorRepository repo, PasswordEncoder passwordEncoder,
                              ApplicationEventPublisher eventos, Clock clock, ConviteService convites,
-                             JogoService jogos, Formatos fmt) {
+                             LinkPasswordService linksPassword, JogoService jogos, Formatos fmt) {
         this.repo = repo;
         this.passwordEncoder = passwordEncoder;
         this.eventos = eventos;
         this.clock = clock;
         this.convites = convites;
+        this.linksPassword = linksPassword;
         this.jogos = jogos;
         this.fmt = fmt;
     }
@@ -163,6 +165,84 @@ public class UtilizadorService implements UserDetailsService {
         u.alterarPasswordHash(passwordEncoder.encode(nova));
         eventos.publishEvent(new AuditEvent(u.getUsername(), Acao.ALTERACAO_PASSWORD, null, "UTILIZADOR",
             u.getId(), u.getNome() + " mudou a password"));
+    }
+
+    // ---------------------------------------------------------------- link para redefinir a password
+
+    /**
+     * O Admin gera um link para um jogador escolher uma nova password (quando a esqueceu).
+     * O Admin nunca fica a saber a password. O link não fica guardado.
+     */
+    @Transactional(readOnly = true)
+    public LinkPassword gerarLinkPassword(Long membroId, String usernameAdmin) {
+        Utilizador admin = exigirAdmin(usernameAdmin);
+        Utilizador membro = carregarMembro(membroId);
+        if (membro.getId().equals(admin.getId())) {
+            throw new OperacaoInvalidaException("Para mudares a tua password usa Perfil → Mudar password.");
+        }
+        if (membro.isBloqueado()) {
+            throw new OperacaoInvalidaException(membro.getNome() + " está bloqueado. Desbloqueia-o primeiro em Membros.");
+        }
+        LinkPasswordService.Link link = linksPassword.gerar(membro.getId(), membro.getPasswordHash(), admin.getUsername());
+        int horas = linksPassword.getValidadeHoras();
+        eventos.publishEvent(new AuditEvent(admin.getUsername(), Acao.GERACAO_LINK_PASSWORD, null, "UTILIZADOR",
+            membro.getId(), "Link para redefinir a password de " + membro.getNome() + " gerado, válido "
+                + horas + (horas == 1 ? " hora" : " horas")));
+        return new LinkPassword(link.token(), link.expiraEm(), membro.getId(), membro.getNomeVisivel());
+    }
+
+    /** Verifica um link de redefinição. Lança {@link LinkPasswordInvalidoException} se não servir. */
+    @Transactional(readOnly = true)
+    public LinkPassword validarLinkPassword(String token) {
+        Utilizador u = utilizadorDoLink(token);
+        return new LinkPassword(token, null, u.getId(), u.getNomeVisivel());
+    }
+
+    /**
+     * A pessoa escolhe a nova password a partir do link. O link deixa de servir logo a seguir (a password mudou)
+     * e as sessões persistentes noutros dispositivos deixam de valer.
+     *
+     * @return o username, para mostrar no login
+     */
+    @Transactional
+    public String redefinirPassword(String token, String nova) {
+        Utilizador u = utilizadorDoLink(token);
+        if (nova == null || nova.length() < 6 || nova.length() > 100) {
+            throw new OperacaoInvalidaException("A nova password deve ter pelo menos 6 caracteres.");
+        }
+        String criadoPor = linksPassword.ler(token).criadoPor();
+        u.alterarPasswordHash(passwordEncoder.encode(nova));
+        eventos.publishEvent(new AuditEvent(u.getUsername(), Acao.REDEFINICAO_PASSWORD, null, "UTILIZADOR",
+            u.getId(), u.getNome() + " redefiniu a password com o link gerado por " + criadoPor));
+        return u.getUsername();
+    }
+
+    private Utilizador utilizadorDoLink(String token) {
+        LinkPasswordService.Leitura leitura = linksPassword.ler(token);
+        if (leitura.estado() == LinkPasswordService.Estado.EXPIRADO) {
+            throw new LinkPasswordInvalidoException("Este link para mudar a password expirou. Pede um novo ao administrador.");
+        }
+        Optional<Utilizador> dono = leitura.estado() == LinkPasswordService.Estado.VALIDO
+            ? repo.findById(leitura.utilizadorId()) : Optional.empty();
+        if (dono.isEmpty()) {
+            throw new LinkPasswordInvalidoException("Este link não é válido. Confirma que o copiaste inteiro, ou pede um novo ao administrador.");
+        }
+        Utilizador u = dono.get();
+        if (u.isBloqueado()) {
+            throw new LinkPasswordInvalidoException("A tua conta está bloqueada. Se voltares a jogar, fala com o administrador.");
+        }
+        if (!leitura.correspondeA(u.getPasswordHash())) {
+            throw new LinkPasswordInvalidoException("Este link já foi usado: a password já foi mudada. Se precisares, pede um novo ao administrador.");
+        }
+        return u;
+    }
+
+    public int validadeLinkPasswordHoras() {
+        return linksPassword.getValidadeHoras();
+    }
+
+    /** Link de redefinição de password; {@code expiraEm} só vem preenchido quando o link acabou de ser gerado. */
+    public record LinkPassword(String token, LocalDateTime expiraEm, Long utilizadorId, String nome) {
     }
 
     // ---------------------------------------------------------------- gestão de membros (Admin)

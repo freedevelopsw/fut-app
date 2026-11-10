@@ -44,6 +44,15 @@
                 <span class="tag" th:text="${carta.nivel().descricao}">Admin</span>
             </div>
         </section>
+
+        <!-- Password esquecida: só o Admin gera o link, e nunca fica a saber a password -->
+        <section th:if="${podeGerarLinkPassword}" class="seccao">
+            <h2 class="etiqueta">Password</h2>
+            <form th:action="@{/jogadores/{id}/link-password(id=${carta.id()})}" method="post" class="cartao d-flex flex-column gap-2">
+                <span class="small text-secondary" th:text="|Se ${carta.nomeVisivel()} se esqueceu da password, gera um link e envia-lho. Quem abrir o link escolhe uma nova password; tu não a ficas a saber.|">Se se esqueceu da password…</span>
+                <button type="submit" class="btn btn-fa btn-fa-sm btn-contorno">Gerar link para mudar a password</button>
+            </form>
+        </section>
     </main>
 
     <div class="rodape">

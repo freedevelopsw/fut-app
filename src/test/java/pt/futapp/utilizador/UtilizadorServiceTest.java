@@ -3,6 +3,7 @@ package pt.futapp.utilizador;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static pt.futapp.TesteApoio.ADMIN;
+import static pt.futapp.TesteApoio.CHAVE_CONVITE;
 import static pt.futapp.TesteApoio.convites;
 import static pt.futapp.TesteApoio.form;
 import static pt.futapp.TesteApoio.registar;
@@ -31,6 +32,10 @@ class UtilizadorServiceTest {
 
     @Autowired
     private AdminInicial adminInicial;
+
+    private boolean passwordE(String username, String password) {
+        return passwordEncoder.matches(password, repo.findByUsernameIgnoreCase(username).orElseThrow().getPasswordHash());
+    }
 
     private Long idDe(String username) {
         return utilizadores.vista(username).orElseThrow().id();
@@ -252,5 +257,106 @@ class UtilizadorServiceTest {
         utilizadores.bloquear(idDe(rui), ADMIN);
 
         assertThatThrownBy(() -> utilizadores.gerarConvite(7, rui)).isInstanceOf(OperacaoInvalidaException.class);
+    }
+
+    // ---------------------------------------------------------------- link para redefinir a password
+
+    @Test
+    void oAdminGeraUmLinkEOJogadorEscolheUmaNovaPassword() {
+        String rui = registar(utilizadores, "rui");
+
+        UtilizadorService.LinkPassword link = utilizadores.gerarLinkPassword(idDe(rui), ADMIN);
+        assertThat(utilizadores.validarLinkPassword(link.token()).nome()).isEqualTo("Nome rui");
+
+        String username = utilizadores.redefinirPassword(link.token(), "nova-password");
+
+        assertThat(username).isEqualTo(rui);
+        assertThat(passwordE(rui, "nova-password")).isTrue();
+        assertThat(passwordE(rui, "segredo123")).isFalse();
+    }
+
+    @Test
+    void oLinkSoServeUmaVez() {
+        String rui = registar(utilizadores, "rui");
+        String token = utilizadores.gerarLinkPassword(idDe(rui), ADMIN).token();
+        utilizadores.redefinirPassword(token, "nova-password");
+
+        assertThatThrownBy(() -> utilizadores.redefinirPassword(token, "outra-password"))
+            .isInstanceOf(LinkPasswordInvalidoException.class)
+            .hasMessageContaining("já foi usado");
+        assertThat(passwordE(rui, "nova-password")).isTrue();
+    }
+
+    @Test
+    void seOJogadorMudarAPasswordEntretantoOLinkDeixaDeServir() {
+        String rui = registar(utilizadores, "rui");
+        String token = utilizadores.gerarLinkPassword(idDe(rui), ADMIN).token();
+
+        utilizadores.alterarPassword(rui, "segredo123", "lembrei-me");
+
+        assertThatThrownBy(() -> utilizadores.validarLinkPassword(token))
+            .isInstanceOf(LinkPasswordInvalidoException.class);
+    }
+
+    @Test
+    void umLinkExpiradoNaoServe() {
+        String rui = registar(utilizadores, "rui");
+        String hash = repo.findByUsernameIgnoreCase(rui).orElseThrow().getPasswordHash();
+        LinkPasswordService antigo = new LinkPasswordService(CHAVE_CONVITE, 24,
+            Clock.offset(Clock.systemUTC(), Duration.ofHours(-25)));
+        String token = antigo.gerar(idDe(rui), hash, ADMIN).token();
+
+        assertThatThrownBy(() -> utilizadores.redefinirPassword(token, "nova-password"))
+            .isInstanceOf(LinkPasswordInvalidoException.class)
+            .hasMessageContaining("expirou");
+        assertThat(passwordE(rui, "segredo123")).isTrue();
+    }
+
+    @Test
+    void umLinkInventadoNaoServe() {
+        assertThatThrownBy(() -> utilizadores.validarLinkPassword("inventado"))
+            .isInstanceOf(LinkPasswordInvalidoException.class)
+            .hasMessageContaining("não é válido");
+        assertThatThrownBy(() -> utilizadores.validarLinkPassword(null))
+            .isInstanceOf(LinkPasswordInvalidoException.class);
+    }
+
+    @Test
+    void soOAdminGeraLinksDePasswordENaoParaSiProprio() {
+        String rui = registar(utilizadores, "rui");
+        String nuno = registar(utilizadores, "nuno");
+        utilizadores.definirNivel(idDe(nuno), NivelAcesso.ORGANIZADOR, ADMIN);
+
+        assertThatThrownBy(() -> utilizadores.gerarLinkPassword(idDe(rui), nuno))
+            .isInstanceOf(OperacaoInvalidaException.class);
+        assertThatThrownBy(() -> utilizadores.gerarLinkPassword(idDe(nuno), rui))
+            .isInstanceOf(OperacaoInvalidaException.class);
+        assertThatThrownBy(() -> utilizadores.gerarLinkPassword(idDe(ADMIN), ADMIN))
+            .isInstanceOf(OperacaoInvalidaException.class)
+            .hasMessageContaining("Perfil");
+    }
+
+    @Test
+    void umaContaBloqueadaNaoRedefineAPassword() {
+        String rui = registar(utilizadores, "rui");
+        String token = utilizadores.gerarLinkPassword(idDe(rui), ADMIN).token();
+        utilizadores.bloquear(idDe(rui), ADMIN);
+
+        assertThatThrownBy(() -> utilizadores.gerarLinkPassword(idDe(rui), ADMIN))
+            .isInstanceOf(OperacaoInvalidaException.class)
+            .hasMessageContaining("bloqueado");
+        assertThatThrownBy(() -> utilizadores.redefinirPassword(token, "nova-password"))
+            .isInstanceOf(LinkPasswordInvalidoException.class)
+            .hasMessageContaining("bloqueada");
+    }
+
+    @Test
+    void aNovaPasswordTemDeTerPeloMenosSeisCaracteres() {
+        String rui = registar(utilizadores, "rui");
+        String token = utilizadores.gerarLinkPassword(idDe(rui), ADMIN).token();
+
+        assertThatThrownBy(() -> utilizadores.redefinirPassword(token, "curta"))
+            .isInstanceOf(OperacaoInvalidaException.class);
+        assertThat(passwordE(rui, "segredo123")).isTrue();
     }
 }

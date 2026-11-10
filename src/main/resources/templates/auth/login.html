@@ -14,6 +14,7 @@
     <div th:if="${param.error}" class="aviso aviso-erro" role="alert">Utilizador ou password errados.</div>
     <div th:if="${param.bloqueado}" class="aviso aviso-laranja" role="alert">A tua conta está bloqueada. Se voltares a jogar, fala com o administrador.</div>
     <div th:if="${param.passwordAlterada}" class="aviso aviso-verde" role="status">Password alterada. Entra com a nova password.</div>
+    <div th:if="${param.passwordRedefinida}" class="aviso aviso-verde" role="status">Password nova guardada. Entra com ela.</div>
     <div th:if="${param.saiu}" class="aviso aviso-verde" role="status">Saíste da tua conta.</div>
     <div th:if="${param.registado}" class="aviso aviso-verde" role="status">Conta criada. Já podes entrar.</div>
 

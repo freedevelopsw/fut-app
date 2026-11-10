@@ -513,4 +513,65 @@ class PaginasTest {
                 .param("vagas", "12"))
             .andExpect(status().isOk());
     }
+
+    // ---------------------------------------------------------------- link para redefinir a password
+
+    @Test
+    void oAdminGeraOLinkNaCartaEOJogadorMudaAPasswordSemLogin() throws Exception {
+        String rui = registar(utilizadores, "rui");
+        Long id = utilizadores.vista(rui).orElseThrow().id();
+
+        mvc.perform(get("/jogadores/" + id).with(comoOrganizador()))
+            .andExpect(content().string(containsString("Gerar link para mudar a password")));
+
+        String pagina = mvc.perform(post("/jogadores/" + id + "/link-password").with(comoOrganizador()).with(csrf()))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("só funciona uma vez")))
+            .andReturn().getResponse().getContentAsString();
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("/redefinir-password\\?token=([A-Za-z0-9_-]+)").matcher(pagina);
+        assertThat(m.find()).isTrue();
+        String token = m.group(1);
+
+        mvc.perform(get("/redefinir-password").param("token", token))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("Olá Nome rui!")));
+
+        mvc.perform(post("/redefinir-password").with(csrf()).param("token", token)
+                .param("nova", "nova-password").param("confirmacao", "diferente"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("não são iguais")));
+
+        mvc.perform(post("/redefinir-password").with(csrf()).param("token", token)
+                .param("nova", "nova-password").param("confirmacao", "nova-password"))
+            .andExpect(redirectedUrl("/login?passwordRedefinida"));
+
+        mvc.perform(formLogin("/login").user(rui).password("nova-password")).andExpect(redirectedUrl("/"));
+        mvc.perform(get("/redefinir-password").param("token", token))
+            .andExpect(content().string(containsString("já foi usado")))
+            .andExpect(content().string(not(containsString("Guardar nova password"))));
+    }
+
+    @Test
+    void soOAdminVeEUsaOBotaoDoLinkDePassword() throws Exception {
+        String rui = registar(utilizadores, "rui");
+        String nuno = registar(utilizadores, "nuno");
+        Long id = utilizadores.vista(rui).orElseThrow().id();
+
+        mvc.perform(get("/jogadores/" + id).with(user(nuno).roles("JOGADOR", "ORGANIZADOR")))
+            .andExpect(content().string(not(containsString("Gerar link para mudar a password"))));
+        mvc.perform(post("/jogadores/" + id + "/link-password").with(user(nuno).roles("JOGADOR", "ORGANIZADOR")).with(csrf()))
+            .andExpect(status().isForbidden());
+        Long adminId = utilizadores.vista(ADMIN).orElseThrow().id();
+        mvc.perform(get("/jogadores/" + adminId).with(comoOrganizador()))
+            .andExpect(content().string(not(containsString("Gerar link para mudar a password"))));
+    }
+
+    @Test
+    void umLinkDePasswordInvalidoMostraUmAviso() throws Exception {
+        mvc.perform(get("/redefinir-password").param("token", "inventado"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("não é válido")))
+            .andExpect(content().string(not(containsString("Guardar nova password"))));
+        mvc.perform(get("/redefinir-password")).andExpect(status().isOk());
+    }
 }

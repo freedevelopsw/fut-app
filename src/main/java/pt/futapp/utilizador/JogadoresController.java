@@ -35,6 +35,8 @@ public class JogadoresController {
         CartaView carta = jogadores.carta(id, principal.getName());
         model.addAttribute("carta", carta);
         model.addAttribute("numeros", estatisticas.doJogador(id, principal.getName()));
+        boolean admin = utilizadores.vista(principal.getName()).map(EuView::admin).orElse(false);
+        model.addAttribute("podeGerarLinkPassword", admin && !carta.eu() && !carta.bloqueado());
         model.addAttribute("nav", carta.eu() ? "perfil" : "estatisticas");
         return "jogadores/detalhe";
     }
