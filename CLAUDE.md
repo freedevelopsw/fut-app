@@ -53,6 +53,15 @@ O dono do projeto não escreve código: todo o código é gerado, testado automa
 - `/jogadores/{id}`: carta visível a todos; `/jogadores/{id}/editar`: o próprio ou o Admin (`JogadorService`).
 - Lista de jogadores ativos no ecrã Estatísticas; nomes nas convocatórias e nos membros ligam à carta.
 
+## Equipas (Fase 2)
+- A equipa fica na própria inscrição (`Inscricao.equipa`: COLETES / SEM_COLETES); jogam as primeiras `vagas` inscrições ativas.
+- `GeradorEquipas`: GR separados, distribuição gulosa por rating, trocas que reduzem a diferença de rating e de posições;
+  sem rating conta 5; aleatoriedade leve para "Gerar de novo".
+- `/jogos/{id}/equipas` (Organizador/Admin): gerar, tocar para mudar de equipa, publicar (só com a convocatória fechada).
+  Publicar muda o estado para EQUIPAS_PUBLICADAS; depois disso os ajustes ficam logo visíveis.
+- Quem sobe da lista de espera fica "sem equipa" e impede publicar até ser atribuído.
+- Não usar `eq`, `ne`, `gt`, `lt`, `ge`, `le`, `and`, `or`, `not` como nomes de variáveis no Thymeleaf (são operadores).
+
 ## Roles
 Cumulativas: `JOGADOR`, `ORGANIZADOR`, `ADMIN`. Convidado = inscrição sem conta (`Inscricao.nomeConvidado`).
 - Mudam-se na carta do jogador, num dropdown de nível de acesso (`NivelAcesso`: Jogador, Organizador, Admin;
@@ -61,6 +70,6 @@ Cumulativas: `JOGADOR`, `ORGANIZADOR`, `ADMIN`. Convidado = inscrição sem cont
   (`UtilizadorService.opcoesNivel`). O Admin não muda o próprio nível.
 
 ## Estado
-- Fatia 1 (M0 + M1): admin no arranque, registo só por convite, bloqueio de membros, mudar password, carta do jogador, login, roles, criar jogo, convocatória (12 vagas, espera a partir do 13º, cancelamentos registados, fecho manual), partilha WhatsApp, auditoria com limpeza.
+- Fatia 1 (M0 + M1): admin no arranque, registo só por convite, bloqueio de membros, mudar password, carta do jogador, equipas (Fase 2), login, roles, criar jogo, convocatória (12 vagas, espera a partir do 13º, cancelamentos registados, fecho manual), partilha WhatsApp, auditoria com limpeza.
 - Pendente: convidados passarem a utilizadores (ligar o histórico do convidado à nova conta).
-- Seguinte: equipas (Fase 2), registo do jogo (Fase 3), votação (Fase 4), resumo (Fase 5).
+- Seguinte: registo do jogo (Fase 3), votação (Fase 4), resumo (Fase 5).

@@ -66,6 +66,26 @@ public class Jogo {
         estado = EstadoJogo.CONVOCATORIA_FECHADA;
     }
 
+    /** As equipas podem ser preparadas até serem publicadas e ajustadas depois, mas não após o início do registo. */
+    public boolean permiteEquipas() {
+        return estado == EstadoJogo.CONVOCATORIA_ABERTA || estado == EstadoJogo.CONVOCATORIA_FECHADA
+            || estado == EstadoJogo.EQUIPAS_PUBLICADAS;
+    }
+
+    public boolean equipasPublicadas() {
+        return estado == EstadoJogo.EQUIPAS_PUBLICADAS;
+    }
+
+    public void publicarEquipas() {
+        if (estado == EstadoJogo.CONVOCATORIA_ABERTA) {
+            throw new OperacaoInvalidaException("Fecha primeiro a convocatória para publicares as equipas.");
+        }
+        if (estado != EstadoJogo.CONVOCATORIA_FECHADA && estado != EstadoJogo.EQUIPAS_PUBLICADAS) {
+            throw new OperacaoInvalidaException("Já não é possível mudar as equipas deste jogo.");
+        }
+        estado = EstadoJogo.EQUIPAS_PUBLICADAS;
+    }
+
     public Long getId() { return id; }
     public LocalDateTime getDataHora() { return dataHora; }
     public String getLocal() { return local; }

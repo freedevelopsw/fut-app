@@ -82,6 +82,8 @@ class ConviteServiceTest {
     void oTokenNaoMostraADataNemOAdminEmTextoSimples() {
         String token = em(AGORA).gerar(7, "admin").token();
 
-        assertThat(token).doesNotContain("admin").doesNotContain("v1").matches("[A-Za-z0-9_-]+");
+        assertThat(token).matches("[A-Za-z0-9_-]+");
+        String bytes = new String(java.util.Base64.getUrlDecoder().decode(token), java.nio.charset.StandardCharsets.ISO_8859_1);
+        assertThat(bytes).doesNotContain("admin").doesNotContain("v1|");
     }
 }

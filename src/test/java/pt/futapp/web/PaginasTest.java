@@ -77,7 +77,7 @@ class PaginasTest {
 
         Long adminId = utilizadores.vista(ADMIN).orElseThrow().id();
         for (String url : List.of("/", "/jogos/" + jogo, "/jogos/novo", "/perfil", "/estatisticas",
-                                  "/jogadores/" + adminId, "/jogadores/" + adminId + "/editar",
+                                  "/jogadores/" + adminId, "/jogadores/" + adminId + "/editar", "/jogos/" + jogo + "/equipas",
                                   "/admin/membros", "/admin/convites", "/admin/auditoria", "/perfil/password")) {
             mvc.perform(get(url).with(comoOrganizador())).andExpect(status().isOk());
         }
@@ -327,6 +327,36 @@ class PaginasTest {
         mvc.perform(get("/jogadores/" + idAdmin).with(comoRui))
             .andExpect(content().string(not(containsString("name=\"nivel\""))))
             .andExpect(content().string(containsString("Só o Admin pode dar ou retirar o nível de Admin")));
+    }
+
+    @Test
+    void asEquipasFazemSeEPublicamSePeloEcra() throws Exception {
+        for (String u : List.of("e1", "e2", "e3", "e4")) {
+            jogos.inscrever(jogo, registar(utilizadores, u));
+        }
+        var jogador = user("e1").roles("JOGADOR");
+
+        mvc.perform(get("/jogos/" + jogo + "/equipas").with(jogador)).andExpect(status().isForbidden());
+        mvc.perform(post("/jogos/" + jogo + "/gestao/equipas/gerar").with(comoOrganizador()).with(csrf()))
+            .andExpect(redirectedUrl("/jogos/" + jogo + "/equipas"));
+        mvc.perform(get("/jogos/" + jogo + "/equipas").with(comoOrganizador()))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("Sem coletes")))
+            .andExpect(content().string(containsString("Nome e1")));
+
+        // Antes de publicar, o jogador não vê as equipas na convocatória
+        mvc.perform(get("/jogos/" + jogo).with(jogador))
+            .andExpect(content().string(not(containsString("equipa-cartao"))));
+
+        jogos.fecharConvocatoria(jogo, organizador);
+        mvc.perform(post("/jogos/" + jogo + "/gestao/equipas/publicar").with(comoOrganizador()).with(csrf()))
+            .andExpect(redirectedUrl("/jogos/" + jogo + "/equipas"));
+
+        mvc.perform(get("/jogos/" + jogo).with(jogador))
+            .andExpect(content().string(containsString("equipa-cartao")))
+            .andExpect(content().string(containsString("Equipas publicadas")));
+        mvc.perform(post("/jogos/" + jogo + "/gestao/equipas/gerar").with(jogador).with(csrf()))
+            .andExpect(status().isForbidden());
     }
 
     @Test

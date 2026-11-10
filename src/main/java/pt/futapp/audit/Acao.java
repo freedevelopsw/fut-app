@@ -17,6 +17,8 @@ public enum Acao {
     ADICAO_CONVIDADO,
     FECHO_CONVOCATORIA,
     // Fases seguintes (ainda não usadas)
+    GERACAO_EQUIPAS,
+    MUDANCA_EQUIPA,
     PUBLICACAO_EQUIPAS,
     REGISTO_GOLO,
     FECHO_JOGO,

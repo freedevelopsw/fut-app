@@ -23,17 +23,72 @@ import pt.futapp.comum.OperacaoInvalidaException;
 public class JogoController {
 
     private final JogoService jogos;
+    private final EquipasService equipas;
 
-    public JogoController(JogoService jogos) {
+    public JogoController(JogoService jogos, EquipasService equipas) {
         this.jogos = jogos;
+        this.equipas = equipas;
     }
 
     @GetMapping("/{id}")
     public String detalhe(@PathVariable Long id, Principal principal, HttpServletRequest pedido, Model model) {
-        String urlBase = ServletUriComponentsBuilder.fromContextPath(pedido).build().toUriString();
+        String urlBase = urlBase(pedido);
         model.addAttribute("conv", jogos.convocatoria(id, principal.getName(), urlBase));
+        model.addAttribute("equipas", equipas.vista(id, principal.getName(), urlBase));
         model.addAttribute("nav", "jogo");
         return "jogos/detalhe";
+    }
+
+    // ---------------------------------------------------------------- equipas (Organizador / Admin)
+
+    @GetMapping("/{id}/equipas")
+    public String equipas(@PathVariable Long id, Principal principal, HttpServletRequest pedido, Model model) {
+        model.addAttribute("equipas", equipas.vista(id, principal.getName(), urlBase(pedido)));
+        model.addAttribute("nav", "jogo");
+        return "jogos/equipas";
+    }
+
+    @PostMapping("/{id}/gestao/equipas/gerar")
+    public String gerarEquipas(@PathVariable Long id, Principal principal, RedirectAttributes redirect) {
+        return executarEquipas(id, redirect, "Equipas geradas. Ajusta à mão se for preciso.",
+            () -> equipas.gerar(id, principal.getName()));
+    }
+
+    @PostMapping("/{id}/gestao/equipas/mover")
+    public String moverJogador(@PathVariable Long id, @RequestParam Long inscricaoId,
+                               @RequestParam(required = false) Equipa destino,
+                               Principal principal, RedirectAttributes redirect) {
+        return executarEquipas(id, redirect, null, () -> equipas.mover(id, inscricaoId, destino, principal.getName()));
+    }
+
+    @PostMapping("/{id}/gestao/equipas/publicar")
+    public String publicarEquipas(@PathVariable Long id, Principal principal, HttpServletRequest pedido,
+                                  RedirectAttributes redirect) {
+        String urlBase = urlBase(pedido);
+        try {
+            equipas.publicar(id, principal.getName(), urlBase);
+            redirect.addFlashAttribute("sucesso", "Equipas publicadas. Partilha-as no grupo.");
+            redirect.addFlashAttribute("equipasPublicadasAgora", true);
+        } catch (OperacaoInvalidaException e) {
+            redirect.addFlashAttribute("erro", e.getMessage());
+        }
+        return "redirect:/jogos/" + id + "/equipas";
+    }
+
+    private String executarEquipas(Long id, RedirectAttributes redirect, String sucesso, Runnable acao) {
+        try {
+            acao.run();
+            if (sucesso != null) {
+                redirect.addFlashAttribute("sucesso", sucesso);
+            }
+        } catch (OperacaoInvalidaException e) {
+            redirect.addFlashAttribute("erro", e.getMessage());
+        }
+        return "redirect:/jogos/" + id + "/equipas";
+    }
+
+    private static String urlBase(HttpServletRequest pedido) {
+        return ServletUriComponentsBuilder.fromContextPath(pedido).build().toUriString();
     }
 
     // ---------------------------------------------------------------- jogador

@@ -44,6 +44,11 @@ public class Inscricao {
     @Column(name = "inscrito_em", nullable = false)
     private LocalDateTime inscritoEm;
 
+    /** Equipa do jogador neste jogo (Fase 2). Null = ainda sem equipa. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "equipa", length = 20)
+    private Equipa equipa;
+
     @Column(name = "cancelado_em")
     private LocalDateTime canceladoEm;
 
@@ -72,8 +77,13 @@ public class Inscricao {
 
     public void cancelar(Utilizador por, LocalDateTime quando) {
         this.estado = EstadoInscricao.CANCELADA;
+        this.equipa = null;
         this.canceladoPor = por;
         this.canceladoEm = quando;
+    }
+
+    public void definirEquipa(Equipa equipa) {
+        this.equipa = equipa;
     }
 
     public boolean isConvidado() {
@@ -93,6 +103,7 @@ public class Inscricao {
     public Utilizador getJogador() { return jogador; }
     public String getNomeConvidado() { return nomeConvidado; }
     public EstadoInscricao getEstado() { return estado; }
+    public Equipa getEquipa() { return equipa; }
     public LocalDateTime getInscritoEm() { return inscritoEm; }
     public LocalDateTime getCanceladoEm() { return canceladoEm; }
     public Utilizador getCanceladoPor() { return canceladoPor; }

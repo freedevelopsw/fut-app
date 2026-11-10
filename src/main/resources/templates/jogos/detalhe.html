@@ -61,6 +61,28 @@
             </a>
         </section>
 
+        <!-- Equipas publicadas (visíveis a todos) -->
+        <section th:if="${equipas.publicadas()}" class="seccao">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="etiqueta">Equipas</h2>
+                <a th:if="${equipas.podeGerir()}" th:href="@{/jogos/{id}/equipas(id=${c.jogoId()})}" class="small fw-semibold">Gerir</a>
+            </div>
+            <div class="equipas-grelha">
+                <div th:each="time : ${equipas.lista()}" class="equipa-cartao">
+                    <div class="equipa-topo">
+                        <span th:class="${time.equipa().name() == 'COLETES'} ? 'cor-coletes' : 'cor-sem'" aria-hidden="true"></span>
+                        <h3 th:text="${time.nome()}">Coletes</h3>
+                        <span class="numero text-secondary" th:text="${time.tamanho()}">6</span>
+                    </div>
+                    <div class="equipa-resumo" th:text="${time.media()} ? |média ${time.media()}| : ' '">média 7</div>
+                    <div th:each="j : ${time.jogadores()}" class="equipa-linha">
+                        <a th:if="${j.jogadorId()}" class="nome-curto text-reset text-decoration-none" th:href="@{/jogadores/{id}(id=${j.jogadorId()})}" th:text="${j.nome()}">Rui</a>
+                        <span th:unless="${j.jogadorId()}" class="nome-curto" th:text="${j.nome()}">Zé</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- Inscritos -->
         <section class="seccao">
             <h2 class="etiqueta">Inscritos</h2>
@@ -115,6 +137,10 @@
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
                     Partilhar no WhatsApp
                 </a>
+
+                <a th:if="${equipas.podeGerir()}" th:href="@{/jogos/{id}/equipas(id=${c.jogoId()})}" class="btn btn-fa btn-fa-sm"
+                   th:classappend="${c.aberta()} ? 'btn-contorno' : 'btn-verde'"
+                   th:text="${equipas.existem()} ? 'Ver e ajustar equipas' : (${c.aberta()} ? 'Preparar equipas' : 'Fazer equipas')">Fazer equipas</a>
 
                 <form th:unless="${c.membrosDisponiveis().isEmpty()}" th:action="@{/jogos/{id}/gestao/jogadores(id=${c.jogoId()})}" method="post" class="d-flex flex-column gap-2">
                     <label class="form-label m-0" for="utilizadorId">Inscrever um jogador</label>

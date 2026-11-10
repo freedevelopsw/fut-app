@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pt-PT" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Equipas')}"></head>
+<body hx-boost="true">
+<div class="app" th:with="e=${equipas}">
+    <header class="app-header">
+        <div class="d-flex justify-content-between align-items-center gap-2">
+            <a th:href="@{/jogos/{id}(id=${e.jogoId()})}" class="etiqueta text-decoration-none">← Convocatória</a>
+            <span class="chip" th:classappend="${e.publicadas()} ? 'chip-verde' : 'chip-cinza'"
+                  th:text="${e.publicadas()} ? 'Equipas publicadas' : 'Rascunho'">Rascunho</span>
+        </div>
+        <h1 class="titulo">Equipas</h1>
+        <p class="m-0 small text-secondary" th:text="|${e.dia()} · ${e.hora()}|">Quinta-feira, 12 nov. · 21:00</p>
+        <p class="m-0 small text-secondary" th:if="${e.podeGerir()}">
+            A app equilibra as equipas pelo rating e pela posição. Toca num jogador para o passar para a outra equipa.
+            <span th:unless="${e.publicadas()}">Os jogadores só as veem depois de publicadas.</span>
+        </p>
+    </header>
+
+    <main class="app-main">
+        <div th:replace="~{fragments/layout :: mensagens}"></div>
+
+        <div th:if="${e.desatualizadas()}" class="aviso aviso-laranja" role="status">
+            <span th:text="${e.porAtribuir().size() == 1} ? 'Há 1 jogador sem equipa: a lista mudou depois de as equipas estarem feitas.' : |Há ${e.porAtribuir().size()} jogadores sem equipa: a lista mudou depois de as equipas estarem feitas.|">Há jogadores sem equipa.</span>
+        </div>
+
+        <p th:unless="${e.existem()}" class="lista-vazia">
+            Ainda não há equipas. Carrega em <strong>Gerar equipas</strong> e a app divide os inscritos em duas equipas equilibradas.
+            Quem não preencheu a carta conta como rating 5.
+        </p>
+
+        <!-- Partilha depois de publicar -->
+        <section th:if="${e.publicadas() and equipasPublicadasAgora}" class="cartao d-flex flex-column gap-3">
+            <div class="fw-semibold">Avisa o grupo</div>
+            <a th:href="${e.whatsappUrl()}" target="_blank" rel="noopener" hx-boost="false" class="btn btn-fa btn-fa-sm btn-verde">Partilhar equipas no WhatsApp</a>
+        </section>
+
+        <div th:if="${e.existem()}" class="equipas-grelha">
+            <section th:each="time : ${e.lista()}" class="equipa-cartao"
+                     th:classappend="${time.equipa().name() == 'COLETES'} ? 'coletes'">
+                <div class="equipa-topo">
+                    <span th:class="${time.equipa().name() == 'COLETES'} ? 'cor-coletes' : 'cor-sem'" aria-hidden="true"></span>
+                    <h2 th:text="${time.nome()}">Coletes</h2>
+                    <span class="numero text-secondary" th:text="${time.tamanho()}">6</span>
+                </div>
+                <div class="equipa-resumo">
+                    <span th:if="${time.media()}" th:text="|média ${time.media()}|">média 7</span><span th:if="${time.media() != null and !#strings.isEmpty(time.posicoes())}"> · </span><span th:text="${time.posicoes()}">1 GR · 2 DEF</span>
+                </div>
+                <form th:each="j : ${time.jogadores()}" th:action="@{/jogos/{id}/gestao/equipas/mover(id=${e.jogoId()})}" method="post"
+                      th:if="${e.podeGerir()}">
+                    <input type="hidden" name="inscricaoId" th:value="${j.inscricaoId()}">
+                    <button type="submit" class="jogador-equipa"
+                            th:aria-label="|Passar ${j.nome()} para ${time.equipa().outra().descricao}|">
+                        <span class="nome-curto" th:text="${j.nome()}">Rui</span>
+                        <span class="rating-mini pequeno" th:classappend="${j.rating() == null} ? 'vazio'" th:text="${j.rating()} ?: '–'">7</span>
+                    </button>
+                </form>
+                <div th:unless="${e.podeGerir()}" th:each="j : ${time.jogadores()}" class="equipa-linha">
+                    <span class="nome-curto" th:text="${j.nome()}">Rui</span>
+                    <span class="rating-mini pequeno" th:classappend="${j.rating() == null} ? 'vazio'" th:text="${j.rating()} ?: '–'">7</span>
+                </div>
+            </section>
+        </div>
+
+        <!-- Jogadores sem equipa -->
+        <section th:if="${e.existem() and !e.porAtribuir().isEmpty() and e.podeGerir()}" class="seccao">
+            <h2 class="etiqueta">Sem equipa</h2>
+            <ul class="lista">
+                <li th:each="j : ${e.porAtribuir()}" class="pe-2">
+                    <span class="nome" th:text="${j.nome()}">Luís</span>
+                    <form th:action="@{/jogos/{id}/gestao/equipas/mover(id=${e.jogoId()})}" method="post">
+                        <input type="hidden" name="inscricaoId" th:value="${j.inscricaoId()}">
+                        <input type="hidden" name="destino" value="COLETES">
+                        <button type="submit" class="btn btn-sm btn-contorno fw-semibold" style="min-height: 44px; border-radius: 10px">Coletes</button>
+                    </form>
+                    <form th:action="@{/jogos/{id}/gestao/equipas/mover(id=${e.jogoId()})}" method="post">
+                        <input type="hidden" name="inscricaoId" th:value="${j.inscricaoId()}">
+                        <input type="hidden" name="destino" value="SEM_COLETES">
+                        <button type="submit" class="btn btn-sm btn-contorno fw-semibold" style="min-height: 44px; border-radius: 10px">Sem coletes</button>
+                    </form>
+                </li>
+            </ul>
+        </section>
+
+        <p th:if="${e.podeGerir() and e.existem() and !e.podePublicar() and !e.publicadas()}" class="m-0 small text-secondary"
+           th:text="${e.motivoNaoPublicar()}">Fecha primeiro a convocatória.</p>
+    </main>
+
+    <div class="rodape">
+        <div class="barra-acao d-flex gap-2" th:if="${e.podeGerir()}">
+            <form th:action="@{/jogos/{id}/gestao/equipas/gerar(id=${e.jogoId()})}" method="post"
+                  th:classappend="${e.existem()} ? '' : 'flex-grow-1'"
+                  th:hx-confirm="${e.existem()} ? 'Gerar novas equipas? As atuais são substituídas.' : null">
+                <button type="submit" class="btn btn-fa px-3"
+                        th:classappend="${e.existem()} ? 'btn-contorno' : 'btn-verde'"
+                        th:text="${e.existem()} ? 'Gerar de novo' : 'Gerar equipas'">Gerar equipas</button>
+            </form>
+            <form th:if="${e.existem() and !e.publicadas()}" th:action="@{/jogos/{id}/gestao/equipas/publicar(id=${e.jogoId()})}" method="post" class="flex-grow-1">
+                <button type="submit" class="btn btn-fa btn-verde" th:disabled="${!e.podePublicar()}">Publicar equipas</button>
+            </form>
+            <a th:if="${e.publicadas()}" th:href="${e.whatsappUrl()}" target="_blank" rel="noopener" hx-boost="false"
+               class="btn btn-fa btn-verde flex-grow-1" style="width: auto">Partilhar no WhatsApp</a>
+        </div>
+        <nav th:replace="~{fragments/layout :: nav}"></nav>
+    </div>
+</div>
+</body>
+</html>

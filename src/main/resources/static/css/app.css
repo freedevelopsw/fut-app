@@ -117,3 +117,25 @@ details.cartao summary::-webkit-details-marker { display: none; }
 .rating-mini { min-width: 36px; height: 28px; padding: 0 8px; border-radius: 8px; background: #14532F; color: #FFFFFF; font-family: "Space Grotesk", Inter, sans-serif; font-weight: 700; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; flex: none; }
 .rating-mini.vazio { background: var(--fa-linha-suave); color: var(--fa-suave); }
 .lista a.linha-link { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; color: inherit; text-decoration: none; min-height: 48px; }
+
+/* Equipas */
+.equipas-grelha { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.equipa-cartao { background: var(--fa-cartao); border: 1px solid var(--fa-linha); border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.equipa-topo { display: flex; align-items: center; gap: 8px; padding: 2px 2px 0; }
+.equipa-topo h2, .equipa-topo h3 { margin: 0; flex: 1; font-size: 15px; font-weight: 700; color: var(--fa-tinta); }
+.equipa-resumo { font-size: 12px; color: var(--fa-suave); padding: 0 2px 4px; min-height: 18px; }
+.cor-coletes { width: 14px; height: 14px; border-radius: 4px; background: #E07A1F; flex: none; }
+.cor-sem { width: 14px; height: 14px; border-radius: 4px; border: 2px solid var(--fa-suave); box-sizing: border-box; flex: none; }
+.jogador-equipa { width: 100%; min-height: 48px; border: 1px solid var(--fa-linha-suave); border-radius: 12px; background: #FAFBF9; color: var(--fa-tinta); font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 6px; padding: 4px 6px 4px 10px; text-align: left; }
+.jogador-equipa:hover { border-color: #C9CEC6; }
+.jogador-equipa .nome-curto { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.jogador-equipa .avatar { width: 28px; height: 28px; font-size: 11px; }
+.coletes .jogador-equipa .avatar { background: #FBEFE3; color: var(--fa-laranja); }
+.equipa-linha { display: flex; align-items: center; gap: 8px; font-size: 14px; min-height: 32px; }
+.equipa-linha .nome-curto { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rating-mini.pequeno { min-width: 28px; height: 22px; font-size: 12px; padding: 0 6px; border-radius: 6px; }
+
+/* Botões desativados continuam a parecer botões */
+.btn-verde:disabled, .btn-verde.disabled { background: var(--fa-verde); color: #FFFFFF; opacity: .4; }
+.btn-escuro:disabled, .btn-escuro.disabled { background: var(--fa-tinta); color: #FFFFFF; opacity: .4; }
+.btn-contorno:disabled, .btn-contorno.disabled { background: #FFFFFF; color: var(--fa-tinta); border-color: #C9CEC6; opacity: .5; }
