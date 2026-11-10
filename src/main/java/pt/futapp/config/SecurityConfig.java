@@ -27,7 +27,9 @@ public class SecurityConfig {
             .authorizeHttpRequests(pedidos -> pedidos
                 .requestMatchers("/login", "/registo", "/css/**", "/img/**", "/manifest.webmanifest", "/error").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
-                .requestMatchers("/jogos/novo", "/jogos/*/equipas", "/jogos/*/registo", "/jogos/*/gestao/**").hasAnyRole("ORGANIZADOR", "ADMIN")
+                .requestMatchers("/jogos/*/votos", "/jogos/*/votos/**").hasRole("ADMIN")
+                .requestMatchers("/jogos/novo", "/jogos/*/equipas", "/jogos/*/registo", "/jogos/*/gestao/**", "/gestao/**")
+                    .hasAnyRole("ORGANIZADOR", "ADMIN")
                 .anyRequest().authenticated())
             .formLogin(login -> login
                 .loginPage("/login")

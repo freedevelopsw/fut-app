@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-PT" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Votação')}"></head>
+<body hx-boost="true">
+<div class="app" th:with="v=${votacao}">
+    <header class="app-header">
+        <div class="d-flex justify-content-between align-items-center gap-2">
+            <a th:href="@{/jogos/{id}(id=${v.jogoId()})}" class="etiqueta text-decoration-none">← Jogo</a>
+            <span class="chip" th:classappend="${v.aberta()} ? 'chip-verde' : 'chip-cinza'" th:text="${v.aberta()} ? 'Votação aberta' : ${v.estado().descricao}">Votação aberta</span>
+        </div>
+        <h1 class="titulo">Quem foi o melhor?</h1>
+        <p class="m-0 small text-secondary" th:text="|${v.dia()} · ${v.hora()}|">Quinta-feira, 12 nov. · 21:00</p>
+    </header>
+
+    <main class="app-main">
+        <div th:replace="~{fragments/layout :: mensagens}"></div>
+
+        <p th:unless="${v.podeVotar()}" class="lista-vazia" th:text="${v.motivoNaoVotar()}">A votação não está aberta.</p>
+
+        <th:block th:if="${v.podeVotar()}">
+            <div class="d-flex align-items-center gap-3">
+                <div class="mini-avatares" aria-hidden="true"><span th:each="e : ${v.votaram()}" th:text="${e.iniciais()}">RU</span></div>
+                <span class="small text-secondary"><strong class="text-body" th:text="|${v.votaram().size()} de ${v.eleitores()}|">7 de 11</strong> já votaram</span>
+            </div>
+            <div class="aviso" style="background: var(--fa-cartao); border: 1px solid var(--fa-linha); color: var(--fa-suave); font-size: 13px">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                <span>O teu voto é secreto para os outros jogadores. O Admin consegue ver os votos. Podes alterar o voto até a votação fechar.</span>
+            </div>
+        </th:block>
+    </main>
+
+    <form th:if="${v.podeVotar()}" th:action="@{/jogos/{id}/votar(id=${v.jogoId()})}" method="post" class="d-flex flex-column flex-grow-1">
+        <main class="app-main pt-0">
+            <th:block th:each="cat : ${v.categorias()}">
+                <!-- MVP: lista grande -->
+                <fieldset th:if="${cat.mvp()}" class="seccao border-0 p-0 m-0">
+                    <legend class="etiqueta mb-2">MVP · obrigatório</legend>
+                    <label th:each="c : ${v.candidatos()}" class="opcao-voto">
+                        <input type="radio" th:name="${cat.campo()}" th:value="${c.inscricaoId()}" th:checked="${c.inscricaoId() == cat.meuVoto()}" required>
+                        <span class="ponto-equipa" th:classappend="${c.equipa().name() == 'COLETES'} ? 'coletes' : 'sem'" aria-hidden="true"></span>
+                        <span class="info">
+                            <span class="fw-semibold" th:text="${c.nome()}">Rui</span>
+                            <span class="sub" th:text="${c.equipa().descricao} + (${c.golos() > 0} ? (${c.golos() == 1} ? ' · 1 golo' : ' · ' + ${c.golos()} + ' golos') : '') + (${c.convidado()} ? ' · convidado' : '')">Coletes · 2 golos</span>
+                        </span>
+                    </label>
+                </fieldset>
+            </th:block>
+
+            <section class="seccao" th:if="${v.categorias().size() > 1}">
+                <h2 class="etiqueta">Prémios · opcionais</h2>
+                <div class="cartao d-flex flex-column gap-3">
+                    <div th:each="cat : ${v.categorias()}" th:unless="${cat.mvp()}">
+                        <label class="form-label m-0" th:for="${cat.campo()}" th:text="${cat.nome()}">Frango da noite</label>
+                        <div class="small text-secondary mb-1" th:if="${cat.descricao()}" th:text="${cat.descricao()}">Descrição</div>
+                        <select class="form-select" th:id="${cat.campo()}" th:name="${cat.campo()}">
+                            <option value="">—</option>
+                            <option th:each="c : ${v.candidatos()}" th:value="${c.inscricaoId()}" th:text="${c.nome()}"
+                                    th:selected="${c.inscricaoId() == cat.meuVoto()}">Rui</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <div class="rodape">
+            <div class="barra-acao">
+                <button type="submit" class="btn btn-fa btn-verde" th:text="${v.jaVotei()} ? 'Guardar alterações' : 'Votar'">Votar</button>
+            </div>
+            <nav th:replace="~{fragments/layout :: nav}"></nav>
+        </div>
+    </form>
+
+    <div class="rodape" th:unless="${v.podeVotar()}">
+        <nav th:replace="~{fragments/layout :: nav}"></nav>
+    </div>
+</div>
+</body>
+</html>

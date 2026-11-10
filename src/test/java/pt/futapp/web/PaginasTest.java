@@ -80,6 +80,7 @@ class PaginasTest {
         Long adminId = utilizadores.vista(ADMIN).orElseThrow().id();
         for (String url : List.of("/", "/jogos/" + jogo, "/jogos/novo", "/perfil", "/estatisticas",
                                   "/jogadores/" + adminId, "/jogadores/" + adminId + "/editar", "/jogos/" + jogo + "/equipas", "/jogos/" + jogo + "/registo",
+                                  "/jogos/" + jogo + "/votar", "/jogos/" + jogo + "/votos", "/gestao/premios",
                                   "/admin/membros", "/admin/convites", "/admin/auditoria", "/perfil/password")) {
             mvc.perform(get(url).with(comoOrganizador())).andExpect(status().isOk());
         }
@@ -400,6 +401,54 @@ class PaginasTest {
             .andExpect(content().string(containsString("Votação aberta")));
         mvc.perform(post("/jogos/" + jogo + "/gestao/registo/reabrir").with(jogador).with(csrf()))
             .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void votaSePeloEcraEOsResultadosAparecemNoFim() throws Exception {
+        for (String u : List.of("v1", "v2", "v3", "v4")) {
+            jogos.inscrever(jogo, registar(utilizadores, u));
+        }
+        equipas.gerar(jogo, organizador);
+        jogos.fecharConvocatoria(jogo, organizador);
+        equipas.publicar(jogo, organizador, "http://localhost");
+        registoService.fechar(jogo, organizador);
+        var v1 = user("v1").roles("JOGADOR");
+        Long votadoV2 = registoService.vista(jogo, organizador).coletes().stream()
+            .filter(p -> p.nome().equals("Nome v2")).findFirst()
+            .or(() -> registoService.vista(jogo, organizador).semColetes().stream().filter(p -> p.nome().equals("Nome v2")).findFirst())
+            .orElseThrow().inscricaoId();
+
+        mvc.perform(get("/jogos/" + jogo).with(v1))
+            .andExpect(content().string(containsString("Votar no MVP e nos prémios")));
+        mvc.perform(get("/jogos/" + jogo + "/votar").with(v1))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("name=\"voto_MVP\"")))
+            .andExpect(content().string(containsString("Frango da noite")));
+        mvc.perform(post("/jogos/" + jogo + "/votar").with(v1).with(csrf()).param("voto_MVP", String.valueOf(votadoV2)))
+            .andExpect(redirectedUrl("/jogos/" + jogo));
+        mvc.perform(get("/jogos/" + jogo).with(v1))
+            .andExpect(content().string(containsString("1 de 4")))
+            .andExpect(content().string(containsString("Alterar o meu voto")));
+
+        mvc.perform(get("/jogos/" + jogo + "/votos").with(v1)).andExpect(status().isForbidden());
+        mvc.perform(get("/jogos/" + jogo + "/votos").with(comoOrganizador()))
+            .andExpect(content().string(containsString("Nome v1 → Nome v2")));
+
+        mvc.perform(post("/jogos/" + jogo + "/gestao/votacao/fechar").with(comoOrganizador()).with(csrf()))
+            .andExpect(redirectedUrl("/jogos/" + jogo));
+        mvc.perform(get("/jogos/" + jogo).with(v1))
+            .andExpect(content().string(containsString("MVP do jogo")))
+            .andExpect(content().string(containsString("Nome v2")));
+    }
+
+    @Test
+    void osPremiosGeremSeNoEcraDoOrganizador() throws Exception {
+        mvc.perform(get("/gestao/premios").with(user("x").roles("JOGADOR"))).andExpect(status().isForbidden());
+        mvc.perform(post("/gestao/premios").with(comoOrganizador()).with(csrf()).param("nome", "Bota de ouro"))
+            .andExpect(redirectedUrl("/gestao/premios"));
+        mvc.perform(get("/gestao/premios").with(comoOrganizador()))
+            .andExpect(content().string(containsString("Bota de ouro")))
+            .andExpect(content().string(containsString("Ator de Hollywood")));
     }
 
     @Test

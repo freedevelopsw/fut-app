@@ -118,6 +118,25 @@ public class Jogo {
         estado = EstadoJogo.EM_REGISTO;
     }
 
+    public boolean votacaoAberta() {
+        return estado == EstadoJogo.VOTACAO_ABERTA;
+    }
+
+    /** Fecha a votação: o jogo fica fechado e os resultados são revelados. */
+    public void fecharVotacao() {
+        if (estado != EstadoJogo.VOTACAO_ABERTA) {
+            throw new OperacaoInvalidaException("A votação deste jogo não está aberta.");
+        }
+        estado = EstadoJogo.FECHADO;
+    }
+
+    public void reabrirVotacao() {
+        if (estado != EstadoJogo.FECHADO) {
+            throw new OperacaoInvalidaException("Só se reabre a votação de um jogo fechado.");
+        }
+        estado = EstadoJogo.VOTACAO_ABERTA;
+    }
+
     /** Já houve registo do jogo (há resultado para mostrar). */
     public boolean temResultado() {
         return estado == EstadoJogo.EM_REGISTO || estado == EstadoJogo.VOTACAO_ABERTA || estado == EstadoJogo.FECHADO;

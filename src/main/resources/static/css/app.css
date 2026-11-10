@@ -157,3 +157,17 @@ details.cartao summary::-webkit-details-marker { display: none; }
 .ponto-equipa.sem { border: 2px solid var(--fa-suave); box-sizing: border-box; }
 .btn-presenca { min-height: 40px; min-width: 92px; border-radius: 10px; font-size: 14px; font-weight: 600; }
 .faltou .nome { text-decoration: line-through; color: var(--fa-suave); }
+
+/* Votação */
+.opcao-voto { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 14px; border: 1px solid var(--fa-linha); border-radius: 14px; background: var(--fa-cartao); cursor: pointer; margin: 0; }
+.opcao-voto:has(input:checked) { border: 2px solid var(--fa-verde); background: #F1F8F4; }
+.opcao-voto input { width: 22px; height: 22px; accent-color: var(--fa-verde); flex: none; margin: 0; }
+.opcao-voto .info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.opcao-voto .sub { font-size: 13px; color: var(--fa-suave); }
+.mvp-cartao { background: var(--fa-verde); color: #FFFFFF; border-radius: 20px; padding: 18px 20px; display: flex; align-items: center; gap: 16px; }
+.mvp-cartao .trofeu { width: 56px; height: 56px; flex: none; border-radius: 999px; background: #FFFFFF; color: var(--fa-verde); display: flex; align-items: center; justify-content: center; }
+.mvp-cartao .rotulo { font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+.mvp-cartao .nome-mvp { font-family: "Space Grotesk", Inter, sans-serif; font-size: 28px; font-weight: 700; line-height: 1.05; overflow-wrap: anywhere; }
+.mini-avatares { display: flex; }
+.mini-avatares span { width: 28px; height: 28px; margin-left: -8px; border-radius: 999px; background: var(--fa-linha-suave); border: 2px solid var(--fa-fundo); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; }
+.mini-avatares span:first-child { margin-left: 0; }

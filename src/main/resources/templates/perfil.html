@@ -29,6 +29,13 @@
             </ul>
         </section>
 
+        <section th:if="${eu.gestor()}" class="seccao">
+            <h2 class="etiqueta">Organização</h2>
+            <ul class="lista">
+                <li><a class="nome text-reset text-decoration-none py-3" th:href="@{/gestao/premios}">Prémios</a></li>
+            </ul>
+        </section>
+
         <section th:if="${eu.admin()}" class="seccao">
             <h2 class="etiqueta">Administração</h2>
             <ul class="lista">

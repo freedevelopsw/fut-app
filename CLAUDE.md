@@ -70,6 +70,15 @@ O dono do projeto não escreve código: todo o código é gerado, testado automa
 - Fechar o jogo → VOTACAO_ABERTA (não exige golos). Enquanto a votação está aberta, pode-se reabrir o registo.
 - O resultado (placar + marcadores) aparece na convocatória de todos a partir de EM_REGISTO.
 
+## Votação (Fase 4) — pacote `votacao`
+- `Premio` (prémios brincadeira; 10 criados no 1.º arranque por `PremiosIniciais`); `/gestao/premios` para Organizador e Admin:
+  criar, editar, ativar/desativar (não se apagam). O MVP é fixo (`Voto.premio` null).
+- `Voto` (eleitor = utilizador, votado = inscrição, `anulado`). Votam os presentes com conta (não convidados, não faltas);
+  ninguém vota em si. Boletim `/jogos/{id}/votar`: MVP obrigatório (radio), prémios opcionais (dropdowns); voltar a votar substitui.
+- Fecha sozinha quando todos votaram, ou pelo Organizador/Admin; pode ser reaberta. Resultados só com o jogo FECHADO.
+- Empate MVP: mais golos no jogo; se continuar, partilhado. Outros prémios: empate = partilhado.
+- Admin: `/jogos/{id}/votos` vê quem votou em quem e anula votos.
+
 ## Roles
 Cumulativas: `JOGADOR`, `ORGANIZADOR`, `ADMIN`. Convidado = inscrição sem conta (`Inscricao.nomeConvidado`).
 - Mudam-se na carta do jogador, num dropdown de nível de acesso (`NivelAcesso`: Jogador, Organizador, Admin;
@@ -78,6 +87,6 @@ Cumulativas: `JOGADOR`, `ORGANIZADOR`, `ADMIN`. Convidado = inscrição sem cont
   (`UtilizadorService.opcoesNivel`). O Admin não muda o próprio nível.
 
 ## Estado
-- Fatia 1 (M0 + M1): admin no arranque, registo só por convite, bloqueio de membros, mudar password, carta do jogador, equipas (Fase 2), registo do jogo (Fase 3), login, roles, criar jogo, convocatória (12 vagas, espera a partir do 13º, cancelamentos registados, fecho manual), partilha WhatsApp, auditoria com limpeza.
+- Fatia 1 (M0 + M1): admin no arranque, registo só por convite, bloqueio de membros, mudar password, carta do jogador, equipas (Fase 2), registo do jogo (Fase 3), votação (Fase 4), login, roles, criar jogo, convocatória (12 vagas, espera a partir do 13º, cancelamentos registados, fecho manual), partilha WhatsApp, auditoria com limpeza.
 - Pendente: convidados passarem a utilizadores (ligar o histórico do convidado à nova conta).
-- Seguinte: votação (Fase 4), resumo (Fase 5).
+- Seguinte: resumo do jogo (Fase 5) e estatísticas.

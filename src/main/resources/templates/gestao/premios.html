@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-PT" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Prémios')}"></head>
+<body hx-boost="true">
+<div class="app">
+    <header class="app-header">
+        <a th:href="@{/perfil}" class="etiqueta text-decoration-none">← Perfil</a>
+        <h1 class="titulo">Prémios</h1>
+        <p class="m-0 small text-secondary">O MVP é votado sempre. Os prémios ativos aparecem na votação de cada jogo, e votar neles é opcional.</p>
+    </header>
+
+    <main class="app-main">
+        <div th:replace="~{fragments/layout :: mensagens}"></div>
+
+        <ul class="lista">
+            <li th:each="p : ${premios}" class="py-2 pe-2 flex-wrap">
+                <th:block th:if="${editar == p.id}">
+                    <form th:action="@{/gestao/premios/{id}(id=${p.id})}" method="post" class="d-flex flex-column gap-2 w-100 py-1 pe-2">
+                        <input class="form-control" name="nome" th:value="${p.nome}" maxlength="40" required aria-label="Nome do prémio">
+                        <input class="form-control" name="descricao" th:value="${p.descricao}" maxlength="120" placeholder="Descrição (opcional)" aria-label="Descrição">
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-verde fw-semibold flex-grow-1" style="min-height: 44px; border-radius: 10px">Guardar</button>
+                            <a th:href="@{/gestao/premios}" class="btn btn-contorno fw-semibold flex-grow-1" style="min-height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center">Cancelar</a>
+                        </div>
+                    </form>
+                </th:block>
+                <th:block th:unless="${editar == p.id}">
+                    <a th:href="@{/gestao/premios(editar=${p.id})}" class="d-flex flex-column flex-grow-1 text-reset text-decoration-none" style="min-width: 0">
+                        <span class="fw-semibold" th:classappend="${p.ativo} ? '' : 'text-secondary'" th:text="${p.nome}">Frango da noite</span>
+                        <span class="small text-secondary text-truncate" th:text="${p.descricao} ?: 'Toca para editar'">Descrição</span>
+                    </a>
+                    <form th:action="@{/gestao/premios/{id}/ativo(id=${p.id})}" method="post">
+                        <input type="hidden" name="ativo" th:value="${!p.ativo}">
+                        <button type="submit" class="btn btn-sm fw-semibold" style="min-height: 44px; min-width: 84px; border-radius: 10px"
+                                th:classappend="${p.ativo} ? 'btn-verde' : 'btn-contorno'" th:aria-pressed="${p.ativo}"
+                                th:aria-label="${p.ativo} ? |Desativar ${p.nome}| : |Ativar ${p.nome}|"
+                                th:text="${p.ativo} ? 'Ativo' : 'Inativo'">Ativo</button>
+                    </form>
+                </th:block>
+            </li>
+        </ul>
+
+        <form th:action="@{/gestao/premios}" method="post" class="cartao d-flex flex-column gap-2">
+            <h2 class="m-0 fs-6 fw-bold">Novo prémio</h2>
+            <input class="form-control" name="nome" maxlength="40" placeholder="Nome" required aria-label="Nome do novo prémio">
+            <input class="form-control" name="descricao" maxlength="120" placeholder="Descrição (opcional)" aria-label="Descrição do novo prémio">
+            <button type="submit" class="btn btn-fa btn-fa-sm btn-contorno">Criar prémio</button>
+        </form>
+    </main>
+
+    <div class="rodape">
+        <nav th:replace="~{fragments/layout :: nav}"></nav>
+    </div>
+</div>
+</body>
+</html>

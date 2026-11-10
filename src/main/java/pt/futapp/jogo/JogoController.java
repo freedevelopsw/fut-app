@@ -17,6 +17,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import pt.futapp.comum.OperacaoInvalidaException;
+import pt.futapp.votacao.VotacaoService;
 
 @Controller
 @RequestMapping("/jogos")
@@ -25,11 +26,13 @@ public class JogoController {
     private final JogoService jogos;
     private final EquipasService equipas;
     private final RegistoService registo;
+    private final VotacaoService votacao;
 
-    public JogoController(JogoService jogos, EquipasService equipas, RegistoService registo) {
+    public JogoController(JogoService jogos, EquipasService equipas, RegistoService registo, VotacaoService votacao) {
         this.jogos = jogos;
         this.equipas = equipas;
         this.registo = registo;
+        this.votacao = votacao;
     }
 
     @GetMapping("/{id}")
@@ -38,6 +41,7 @@ public class JogoController {
         model.addAttribute("conv", jogos.convocatoria(id, principal.getName(), urlBase));
         model.addAttribute("equipas", equipas.vista(id, principal.getName(), urlBase));
         model.addAttribute("registo", registo.vista(id, principal.getName()));
+        model.addAttribute("votacao", votacao.vista(id, principal.getName()));
         model.addAttribute("nav", "jogo");
         return "jogos/detalhe";
     }

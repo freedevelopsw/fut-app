@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt-PT" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Votos')}"></head>
+<body hx-boost="true">
+<div class="app" th:with="v=${votacao}">
+    <header class="app-header">
+        <a th:href="@{/jogos/{id}(id=${v.jogoId()})}" class="etiqueta text-decoration-none">← Jogo</a>
+        <h1 class="titulo">Votos</h1>
+        <p class="m-0 small text-secondary">Só o Admin vê esta página. Um voto anulado fica registado mas não conta para os resultados.</p>
+    </header>
+
+    <main class="app-main">
+        <div th:replace="~{fragments/layout :: mensagens}"></div>
+
+        <p th:if="${#lists.isEmpty(votos)}" class="lista-vazia">Ainda ninguém votou.</p>
+        <ul th:unless="${#lists.isEmpty(votos)}" class="lista">
+            <li th:each="voto : ${votos}" class="py-2 pe-2" th:classappend="${voto.anulado()} ? 'faltou'">
+                <div class="d-flex flex-column flex-grow-1" style="min-width: 0">
+                    <span class="nome" th:text="|${voto.eleitor()} → ${voto.votado()}|">Rui → Nuno</span>
+                    <span class="small text-secondary" th:text="${voto.anulado()} ? |${voto.categoria()} · anulado| : ${voto.categoria()}">MVP</span>
+                </div>
+                <form th:unless="${voto.anulado()}" th:action="@{/jogos/{id}/votos/{voto}/anular(id=${v.jogoId()},voto=${voto.id()})}" method="post"
+                      hx-confirm="Anular este voto? Deixa de contar para os resultados.">
+                    <button type="submit" class="btn btn-sm btn-contorno fw-semibold" style="min-height: 44px; border-radius: 10px">Anular</button>
+                </form>
+            </li>
+        </ul>
+    </main>
+
+    <div class="rodape">
+        <nav th:replace="~{fragments/layout :: nav}"></nav>
+    </div>
+</div>
+</body>
+</html>
