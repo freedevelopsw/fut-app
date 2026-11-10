@@ -6,17 +6,17 @@ import java.util.Set;
 
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
+import pt.futapp.comum.conversores.RoleConverter;
 
 @Entity
 @Table(name = "utilizador")
@@ -44,7 +44,7 @@ public class Utilizador {
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "utilizador_role", joinColumns = @JoinColumn(name = "utilizador_id"))
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = RoleConverter.class)
     @Column(name = "role", nullable = false, length = 20)
     private Set<Role> roles = new HashSet<>();
 

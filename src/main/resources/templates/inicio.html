@@ -39,7 +39,8 @@
             <ul class="lista">
                 <li th:each="j : ${anteriores}">
                     <a class="nome text-reset text-decoration-none py-2" th:href="@{/jogos/{id}(id=${j.id()})}" th:text="|${j.dia()} · ${j.local()}|">Jogo</a>
-                    <span th:if="${j.resultado()}" class="numero pe-3" th:text="${j.resultado()}">3–2</span>
+                    <span th:if="${j.resultado() != null and !j.cancelado()}" class="numero pe-3" th:text="${j.resultado()}">3–2</span>
+                    <span th:if="${j.cancelado()}" class="tag tag-espera me-3">Cancelado</span>
                 </li>
             </ul>
         </section>

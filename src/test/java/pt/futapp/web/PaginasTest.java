@@ -464,6 +464,29 @@ class PaginasTest {
     }
 
     @Test
+    void cancelarEReativarPeloEcra() throws Exception {
+        var jogador = user("c1").roles("JOGADOR");
+        registar(utilizadores, "c1");
+
+        mvc.perform(get("/jogos/" + jogo).with(comoOrganizador()))
+            .andExpect(content().string(containsString("Falta de jogadores")));
+        mvc.perform(post("/jogos/" + jogo + "/gestao/cancelar").with(jogador).with(csrf()).param("motivo", "x"))
+            .andExpect(status().isForbidden());
+        mvc.perform(post("/jogos/" + jogo + "/gestao/cancelar").with(comoOrganizador()).with(csrf()).param("motivo", "Campo fechado"))
+            .andExpect(redirectedUrl("/jogos/" + jogo));
+        mvc.perform(get("/jogos/" + jogo).with(jogador))
+            .andExpect(content().string(containsString("Jogo cancelado")))
+            .andExpect(content().string(containsString("Campo fechado")))
+            .andExpect(content().string(not(containsString("Inscrever-me"))));
+        mvc.perform(get("/").with(jogador))
+            .andExpect(content().string(containsString("Cancelado")));
+        mvc.perform(post("/jogos/" + jogo + "/gestao/reativar").with(comoOrganizador()).with(csrf()))
+            .andExpect(redirectedUrl("/jogos/" + jogo));
+        mvc.perform(get("/jogos/" + jogo).with(jogador))
+            .andExpect(content().string(containsString("Inscrever-me")));
+    }
+
+    @Test
     void desbloquearDevolveOAcesso() throws Exception {
         String rui = registar(utilizadores, "rui");
         Long id = utilizadores.vista(rui).orElseThrow().id();

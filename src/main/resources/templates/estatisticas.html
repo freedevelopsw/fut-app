@@ -7,7 +7,7 @@
         <p class="etiqueta">Temporada</p>
         <h1 class="titulo">Estatísticas</h1>
         <p class="m-0 small text-secondary"
-           th:text="${e.jogosFechados() == 1} ? 'Contas feitas a partir de 1 jogo fechado. Os convidados não entram.' : |Contas feitas a partir de ${e.jogosFechados()} jogos fechados. Os convidados não entram.|">Contas feitas a partir de 8 jogos fechados.</p>
+           th:text="${e.jogosFechados() == 1} ? 'Contas feitas a partir de 1 jogo fechado.' : |Contas feitas a partir de ${e.jogosFechados()} jogos fechados.|">Contas feitas a partir de 8 jogos fechados.</p>
     </header>
 
     <main class="app-main">
@@ -21,7 +21,8 @@
                 <ol>
                     <li th:each="l : ${r.lugares()}" th:classappend="${l.posicao() == 1} ? 'lider'">
                         <span class="pos" th:text="${l.posicao()}">1</span>
-                        <a class="nome-r" th:href="@{/jogadores/{id}(id=${l.jogadorId()})}" th:text="${l.eu()} ? |${l.nome()} (tu)| : ${l.nome()}">Rui</a>
+                        <a th:if="${l.jogadorId()}" class="nome-r" th:href="@{/jogadores/{id}(id=${l.jogadorId()})}" th:text="${l.eu()} ? |${l.nome()} (tu)| : ${l.nome()}">Rui</a>
+                        <span th:unless="${l.jogadorId()}" class="nome-r" th:text="|${l.nome()} (convidado)|">Zé (convidado)</span>
                         <span><span class="val" th:text="${l.valor()}">5</span><span class="uni" th:text="${r.unidade(l.valor())}">golos</span></span>
                     </li>
                     <li th:if="${r.maisEmpatados() > 0}" class="small text-secondary">
@@ -50,7 +51,11 @@
                     </thead>
                     <tbody>
                         <tr th:each="l : ${e.tabela()}" th:classappend="${l.eu()} ? 'eu'">
-                            <td><a th:href="@{/jogadores/{id}(id=${l.jogadorId()})}" th:text="${l.nome()}">Rui</a></td>
+                            <td>
+                                <a th:if="${l.jogadorId()}" th:href="@{/jogadores/{id}(id=${l.jogadorId()})}" th:text="${l.nome()}">Rui</a>
+                                <span th:unless="${l.jogadorId()}" th:text="${l.nome()}">Zé</span>
+                                <span th:if="${l.convidado()}" class="tag ms-1">conv.</span>
+                            </td>
                             <td th:text="${l.jogos()}">8</td>
                             <td th:text="${l.vitorias()}">5</td>
                             <td th:text="${l.golos()}">4</td>

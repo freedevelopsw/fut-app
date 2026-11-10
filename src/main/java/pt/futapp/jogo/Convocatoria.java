@@ -22,7 +22,15 @@ public record Convocatoria(
     boolean gestor,
     boolean listaEditavel,
     List<MembroOpcao> membrosDisponiveis,
-    String whatsappUrl) {
+    String whatsappUrl,
+    String motivoCancelamento,
+    String canceladoEm,
+    String canceladoPor,
+    String whatsappCancelamentoUrl) {
+
+    public boolean cancelado() {
+        return estado == EstadoJogo.CANCELADO;
+    }
 
     public boolean aberta() {
         return estado == EstadoJogo.CONVOCATORIA_ABERTA;

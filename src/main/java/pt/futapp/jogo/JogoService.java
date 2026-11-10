@@ -49,12 +49,14 @@ public class JogoService {
 
     @Transactional(readOnly = true)
     public List<JogoResumo> proximosJogos() {
-        return jogos.findByEstadoNotOrderByDataHoraAsc(EstadoJogo.FECHADO).stream().map(this::resumo).toList();
+        return jogos.findByEstadoNotInOrderByDataHoraAsc(List.of(EstadoJogo.FECHADO, EstadoJogo.CANCELADO))
+            .stream().map(this::resumo).toList();
     }
 
     @Transactional(readOnly = true)
     public List<JogoResumo> jogosAnteriores() {
-        return jogos.findTop10ByEstadoOrderByDataHoraDesc(EstadoJogo.FECHADO).stream().map(this::resumo).toList();
+        return jogos.findTop10ByEstadoInOrderByDataHoraDesc(List.of(EstadoJogo.FECHADO, EstadoJogo.CANCELADO))
+            .stream().map(this::resumo).toList();
     }
 
     @Transactional(readOnly = true)
@@ -105,7 +107,12 @@ public class JogoService {
         return new Convocatoria(jogo.getId(), dia, hora, jogo.getLocal(), jogo.getVagas(), jogo.getEstado(),
             inscritos, espera, desistencias, minhaPosicao,
             aberta && minhaPosicao == null, aberta && minhaPosicao != null,
-            eu.ehGestor(), eu.ehGestor() && jogo.permiteEquipas(), disponiveis, whatsapp);
+            eu.ehGestor(), eu.ehGestor() && jogo.permiteEquipas(), disponiveis, whatsapp,
+            jogo.getMotivoCancelamento(),
+            jogo.cancelado() ? fmt.dataHora(jogo.getCanceladoEm()) : null,
+            jogo.getCanceladoPor() != null ? jogo.getCanceladoPor().getNomeVisivel() : null,
+            jogo.cancelado() ? MensagemWhatsApp.url("O jogo de " + dia + ", " + hora + " (" + jogo.getLocal()
+                + ") foi cancelado.\nMotivo: " + jogo.getMotivoCancelamento() + "\n\n" + link) : null);
     }
 
     // ---------------------------------------------------------------- ações do jogador
@@ -230,6 +237,35 @@ public class JogoService {
         return abertas.size();
     }
 
+    /** Motivo usado quando não é indicado nenhum. */
+    public static final String MOTIVO_CANCELAMENTO_OMISSAO = "Falta de jogadores";
+
+    /** Cancela o jogo. O motivo é sempre guardado (por omissão, falta de jogadores). */
+    @Transactional
+    public void cancelar(Long jogoId, String motivo, String username) {
+        Utilizador ator = carregarUtilizador(username);
+        exigirGestor(ator);
+        Jogo jogo = carregarJogo(jogoId);
+        String m = motivo == null || motivo.isBlank() ? MOTIVO_CANCELAMENTO_OMISSAO : motivo.trim();
+        if (m.length() > 200) {
+            throw new OperacaoInvalidaException("O motivo tem no máximo 200 caracteres.");
+        }
+        jogo.cancelar(m, ator, agora());
+        eventos.publishEvent(new AuditEvent(ator.getUsername(), Acao.CANCELAMENTO_JOGO, jogo.getId(), "JOGO", jogo.getId(),
+            "Jogo de " + fmt.dia(jogo.getDataHora()) + " cancelado. Motivo: " + m));
+    }
+
+    /** Desfaz o cancelamento: o jogo volta ao estado em que estava. */
+    @Transactional
+    public void reativar(Long jogoId, String username) {
+        Utilizador ator = carregarUtilizador(username);
+        exigirGestor(ator);
+        Jogo jogo = carregarJogo(jogoId);
+        jogo.reativar();
+        eventos.publishEvent(new AuditEvent(ator.getUsername(), Acao.REATIVACAO_JOGO, jogo.getId(), "JOGO", jogo.getId(),
+            "Jogo de " + fmt.dia(jogo.getDataHora()) + " reativado (" + jogo.getEstado().getDescricao() + ")"));
+    }
+
     // ---------------------------------------------------------------- regras internas
 
     /**
@@ -290,7 +326,7 @@ public class JogoService {
     private JogoResumo resumo(Jogo jogo) {
         long ativos = inscricoes.countByJogoAndEstado(jogo, EstadoInscricao.ATIVA);
         return new JogoResumo(jogo.getId(), fmt.dia(jogo.getDataHora()), fmt.hora(jogo.getDataHora()),
-            jogo.getLocal(), jogo.getEstado().getDescricao(), jogo.convocatoriaAberta(),
+            jogo.getLocal(), jogo.getEstado().getDescricao(), jogo.cancelado(), jogo.convocatoriaAberta(),
             Math.min(ativos, jogo.getVagas()), jogo.getVagas(),
             jogo.temResultado() ? golos.countByJogoAndEquipa(jogo, Equipa.COLETES) + "–"
                 + golos.countByJogoAndEquipa(jogo, Equipa.SEM_COLETES) : null);

@@ -31,7 +31,7 @@ import pt.futapp.votacao.VotoRepository;
 /**
  * Estatísticas calculadas a partir dos jogos fechados (estado FECHADO), sem nada guardado à parte:
  * jogos (presenças), vitórias/empates/derrotas, golos, assistências, MVPs, prémios brincadeira e faltas.
- * Os convidados não entram nos rankings; os bloqueados continuam a contar.
+ * Os convidados também contam: como não têm conta, são agregados pelo nome. Os bloqueados continuam a contar.
  */
 @Service
 public class EstatisticasService {
@@ -58,7 +58,7 @@ public class EstatisticasService {
     @Transactional(readOnly = true)
     public EstatisticasView temporada(String usernameAtual) {
         List<Jogo> fechados = jogos.findByEstadoOrderByDataHoraAsc(EstadoJogo.FECHADO);
-        Map<Long, Acumulado> porJogador = calcular(fechados);
+        Map<String, Acumulado> porJogador = calcular(fechados);
 
         List<EstatisticasView.Linha> tabela = porJogador.values().stream()
             .map(a -> a.linha(usernameAtual))
@@ -81,7 +81,7 @@ public class EstatisticasService {
     public EstatisticasView.Linha doJogador(Long jogadorId, String usernameAtual) {
         Utilizador jogador = utilizadores.findById(jogadorId)
             .orElseThrow(() -> new pt.futapp.comum.OperacaoInvalidaException("Jogador não encontrado."));
-        Acumulado a = calcular(jogos.findByEstadoOrderByDataHoraAsc(EstadoJogo.FECHADO)).get(jogador.getId());
+        Acumulado a = calcular(jogos.findByEstadoOrderByDataHoraAsc(EstadoJogo.FECHADO)).get(chave(jogador.getId(), null));
         return a != null ? a.linha(usernameAtual)
             : EstatisticasView.Linha.vazia(jogador.getId(), jogador.getNomeVisivel(),
                 jogador.getUsername().equalsIgnoreCase(usernameAtual));
@@ -89,8 +89,17 @@ public class EstatisticasService {
 
     // ---------------------------------------------------------------- cálculo
 
-    private Map<Long, Acumulado> calcular(List<Jogo> fechados) {
-        Map<Long, Acumulado> porJogador = new HashMap<>();
+    /** Chave de agregação: o utilizador, ou o nome do convidado (sem diferenças de maiúsculas e espaços). */
+    private static String chave(Long jogadorId, String nomeConvidado) {
+        return jogadorId != null ? "u:" + jogadorId : "c:" + nomeConvidado.trim().toLowerCase();
+    }
+
+    private static String chave(Inscricao ins) {
+        return chave(ins.getJogador() != null ? ins.getJogador().getId() : null, ins.getNomeConvidado());
+    }
+
+    private Map<String, Acumulado> calcular(List<Jogo> fechados) {
+        Map<String, Acumulado> porJogador = new HashMap<>();
         var ordemPremios = premios.todos();
         for (Jogo jogo : fechados) {
             List<Inscricao> ativas = inscricoes.findByJogoAndEstadoOrderByInscritoEmAscIdAsc(jogo, EstadoInscricao.ATIVA);
@@ -103,10 +112,7 @@ public class EstatisticasService {
 
             Map<Long, Inscricao> porInscricao = jogaram.stream().collect(Collectors.toMap(Inscricao::getId, i -> i));
             for (Inscricao ins : jogaram) {
-                if (ins.getJogador() == null) {
-                    continue;
-                }
-                Acumulado a = porJogador.computeIfAbsent(ins.getJogador().getId(), k -> new Acumulado(ins.getJogador()));
+                Acumulado a = porJogador.computeIfAbsent(chave(ins), k -> new Acumulado(ins));
                 if (ins.isFaltou()) {
                     a.faltas++;
                     continue;
@@ -136,11 +142,11 @@ public class EstatisticasService {
         return porJogador;
     }
 
-    private static void somar(Map<Long, Acumulado> porJogador, Inscricao ins, java.util.function.Consumer<Acumulado> acao) {
-        if (ins == null || ins.getJogador() == null) {
+    private static void somar(Map<String, Acumulado> porJogador, Inscricao ins, java.util.function.Consumer<Acumulado> acao) {
+        if (ins == null) {
             return;
         }
-        acao.accept(porJogador.computeIfAbsent(ins.getJogador().getId(), k -> new Acumulado(ins.getJogador())));
+        acao.accept(porJogador.computeIfAbsent(chave(ins), k -> new Acumulado(ins)));
     }
 
     private static void adicionar(List<EstatisticasView.Ranking> rankings, String titulo, String singular, String plural,
@@ -164,7 +170,7 @@ public class EstatisticasService {
             if (posicao > TOPO || lugares.size() == TOPO) {
                 break;
             }
-            lugares.add(new EstatisticasView.Lugar(posicao, l.jogadorId(), l.nome(), v, l.eu()));
+            lugares.add(new EstatisticasView.Lugar(posicao, l.jogadorId(), l.nome(), v, l.eu(), l.convidado()));
         }
         long ultimo = lugares.get(lugares.size() - 1).valor();
         int maisEmpatados = (int) ordenada.stream().skip(lugares.size()).filter(l -> valor.applyAsInt(l) == ultimo).count();
@@ -173,15 +179,20 @@ public class EstatisticasService {
 
     private static final class Acumulado {
         private final Utilizador jogador;
+        private final String nomeConvidado;
         int jogos, vitorias, empates, derrotas, golos, assistencias, mvps, premios, faltas;
 
-        Acumulado(Utilizador jogador) {
-            this.jogador = jogador;
+        Acumulado(Inscricao ins) {
+            this.jogador = ins.getJogador();
+            this.nomeConvidado = ins.getNomeConvidado();
         }
 
         EstatisticasView.Linha linha(String usernameAtual) {
-            return new EstatisticasView.Linha(jogador.getId(), jogador.getNomeVisivel(), jogos, vitorias, empates, derrotas,
-                golos, assistencias, mvps, premios, faltas, jogador.getUsername().equalsIgnoreCase(usernameAtual));
+            boolean convidado = jogador == null;
+            return new EstatisticasView.Linha(convidado ? null : jogador.getId(),
+                convidado ? nomeConvidado : jogador.getNomeVisivel(), jogos, vitorias, empates, derrotas,
+                golos, assistencias, mvps, premios, faltas,
+                !convidado && jogador.getUsername().equalsIgnoreCase(usernameAtual), convidado);
         }
     }
 }

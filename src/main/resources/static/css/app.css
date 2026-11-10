@@ -36,6 +36,7 @@ body { background: var(--fa-fundo); font-size: 15px; }
 .chip::before { content: ""; width: 8px; height: 8px; border-radius: 999px; background: currentColor; }
 .chip-verde { background: var(--fa-verde-claro); color: var(--fa-verde-escuro); }
 .chip-cinza { background: var(--fa-linha-suave); color: #3F4752; }
+.chip-laranja { background: var(--fa-laranja-claro); color: var(--fa-laranja); }
 .tag { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--fa-linha-suave); color: var(--fa-suave); white-space: nowrap; }
 .tag-espera { background: var(--fa-laranja-claro); color: var(--fa-laranja); }
 

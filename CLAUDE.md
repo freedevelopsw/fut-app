@@ -30,6 +30,9 @@ O dono do projeto não escreve código: todo o código é gerado, testado automa
 - Dados do negócio (inscrições, desistências, golos, votos) nunca dependem do audit, que é apagado ao fim de `futapp.audit.retencao-dias`.
 - Mobile-first: cada ecrã é desenhado para 360–430 px; botões de ação grandes (≥ 44 px) na parte de baixo.
 - Toda a regra nova vem com testes em `src/test/java` (`@SpringBootTest` + perfil `test`).
+- Enums em entidades: nunca `@Enumerated`; usar `@Convert(converter = XConverter.class)` (`comum/conversores`,
+  `EnumTextoConverter`) para ficarem como VARCHAR. Com ENUM nativo/check constraints, valores novos partem bases antigas.
+  `AjusteEsquema` converte no arranque colunas ENUM antigas do H2.
 
 ## Registo
 - O Admin é criado no arranque (`AdminInicial`) se não existir nenhum: `futapp.admin.username|nome|password`.
@@ -83,8 +86,14 @@ O dono do projeto não escreve código: todo o código é gerado, testado automa
 - Jogo FECHADO: a página do jogo mostra MVP e prémios, resultado, linha de presenças e "Partilhar resumo no WhatsApp"
   (`ResumoService`); a gestão e as vagas deixam de aparecer. Os jogos anteriores mostram o resultado no início.
 - `EstatisticasService` calcula tudo a partir dos jogos FECHADO (nada guardado à parte): jogos, V/E/D, golos,
-  assistências, MVPs, prémios, faltas. Convidados fora; bloqueados contam. Rankings com no máximo 5 nomes.
+  assistências, MVPs, prémios, faltas. Convidados contam (agregados pelo nome, sem carta); bloqueados contam. Rankings com no máximo 5 nomes.
 - Ecrã Estatísticas: rankings, tabela de todos os jogadores, cartas. A carta mostra os números do jogador.
+
+## Jogo cancelado
+- Estado CANCELADO (Organizador/Admin, qualquer estado exceto FECHADO), com motivo obrigatório
+  (`JogoService.MOTIVO_CANCELAMENTO_OMISSAO` = "Falta de jogadores"), quem e quando; guarda o estado anterior.
+- Reativar volta ao estado anterior. Cancelado sai dos próximos (aparece nos anteriores) e não conta nas estatísticas.
+- Mensagem de cancelamento para o WhatsApp na página do jogo.
 
 ## Roles
 Cumulativas: `JOGADOR`, `ORGANIZADOR`, `ADMIN`. Convidado = inscrição sem conta (`Inscricao.nomeConvidado`).
@@ -96,4 +105,6 @@ Cumulativas: `JOGADOR`, `ORGANIZADOR`, `ADMIN`. Convidado = inscrição sem cont
 ## Estado
 - Fatia 1 (M0 + M1): admin no arranque, registo só por convite, bloqueio de membros, mudar password, carta do jogador, equipas (Fase 2), registo do jogo (Fase 3), votação (Fase 4), fecho do jogo e estatísticas (Fase 5), login, roles, criar jogo, convocatória (12 vagas, espera a partir do 13º, cancelamentos registados, fecho manual), partilha WhatsApp, auditoria com limpeza.
 - Pendente: convidados passarem a utilizadores (ligar o histórico do convidado à nova conta).
-- Seguinte: publicar num alojamento; gráficos e gamificação (M3/M4); fecho de temporada (M5).
+- Jogo cancelado e convidados nas estatísticas.
+- Próxima milestone (ver a especificação): jogos por temporada (Admin, dropdown), temporadas, convidados → utilizadores,
+  reposição de password, imagem do resumo, revogar convites, publicar num alojamento, M4, M5.

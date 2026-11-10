@@ -165,6 +165,52 @@ class JogoServiceTest {
     }
 
     @Test
+    void cancelarGuardaOMotivoEPorOmissaoEFaltaDeJogadores() {
+        inscreverJogadores(3);
+
+        jogos.cancelar(jogo, "  ", organizador);
+
+        Convocatoria c = convocatoria();
+        assertThat(c.cancelado()).isTrue();
+        assertThat(c.motivoCancelamento()).isEqualTo("Falta de jogadores");
+        assertThat(c.canceladoPor()).isEqualTo(NOME_ADMIN);
+        assertThat(c.inscritos()).hasSize(3);
+        assertThat(c.whatsappCancelamentoUrl()).startsWith("https://wa.me/?text=");
+    }
+
+    @Test
+    void umJogoCanceladoSaiDosProximosENaoAceitaInscricoes() {
+        jogos.cancelar(jogo, "Chuva", organizador);
+
+        assertThat(jogos.proximosJogos()).extracting(JogoResumo::id).doesNotContain(jogo);
+        assertThat(jogos.jogosAnteriores()).filteredOn(j -> j.id().equals(jogo))
+            .singleElement().satisfies(j -> assertThat(j.cancelado()).isTrue());
+        assertThat(convocatoria().motivoCancelamento()).isEqualTo("Chuva");
+        assertThatThrownBy(() -> jogos.inscrever(jogo, registar(utilizadores, "tarde"))).isInstanceOf(OperacaoInvalidaException.class);
+        assertThatThrownBy(() -> jogos.cancelar(jogo, "Outra vez", organizador)).isInstanceOf(OperacaoInvalidaException.class);
+    }
+
+    @Test
+    void reativarVoltaAoEstadoAnterior() {
+        jogos.fecharConvocatoria(jogo, organizador);
+        jogos.cancelar(jogo, null, organizador);
+
+        jogos.reativar(jogo, organizador);
+
+        Convocatoria c = convocatoria();
+        assertThat(c.estado()).isEqualTo(EstadoJogo.CONVOCATORIA_FECHADA);
+        assertThat(c.motivoCancelamento()).isNull();
+    }
+
+    @Test
+    void soOOrganizadorOuOAdminCancelam() {
+        String j1 = registar(utilizadores, "j1");
+
+        assertThatThrownBy(() -> jogos.cancelar(jogo, "Não quero", j1)).isInstanceOf(OperacaoInvalidaException.class);
+        assertThat(convocatoria().cancelado()).isFalse();
+    }
+
+    @Test
     void oLinkDoWhatsAppTemAListaEOLinkDoJogo() {
         inscreverJogadores(2);
 

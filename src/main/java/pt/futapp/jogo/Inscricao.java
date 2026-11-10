@@ -3,15 +3,16 @@ package pt.futapp.jogo;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import pt.futapp.comum.conversores.EquipaConverter;
+import pt.futapp.comum.conversores.EstadoInscricaoConverter;
 import pt.futapp.utilizador.Utilizador;
 
 /**
@@ -37,7 +38,7 @@ public class Inscricao {
     @Column(name = "nome_convidado", length = 60)
     private String nomeConvidado;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = EstadoInscricaoConverter.class)
     @Column(nullable = false, length = 20)
     private EstadoInscricao estado;
 
@@ -45,7 +46,7 @@ public class Inscricao {
     private LocalDateTime inscritoEm;
 
     /** Equipa do jogador neste jogo (Fase 2). Null = ainda sem equipa. */
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = EquipaConverter.class)
     @Column(name = "equipa", length = 20)
     private Equipa equipa;
 

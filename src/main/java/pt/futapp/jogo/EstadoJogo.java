@@ -7,7 +7,8 @@ public enum EstadoJogo {
     EQUIPAS_PUBLICADAS("Equipas publicadas"),
     EM_REGISTO("Em registo"),
     VOTACAO_ABERTA("Votação aberta"),
-    FECHADO("Fechado");
+    FECHADO("Fechado"),
+    CANCELADO("Cancelado");
 
     private final String descricao;
 

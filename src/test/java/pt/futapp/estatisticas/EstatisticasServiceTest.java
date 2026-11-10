@@ -106,8 +106,14 @@ class EstatisticasServiceTest {
     }
 
     @Test
-    void osConvidadosNaoEntramNasEstatisticas() {
-        assertThat(estatisticas.temporada(ADMIN).tabela()).extracting(EstatisticasView.Linha::nome).doesNotContain("Zé");
+    void osConvidadosEntramNasEstatisticasPeloNome() {
+        EstatisticasView.Linha ze = estatisticas.temporada(ADMIN).tabela().stream()
+            .filter(l -> l.nome().equals("Zé")).findFirst().orElseThrow();
+
+        assertThat(ze.convidado()).isTrue();
+        assertThat(ze.jogadorId()).isNull();
+        assertThat(ze.jogos()).isEqualTo(1);
+        assertThat(ze.derrotas()).isEqualTo(1);
     }
 
     @Test

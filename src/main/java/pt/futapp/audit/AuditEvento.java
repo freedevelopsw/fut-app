@@ -3,14 +3,14 @@ package pt.futapp.audit;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
+import pt.futapp.comum.conversores.AcaoConverter;
 
 @Entity
 @Table(name = "audit_evento", indexes = {
@@ -32,7 +32,7 @@ public class AuditEvento {
     @Column(name = "ator", length = 40)
     private String ator;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = AcaoConverter.class)
     @Column(name = "acao", nullable = false, length = 40)
     private Acao acao;
 

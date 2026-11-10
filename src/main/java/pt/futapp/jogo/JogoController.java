@@ -207,6 +207,18 @@ public class JogoController {
         return "redirect:/jogos/" + id;
     }
 
+    @PostMapping("/{id}/gestao/cancelar")
+    public String cancelarJogo(@PathVariable Long id, @RequestParam(required = false) String motivo,
+                               Principal principal, RedirectAttributes redirect) {
+        return executar(id, redirect, "Jogo cancelado. Avisa o grupo no WhatsApp.", false,
+            () -> jogos.cancelar(id, motivo, principal.getName()));
+    }
+
+    @PostMapping("/{id}/gestao/reativar")
+    public String reativarJogo(@PathVariable Long id, Principal principal, RedirectAttributes redirect) {
+        return executar(id, redirect, "Jogo reativado.", false, () -> jogos.reativar(id, principal.getName()));
+    }
+
     @PostMapping("/{id}/gestao/fechar")
     public String fechar(@PathVariable Long id, Principal principal, RedirectAttributes redirect) {
         return executar(id, redirect, "Convocatória fechada.", false,

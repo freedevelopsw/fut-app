@@ -7,7 +7,7 @@
     <header class="app-header">
         <div class="d-flex justify-content-between align-items-center gap-2">
             <a th:href="@{/}" class="etiqueta text-decoration-none">← Jogos</a>
-            <span class="chip" th:classappend="${c.aberta()} ? 'chip-verde' : 'chip-cinza'" th:text="${c.estado().descricao}">Convocatória aberta</span>
+            <span class="chip" th:classappend="${c.cancelado()} ? 'chip-laranja' : (${c.aberta()} ? 'chip-verde' : 'chip-cinza')" th:text="${c.estado().descricao}">Convocatória aberta</span>
         </div>
         <h1 class="titulo" th:text="${c.dia()}">Quinta-feira, 12 nov.</h1>
         <div class="meta">
@@ -25,8 +25,22 @@
     <main class="app-main">
         <div th:replace="~{fragments/layout :: mensagens}"></div>
 
+        <!-- Jogo cancelado -->
+        <section th:if="${c.cancelado()}" class="cartao d-flex flex-column gap-2" style="border-color: #E9C9A6; background: var(--fa-laranja-claro)">
+            <span class="fw-bold" style="color: var(--fa-laranja)">Jogo cancelado</span>
+            <span th:text="${c.motivoCancelamento()}">Falta de jogadores</span>
+            <span class="small text-secondary" th:text="|Cancelado por ${c.canceladoPor()} em ${c.canceladoEm()}|">Cancelado por Admin</span>
+            <div th:if="${c.gestor()}" class="d-flex flex-column gap-2 mt-1">
+                <a th:href="${c.whatsappCancelamentoUrl()}" target="_blank" rel="noopener" hx-boost="false" class="btn btn-fa btn-fa-sm btn-verde">Avisar o grupo no WhatsApp</a>
+                <form th:action="@{/jogos/{id}/gestao/reativar(id=${c.jogoId()})}" method="post"
+                      hx-confirm="Reativar o jogo? Volta ao estado em que estava antes de ser cancelado.">
+                    <button type="submit" class="btn btn-fa btn-fa-sm btn-contorno">Reativar jogo</button>
+                </form>
+            </div>
+        </section>
+
         <!-- Vagas -->
-        <section th:if="${resumo == null}" class="cartao d-flex flex-column gap-2" aria-label="Vagas">
+        <section th:if="${resumo == null and !c.cancelado()}" class="cartao d-flex flex-column gap-2" aria-label="Vagas">
             <div class="d-flex justify-content-between align-items-baseline">
                 <span class="numero" style="font-size: 30px">
                     <span th:text="${c.numInscritos()}">11</span><span class="text-secondary fs-5" th:text="| / ${c.vagas()}|"> / 12</span>
@@ -40,11 +54,11 @@
         </section>
 
         <!-- O meu estado -->
-        <div th:if="${resumo == null and c.inscrito() and !c.emEspera()}" class="aviso aviso-verde">
+        <div th:if="${resumo == null and !c.cancelado() and c.inscrito() and !c.emEspera()}" class="aviso aviso-verde">
             <span><strong>Estás inscrito.</strong>
                 <span th:if="${c.aberta()}">Podes cancelar enquanto a convocatória estiver aberta.</span></span>
         </div>
-        <div th:if="${resumo == null and c.emEspera()}" class="aviso aviso-laranja">
+        <div th:if="${resumo == null and !c.cancelado() and c.emEspera()}" class="aviso aviso-laranja">
             <span><strong th:text="|Estás em ${c.posicaoNaEspera()}º na lista de espera.|">Estás em 1º na lista de espera.</strong>
                 Se alguém sair, sobes automaticamente.</span>
         </div>
@@ -193,7 +207,7 @@
         </section>
 
         <!-- Gestão (Organizador / Admin) -->
-        <section th:if="${c.gestor() and resumo == null}" class="seccao">
+        <section th:if="${c.gestor() and resumo == null and !c.cancelado()}" class="seccao">
             <h2 class="etiqueta">Gestão do jogo</h2>
             <div class="cartao d-flex flex-column gap-3">
                 <a th:href="${c.whatsappUrl()}" target="_blank" rel="noopener" hx-boost="false" class="btn btn-fa btn-fa-sm btn-contorno">
@@ -230,6 +244,16 @@
                       hx-confirm="Fechar a convocatória? Depois disso, só o Organizador ou o Admin podem alterar a lista.">
                     <button type="submit" class="btn btn-fa btn-fa-sm btn-escuro">Fechar convocatória</button>
                 </form>
+
+                <details class="mt-1">
+                    <summary class="small fw-semibold" style="color: var(--fa-laranja); cursor: pointer; min-height: 32px">Cancelar jogo</summary>
+                    <form th:action="@{/jogos/{id}/gestao/cancelar(id=${c.jogoId()})}" method="post" class="d-flex flex-column gap-2 mt-2"
+                          hx-confirm="Cancelar este jogo? Podes reativá-lo depois, se for preciso.">
+                        <label class="form-label m-0" for="motivo">Motivo</label>
+                        <textarea class="form-control" id="motivo" name="motivo" rows="2" maxlength="200" required>Falta de jogadores</textarea>
+                        <button type="submit" class="btn btn-fa btn-fa-sm btn-contorno" style="color: var(--fa-laranja); border-color: #E9C9A6">Cancelar jogo</button>
+                    </form>
+                </details>
             </div>
         </section>
 
@@ -258,7 +282,10 @@
                 Partilhar resumo no WhatsApp
             </a>
         </div>
-        <div class="barra-acao" th:if="${resumo == null}">
+        <div class="barra-acao" th:if="${c.cancelado()}">
+            <p class="m-0 text-center text-secondary small py-2">Este jogo foi cancelado.</p>
+        </div>
+        <div class="barra-acao" th:if="${resumo == null and !c.cancelado()}">
             <form th:if="${c.podeInscrever()}" th:action="@{/jogos/{id}/inscricao(id=${c.jogoId()})}" method="post">
                 <button type="submit" class="btn btn-fa btn-verde"
                         th:text="${c.vagasLivres() > 0} ? 'Inscrever-me' : 'Entrar na lista de espera'">Inscrever-me</button>

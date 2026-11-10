@@ -3,15 +3,15 @@ package pt.futapp.jogo;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import pt.futapp.comum.conversores.EquipaConverter;
 import pt.futapp.utilizador.Utilizador;
 
 /**
@@ -30,7 +30,7 @@ public class Golo {
     @JoinColumn(name = "jogo_id")
     private Jogo jogo;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = EquipaConverter.class)
     @Column(nullable = false, length = 20)
     private Equipa equipa;
 

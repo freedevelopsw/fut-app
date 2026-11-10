@@ -88,6 +88,7 @@ public class RegistoService {
         if (!jogo.permiteRegisto()) {
             motivo = switch (jogo.getEstado()) {
                 case VOTACAO_ABERTA, FECHADO -> "O jogo está fechado.";
+                case CANCELADO -> "O jogo foi cancelado.";
                 default -> "Publica primeiro as equipas para registares o jogo.";
             };
         }

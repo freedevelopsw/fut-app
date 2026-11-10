@@ -3,15 +3,15 @@ package pt.futapp.jogo;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import pt.futapp.comum.conversores.EstadoJogoConverter;
 import pt.futapp.comum.OperacaoInvalidaException;
 import pt.futapp.utilizador.Utilizador;
 
@@ -32,13 +32,28 @@ public class Jogo {
     @Column(nullable = false)
     private int vagas;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = EstadoJogoConverter.class)
     @Column(nullable = false, length = 30)
     private EstadoJogo estado;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "criado_por_id")
     private Utilizador criadoPor;
+
+    /** Cancelamento: motivo, quem e quando, e o estado em que estava (para poder reativar). */
+    @Column(name = "motivo_cancelamento", length = 200)
+    private String motivoCancelamento;
+
+    @Column(name = "cancelado_em")
+    private LocalDateTime canceladoEm;
+
+    @ManyToOne
+    @JoinColumn(name = "cancelado_por_id")
+    private Utilizador canceladoPor;
+
+    @Convert(converter = EstadoJogoConverter.class)
+    @Column(name = "estado_antes_cancelamento", length = 30)
+    private EstadoJogo estadoAntesCancelamento;
 
     @Column(name = "criado_em", nullable = false)
     private LocalDateTime criadoEm;
@@ -141,6 +156,41 @@ public class Jogo {
     public boolean temResultado() {
         return estado == EstadoJogo.EM_REGISTO || estado == EstadoJogo.VOTACAO_ABERTA || estado == EstadoJogo.FECHADO;
     }
+
+    public boolean cancelado() {
+        return estado == EstadoJogo.CANCELADO;
+    }
+
+    /** Cancela o jogo (com motivo). Um jogo já fechado não se cancela. */
+    public void cancelar(String motivo, Utilizador por, LocalDateTime quando) {
+        if (estado == EstadoJogo.FECHADO) {
+            throw new OperacaoInvalidaException("Um jogo já fechado não pode ser cancelado.");
+        }
+        if (estado == EstadoJogo.CANCELADO) {
+            throw new OperacaoInvalidaException("O jogo já está cancelado.");
+        }
+        this.estadoAntesCancelamento = estado;
+        this.estado = EstadoJogo.CANCELADO;
+        this.motivoCancelamento = motivo;
+        this.canceladoPor = por;
+        this.canceladoEm = quando;
+    }
+
+    /** Desfaz o cancelamento: o jogo volta ao estado em que estava. */
+    public void reativar() {
+        if (estado != EstadoJogo.CANCELADO) {
+            throw new OperacaoInvalidaException("O jogo não está cancelado.");
+        }
+        this.estado = estadoAntesCancelamento != null ? estadoAntesCancelamento : EstadoJogo.CONVOCATORIA_ABERTA;
+        this.estadoAntesCancelamento = null;
+        this.motivoCancelamento = null;
+        this.canceladoPor = null;
+        this.canceladoEm = null;
+    }
+
+    public String getMotivoCancelamento() { return motivoCancelamento; }
+    public LocalDateTime getCanceladoEm() { return canceladoEm; }
+    public Utilizador getCanceladoPor() { return canceladoPor; }
 
     public Long getId() { return id; }
     public LocalDateTime getDataHora() { return dataHora; }

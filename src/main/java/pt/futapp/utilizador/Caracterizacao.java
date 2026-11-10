@@ -4,9 +4,10 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Embeddable;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
+import pt.futapp.comum.conversores.PeConverter;
+import pt.futapp.comum.conversores.PosicaoConverter;
 
 /**
  * Caracterização do jogador, preenchida pelo próprio (ou corrigida pelo Admin). Tudo é opcional.
@@ -15,15 +16,15 @@ import jakarta.persistence.Enumerated;
 @Embeddable
 public class Caracterizacao {
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = PosicaoConverter.class)
     @Column(name = "posicao", length = 20)
     private Posicao posicao;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = PosicaoConverter.class)
     @Column(name = "posicao_secundaria", length = 20)
     private Posicao posicaoSecundaria;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = PeConverter.class)
     @Column(name = "pe", length = 10)
     private Pe pe;
 
