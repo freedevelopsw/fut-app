@@ -171,3 +171,12 @@ details.cartao summary::-webkit-details-marker { display: none; }
 .mini-avatares { display: flex; }
 .mini-avatares span { width: 28px; height: 28px; margin-left: -8px; border-radius: 999px; background: var(--fa-linha-suave); border: 2px solid var(--fa-fundo); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; }
 .mini-avatares span:first-child { margin-left: 0; }
+
+/* Interruptor on/off compacto (área de toque de 44 px, visual de 40×24) */
+.interruptor { width: 52px; height: 44px; border: none; background: transparent; padding: 0; display: inline-flex; align-items: center; justify-content: center; flex: none; cursor: pointer; }
+.interruptor .trilho { width: 40px; height: 24px; border-radius: 999px; background: #C9CEC6; position: relative; transition: background .15s; }
+.interruptor .trilho::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 999px; background: #FFFFFF; transition: transform .15s; }
+.interruptor[aria-checked="true"] .trilho { background: var(--fa-verde); }
+.interruptor[aria-checked="true"] .trilho::after { transform: translateX(16px); }
+.interruptor:focus-visible { outline: none; }
+.interruptor:focus-visible .trilho { box-shadow: 0 0 0 3px rgba(28, 113, 72, .3); }

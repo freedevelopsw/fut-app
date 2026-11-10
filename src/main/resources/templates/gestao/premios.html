@@ -6,14 +6,14 @@
     <header class="app-header">
         <a th:href="@{/perfil}" class="etiqueta text-decoration-none">← Perfil</a>
         <h1 class="titulo">Prémios</h1>
-        <p class="m-0 small text-secondary">O MVP é votado sempre. Os prémios ativos aparecem na votação de cada jogo, e votar neles é opcional.</p>
+        <p class="m-0 small text-secondary">O MVP é votado sempre. Os prémios ligados aparecem na votação de cada jogo, e votar neles é opcional. Toca no nome para editar.</p>
     </header>
 
     <main class="app-main">
         <div th:replace="~{fragments/layout :: mensagens}"></div>
 
         <ul class="lista">
-            <li th:each="p : ${premios}" class="py-2 pe-2 flex-wrap">
+            <li th:each="p : ${premios}" class="py-2 pe-1">
                 <th:block th:if="${editar == p.id}">
                     <form th:action="@{/gestao/premios/{id}(id=${p.id})}" method="post" class="d-flex flex-column gap-2 w-100 py-1 pe-2">
                         <input class="form-control" name="nome" th:value="${p.nome}" maxlength="40" required aria-label="Nome do prémio">
@@ -31,10 +31,10 @@
                     </a>
                     <form th:action="@{/gestao/premios/{id}/ativo(id=${p.id})}" method="post">
                         <input type="hidden" name="ativo" th:value="${!p.ativo}">
-                        <button type="submit" class="btn btn-sm fw-semibold" style="min-height: 44px; min-width: 84px; border-radius: 10px"
-                                th:classappend="${p.ativo} ? 'btn-verde' : 'btn-contorno'" th:aria-pressed="${p.ativo}"
-                                th:aria-label="${p.ativo} ? |Desativar ${p.nome}| : |Ativar ${p.nome}|"
-                                th:text="${p.ativo} ? 'Ativo' : 'Inativo'">Ativo</button>
+                        <button type="submit" class="interruptor" role="switch" th:aria-checked="${p.ativo}"
+                                th:aria-label="|${p.nome} ativo|" th:title="${p.ativo} ? 'Ativo: toca para desativar' : 'Inativo: toca para ativar'">
+                            <span class="trilho" aria-hidden="true"></span>
+                        </button>
                     </form>
                 </th:block>
             </li>
