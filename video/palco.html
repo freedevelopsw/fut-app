@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="pt-PT"><head><meta charset="utf-8">
+<style>
+:root{--verde:#1C7148;--verde-esc:#0F4029;--laranja:#E07A1F;--tinta:#15191E}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1080px;height:1920px;overflow:hidden;background:#0F4029}
+body{font-family:Inter,sans-serif;color:#fff;position:relative}
+#fundo{position:absolute;inset:0;background:linear-gradient(180deg,#0F4029 0%,#16583A 55%,#1C7148 100%)}
+#campo{position:absolute;inset:0;opacity:.07}
+#topo{position:absolute;left:70px;right:70px;top:96px}
+.pill{display:inline-flex;align-items:center;gap:12px;height:52px;padding:0 24px;border-radius:999px;background:var(--laranja);color:#fff;font-weight:700;font-size:26px;letter-spacing:.08em;text-transform:uppercase}
+.pill .n{opacity:.8;font-weight:600}
+h1{font-family:'Inter Display',Inter,sans-serif;font-weight:800;font-size:88px;line-height:1;margin-top:26px;letter-spacing:-.01em}
+#quem{margin-top:30px;display:flex;align-items:center;gap:12px;font-size:26px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.75)}
+#quem .ponto{width:16px;height:16px;border-radius:999px}
+#legenda{margin-top:14px;font-size:41px;line-height:1.3;font-weight:500;color:rgba(255,255,255,.96);min-height:160px}
+#legenda b{color:#FFD9B3;font-weight:700}
+#telefone{position:absolute;left:220px;top:530px;width:640px;height:1338px;border-radius:84px;background:#0B0D10;
+  box-shadow:0 40px 90px rgba(0,0,0,.45),inset 0 0 0 3px #2A2F36}
+#ecra{position:absolute;left:20px;top:20px;width:600px;height:1298px;border-radius:64px;overflow:hidden;background:#F4F5F2}
+.camada{position:absolute;inset:0;overflow:hidden}
+.camada img.conteudo{position:absolute;left:0;top:0;width:600px}
+.camada .rodape{position:absolute;left:0;bottom:0;width:600px;background-size:600px auto;background-position:bottom;background-repeat:no-repeat}
+#ilha{position:absolute;left:50%;top:16px;width:150px;height:40px;margin-left:-75px;border-radius:999px;background:#0B0D10;z-index:5}
+#dedo{position:absolute;width:74px;height:74px;margin:-37px 0 0 -37px;border-radius:999px;background:rgba(255,255,255,.85);border:3px solid rgba(21,25,30,.25);box-shadow:0 8px 24px rgba(0,0,0,.35);z-index:6;opacity:0}
+#onda{position:absolute;width:74px;height:74px;margin:-37px 0 0 -37px;border-radius:999px;border:6px solid var(--laranja);z-index:6;opacity:0}
+#destaque{position:absolute;border:5px solid var(--laranja);border-radius:20px;z-index:6;opacity:0;box-shadow:0 0 0 8px rgba(224,122,31,.25)}
+#cartoes{position:absolute;left:70px;right:70px;top:560px;display:flex;flex-direction:column;gap:30px}
+.cartao{background:#fff;color:var(--tinta);border-radius:36px;padding:38px 42px;display:flex;gap:30px;align-items:flex-start;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.cartao .ic{flex:none;width:96px;height:96px;border-radius:28px;display:flex;align-items:center;justify-content:center}
+.cartao h2{font-family:'Inter Display',Inter,sans-serif;font-size:50px;font-weight:800;line-height:1.05}
+.cartao p{font-size:34px;line-height:1.3;color:#3F4752;margin-top:10px}
+#intro{position:absolute;left:70px;right:70px;top:150px}
+#intro .marca{display:flex;align-items:center;gap:26px}
+#intro .marca span{font-family:'Inter Display',Inter,sans-serif;font-weight:900;font-size:150px;letter-spacing:-.03em;line-height:1}
+#intro .sub{font-size:52px;font-weight:700;margin-top:36px;line-height:1.15}
+#intro .sub2{font-size:38px;font-weight:500;margin-top:18px;color:rgba(255,255,255,.85)}
+#fim{position:absolute;left:70px;right:70px;top:150px}
+#fim h1{font-size:96px}
+.passo{display:flex;gap:34px;align-items:center;margin-top:56px}
+.passo .num{flex:none;width:120px;height:120px;border-radius:999px;background:#fff;color:var(--verde);font-family:'Inter Display',Inter,sans-serif;font-weight:900;font-size:64px;display:flex;align-items:center;justify-content:center}
+.passo .txt{font-size:50px;font-weight:700;line-height:1.15}
+.passo .txt small{display:block;font-size:34px;font-weight:500;color:rgba(255,255,255,.8);margin-top:6px}
+#fim .rodafim{margin-top:110px;font-size:42px;line-height:1.35;color:rgba(255,255,255,.92)}
+#fim .ate{margin-top:70px;display:flex;align-items:center;gap:22px;font-family:'Inter Display',Inter,sans-serif;font-weight:900;font-size:84px}
+.hidden{display:none!important}
+</style></head>
+<body>
+<div id="fundo"></div>
+<svg id="campo" width="1080" height="1920" viewBox="0 0 1080 1920" fill="none" stroke="#fff" stroke-width="6">
+  <rect x="40" y="40" width="1000" height="1840" rx="8"/><line x1="40" y1="960" x2="1040" y2="960"/>
+  <circle cx="540" cy="960" r="190"/><rect x="290" y="40" width="500" height="260"/><rect x="290" y="1620" width="500" height="260"/>
+</svg>
+
+<div id="intro" class="hidden">
+  <div class="marca"><svg width="150" height="150" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 7l4 3-1.5 5h-5L8 10z"/><path d="M12 7V2.6M16 10l4.3-1.4M14.5 15l2.6 3.8M9.5 15l-2.6 3.8M8 10L3.7 8.6"/></svg><span>FutApp</span></div>
+  <div class="sub">Como funciona, do convite ao MVP</div>
+  <div class="sub2">Tudo no telemóvel, a partir do link do WhatsApp.</div>
+</div>
+
+<div id="topo" class="hidden">
+  <div class="pill" id="pill"></div>
+  <h1 id="titulo"></h1>
+  <div id="quem"><span class="ponto"></span><span class="t"></span></div>
+  <div id="legenda"></div>
+</div>
+
+<div id="cartoes" class="hidden">
+  <div class="cartao"><div class="ic" style="background:#FBEFE3"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#A85008" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></div>
+    <div><h2>Jogador</h2><p>Inscreve-se, joga, vota no fim e acompanha as estatísticas.</p></div></div>
+  <div class="cartao"><div class="ic" style="background:#E6F2EB"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#145637" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3v3h6V3M9 12l2 2 4-4"/></svg></div>
+    <div><h2>Organizador</h2><p>Cria os jogos, fecha a convocatória, faz as equipas e regista os golos.</p></div></div>
+  <div class="cartao"><div class="ic" style="background:#EEF0EC"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#3F4752" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg></div>
+    <div><h2>Admin</h2><p>Convida pessoas para o grupo, gere os membros e consegue ver os votos.</p></div></div>
+</div>
+
+<div id="fim" class="hidden">
+  <h1>O que tens de fazer</h1>
+  <div class="passo"><div class="num">1</div><div class="txt">Inscreve-te<small>quando sair a convocatória</small></div></div>
+  <div class="passo"><div class="num">2</div><div class="txt">Joga<small>e marca golos, de preferência</small></div></div>
+  <div class="passo"><div class="num">3</div><div class="txt">Vota no fim<small>MVP e prémios brincadeira</small></div></div>
+  <div class="rodafim">O resto fica com o Organizador.<br>Dúvidas? Fala com o Admin.</div>
+  <div class="ate">Bons jogos!</div>
+</div>
+
+<div id="telefone">
+  <div id="ecra">
+    <div class="camada" id="A"><img class="conteudo"><div class="rodape"></div></div>
+    <div class="camada" id="B"><img class="conteudo"><div class="rodape"></div></div>
+    <div id="ilha"></div>
+    <div id="destaque"></div><div id="onda"></div><div id="dedo"></div>
+  </div>
+</div>
+
+<script>
+const K = 600 / 390;                 // px do vídeo por px CSS da app
+const META = window.META = {};
+const $ = s => document.querySelector(s);
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const ease = x => { x = clamp(x); return x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+const out = x => 1 - Math.pow(1 - clamp(x), 3);
+const QUEM = { 'Tu': '#E07A1F', 'Organizador': '#7FD3A4', 'Admin': '#B9C2CC', 'Todos': '#FFFFFF' };
+
+function preparar(cena) { // carrega as imagens da cena antes de começar
+  const nomes = new Set();
+  (cena.beats || []).forEach(b => { nomes.add(b.ecra); if (b.depois) nomes.add(b.depois); });
+  if (cena.ecra) nomes.add(cena.ecra);
+  return Promise.all([...nomes].flatMap(n => {
+    const m = META[n]; const srcs = [`cap/${n}-v.jpg`]; if (m && m.full) srcs.push(`cap/${n}-f.jpg`);
+    return srcs.map(src => new Promise(r => { const i = new Image(); i.onload = i.onerror = r; i.src = src; }));
+  }));
+}
+
+// Mostra um ecrã numa camada: página inteira com scroll e rodapé fixo por cima.
+function mostrar(camada, nome, scroll, opacidade) {
+  const el = $('#' + camada), m = META[nome] || { altura: 844, rodape: 0 };
+  el.style.opacity = opacidade;
+  if (opacidade <= 0) return;
+  const img = el.querySelector('img'), rod = el.querySelector('.rodape');
+  const usaFull = m.full;
+  const src = `cap/${nome}-${usaFull ? 'f' : 'v'}.jpg`;
+  if (img.getAttribute('src') !== src) img.setAttribute('src', src);
+  const max = usaFull ? m.altura - 844 : 0;
+  img.style.transform = `translateY(${-clamp(scroll, 0, max) * K}px)`;
+  if (usaFull && m.rodape) {
+    rod.style.display = 'block'; rod.style.height = (m.rodape * K) + 'px';
+    rod.style.backgroundImage = `url(cap/${nome}-v.jpg)`;
+  } else rod.style.display = 'none';
+}
+
+function scrollDe(b, t) { // t relativo ao beat
+  if (!b.scroll) return 0;
+  const [de, ate] = b.scroll, i = b.scrollT || [0.7, b.dur - 0.7];
+  return de + (ate - de) * ease((t - i[0]) / (i[1] - i[0]));
+}
+
+function ecraDoBeat(b, t) { // devolve [nome, scroll] no instante t do beat
+  if (b.depois && t >= b.trocaEm) return [b.depois, b.scrollDepois || 0];
+  return [b.ecra, scrollDe(b, t)];
+}
+
+window.render = function (cena, t, info) {
+  const tipo = cena.tipo || 'passo';
+  ['intro', 'topo', 'cartoes', 'fim'].forEach(id => $('#' + id).classList.add('hidden'));
+  const tel = $('#telefone');
+  // entrada e saída do telefone quando a cena vizinha não o tem
+  let telOp = 1, telY = 0;
+  if (tipo === 'papeis' || tipo === 'fim') telOp = 0;
+  else {
+    if (info.telEntra) { const p = out(t / 0.6); telOp = p; telY = (1 - p) * 260; }
+    if (info.telSai) { const p = clamp((cena.dur - t) / 0.45); telOp = Math.min(telOp, p); telY += (1 - p) * 120; }
+  }
+  tel.style.opacity = telOp; tel.style.transform = `translateY(${telY}px)`;
+
+  // texto: entra no início da cena e sai no fim
+  const entra = out(t / 0.5), sai = clamp((cena.dur - t) / 0.35);
+  const txtOp = Math.min(entra, sai), txtY = (1 - entra) * 30;
+
+  if (tipo === 'intro') {
+    const el = $('#intro'); el.classList.remove('hidden');
+    el.style.opacity = txtOp; el.style.transform = `translateY(${txtY}px)`;
+  } else if (tipo === 'fim') {
+    const el = $('#fim'); el.classList.remove('hidden'); el.style.opacity = 1; el.style.transform = 'none';
+    el.querySelector('h1').style.opacity = out(t / 0.5);
+    el.querySelectorAll('.passo').forEach((p, i) => { const q = out((t - 0.6 - i * 0.55) / 0.5); p.style.opacity = q; p.style.transform = `translateX(${(1 - q) * -60}px)`; });
+    el.querySelector('.rodafim').style.opacity = out((t - 2.8) / 0.6);
+    const ate = el.querySelector('.ate'); const q = out((t - 3.6) / 0.6); ate.style.opacity = q; ate.style.transform = `scale(${0.9 + 0.1 * q})`;
+  } else {
+    const topo = $('#topo'); topo.classList.remove('hidden');
+    topo.style.opacity = txtOp; topo.style.transform = `translateY(${txtY}px)`;
+    $('#pill').innerHTML = cena.pill; $('#titulo').textContent = cena.titulo;
+  }
+  if (tipo === 'papeis') {
+    const c = $('#cartoes'); c.classList.remove('hidden'); c.style.opacity = sai;
+    c.querySelectorAll('.cartao').forEach((el, i) => { const q = out((t - 0.5 - i * 0.6) / 0.55); el.style.opacity = q; el.style.transform = `translateY(${(1 - q) * 60}px)`; });
+  }
+
+  // legenda do beat atual (com troca suave)
+  const beats = cena.beats || [];
+  let i = 0; while (i + 1 < beats.length && t >= beats[i + 1].t0) i++;
+  const b = beats[i];
+  const legenda = $('#legenda'), quem = $('#quem');
+  if (b) {
+    const tb = t - b.t0, fimB = (i + 1 < beats.length ? beats[i + 1].t0 : cena.dur) - b.t0;
+    let op = i === 0 ? 1 : out(tb / 0.35);
+    if (i + 1 < beats.length) op = Math.min(op, clamp((fimB - tb) / 0.25));
+    legenda.innerHTML = b.texto; legenda.style.opacity = op; legenda.style.transform = `translateY(${(1 - (i === 0 ? 1 : out(tb / 0.35))) * 16}px)`;
+    if (b.quem) { quem.style.display = 'flex'; quem.querySelector('.t').textContent = b.quem === 'Tu' ? 'Tu, jogador' : b.quem; quem.querySelector('.ponto').style.background = QUEM[b.quem]; quem.style.opacity = op; }
+    else quem.style.display = 'none';
+  } else { legenda.innerHTML = cena.legenda || ''; legenda.style.opacity = 1; quem.style.display = 'none'; }
+
+  // ecrã do telefone
+  $('#destaque').style.opacity = 0; $('#dedo').style.opacity = 0; $('#onda').style.opacity = 0;
+  if (tipo === 'intro') { mostrar('A', cena.ecra, 0, 1); mostrar('B', cena.ecra, 0, 0); return; }
+  if (!b) return;
+  const tb = t - b.t0;
+  const [nome, sc] = ecraDoBeat(b, tb);
+  // troca de ecrã: entre beats e dentro do beat (depois de um toque)
+  let prevNome = null, prevSc = 0, mistura = 1;
+  if (i > 0 && tb < 0.4) { const pb = beats[i - 1]; [prevNome, prevSc] = ecraDoBeat(pb, b.t0 - pb.t0); mistura = ease(tb / 0.4); }
+  if (b.depois && tb >= b.trocaEm && tb < b.trocaEm + 0.3) { prevNome = b.ecra; prevSc = scrollDe(b, b.trocaEm); mistura = ease((tb - b.trocaEm) / 0.3); }
+  if (prevNome && prevNome !== nome) { mostrar('B', prevNome, prevSc, 1); mostrar('A', nome, sc, mistura); $('#A').style.zIndex = 2; $('#B').style.zIndex = 1; }
+  else { mostrar('A', nome, sc, 1); mostrar('B', nome, 0, 0); }
+
+  // toque num botão ou destaque de um elemento
+  const m = META[b.ecra] || {};
+  if (b.toque) {
+    const r = m.rects[b.toque.rect], cx = (r.x + r.width / 2) * K, cy = (r.y + r.height / 2 - scrollDe(b, b.toque.t)) * K;
+    const d = $('#dedo'), o = $('#onda'), tt = tb - b.toque.t;
+    d.style.left = cx + 'px'; d.style.top = cy + 'px'; o.style.left = cx + 'px'; o.style.top = cy + 'px';
+    if (tt > -0.6 && tt < 0.5) { d.style.opacity = tt < 0 ? out((tt + 0.6) / 0.3) : 1 - clamp(tt / 0.5); d.style.transform = `scale(${tt > -0.12 && tt < 0.12 ? 0.82 : 1})`; }
+    if (tt >= 0 && tt < 0.7) { o.style.opacity = 0.9 * (1 - tt / 0.7); o.style.transform = `scale(${1 + tt * 2.4})`; }
+  }
+  if (b.destaque) {
+    const mm = META[b.destaque.ecra || b.ecra], r = mm.rects[b.destaque.rect], dd = $('#destaque');
+    const tt = tb - b.destaque.t; if (tt >= 0) {
+      const pad = 8; dd.style.left = (r.x * K - pad) + 'px'; dd.style.top = ((r.y - (b.depois && tb >= b.trocaEm ? (b.scrollDepois || 0) : scrollDe(b, tb))) * K - pad) + 'px';
+      dd.style.width = (r.width * K + 2 * pad) + 'px'; dd.style.height = (r.height * K + 2 * pad) + 'px';
+      dd.style.opacity = out(tt / 0.3) * (0.75 + 0.25 * Math.cos(tt * 5));
+    }
+  }
+};
+</script>
+</body></html>
