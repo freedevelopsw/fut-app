@@ -438,7 +438,19 @@ class PaginasTest {
             .andExpect(redirectedUrl("/jogos/" + jogo));
         mvc.perform(get("/jogos/" + jogo).with(v1))
             .andExpect(content().string(containsString("MVP do jogo")))
-            .andExpect(content().string(containsString("Nome v2")));
+            .andExpect(content().string(containsString("Nome v2")))
+            .andExpect(content().string(containsString("Partilhar resumo no WhatsApp")))
+            .andExpect(content().string(containsString("4 jogaram")));
+        mvc.perform(get("/estatisticas").with(v1))
+            .andExpect(content().string(containsString("Mais MVPs")))
+            .andExpect(content().string(containsString("Todos os jogadores")));
+        mvc.perform(get("/").with(v1))
+            .andExpect(content().string(containsString("Anteriores")))
+            .andExpect(content().string(containsString("0–0")));
+        Long idV2 = utilizadores.vista("v2").orElseThrow().id();
+        mvc.perform(get("/jogadores/" + idV2).with(v1))
+            .andExpect(content().string(containsString("Jogos")))
+            .andExpect(content().string(containsString("MVP")));
     }
 
     @Test

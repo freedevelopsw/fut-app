@@ -26,7 +26,7 @@
         <div th:replace="~{fragments/layout :: mensagens}"></div>
 
         <!-- Vagas -->
-        <section class="cartao d-flex flex-column gap-2" aria-label="Vagas">
+        <section th:if="${resumo == null}" class="cartao d-flex flex-column gap-2" aria-label="Vagas">
             <div class="d-flex justify-content-between align-items-baseline">
                 <span class="numero" style="font-size: 30px">
                     <span th:text="${c.numInscritos()}">11</span><span class="text-secondary fs-5" th:text="| / ${c.vagas()}|"> / 12</span>
@@ -40,11 +40,11 @@
         </section>
 
         <!-- O meu estado -->
-        <div th:if="${c.inscrito() and !c.emEspera()}" class="aviso aviso-verde">
+        <div th:if="${resumo == null and c.inscrito() and !c.emEspera()}" class="aviso aviso-verde">
             <span><strong>Estás inscrito.</strong>
                 <span th:if="${c.aberta()}">Podes cancelar enquanto a convocatória estiver aberta.</span></span>
         </div>
-        <div th:if="${c.emEspera()}" class="aviso aviso-laranja">
+        <div th:if="${resumo == null and c.emEspera()}" class="aviso aviso-laranja">
             <span><strong th:text="|Estás em ${c.posicaoNaEspera()}º na lista de espera.|">Estás em 1º na lista de espera.</strong>
                 Se alguém sair, sobes automaticamente.</span>
         </div>
@@ -59,12 +59,6 @@
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
                 Partilhar no WhatsApp
             </a>
-        </section>
-
-        <!-- Resultado (visível a todos depois de o registo começar) -->
-        <section th:if="${registo.mostrarResultado()}" class="seccao">
-            <h2 class="etiqueta">Resultado</h2>
-            <section th:replace="~{fragments/placar :: placar(${registo})}"></section>
         </section>
 
         <!-- Votação -->
@@ -120,6 +114,14 @@
                     <button type="submit" class="btn btn-fa btn-fa-sm btn-contorno">Reabrir votação</button>
                 </form>
             </th:block>
+        </section>
+
+        <!-- Resultado (visível a todos depois de o registo começar) -->
+        <section th:if="${registo.mostrarResultado()}" class="seccao">
+            <h2 class="etiqueta">Resultado</h2>
+            <section th:replace="~{fragments/placar :: placar(${registo})}"></section>
+            <p th:if="${resumo != null}" class="m-0 small text-secondary text-center"
+               th:text="|${resumo.jogaram()} jogaram| + (${resumo.faltas() > 0} ? (${resumo.faltas() == 1} ? ' · 1 falta' : | · ${resumo.faltas()} faltas|) : '') + (${resumo.votaram() == 1} ? ' · 1 votou' : | · ${resumo.votaram()} votaram|) + (${resumo.desistencias() > 0} ? (${resumo.desistencias() == 1} ? ' · 1 desistência' : | · ${resumo.desistencias()} desistências|) : '')">12 jogaram</p>
         </section>
 
         <!-- Equipas publicadas (visíveis a todos) -->
@@ -191,7 +193,7 @@
         </section>
 
         <!-- Gestão (Organizador / Admin) -->
-        <section th:if="${c.gestor()}" class="seccao">
+        <section th:if="${c.gestor() and resumo == null}" class="seccao">
             <h2 class="etiqueta">Gestão do jogo</h2>
             <div class="cartao d-flex flex-column gap-3">
                 <a th:href="${c.whatsappUrl()}" target="_blank" rel="noopener" hx-boost="false" class="btn btn-fa btn-fa-sm btn-contorno">
@@ -250,7 +252,13 @@
     </main>
 
     <div class="rodape">
-        <div class="barra-acao">
+        <div class="barra-acao" th:if="${resumo != null}">
+            <a th:href="${resumo.whatsappUrl()}" target="_blank" rel="noopener" hx-boost="false" class="btn btn-fa btn-verde">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+                Partilhar resumo no WhatsApp
+            </a>
+        </div>
+        <div class="barra-acao" th:if="${resumo == null}">
             <form th:if="${c.podeInscrever()}" th:action="@{/jogos/{id}/inscricao(id=${c.jogoId()})}" method="post">
                 <button type="submit" class="btn btn-fa btn-verde"
                         th:text="${c.vagasLivres() > 0} ? 'Inscrever-me' : 'Entrar na lista de espera'">Inscrever-me</button>

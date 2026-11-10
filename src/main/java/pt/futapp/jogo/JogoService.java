@@ -28,15 +28,17 @@ public class JogoService {
 
     private final JogoRepository jogos;
     private final InscricaoRepository inscricoes;
+    private final GoloRepository golos;
     private final UtilizadorRepository utilizadores;
     private final ApplicationEventPublisher eventos;
     private final Clock clock;
     private final Formatos fmt;
 
-    public JogoService(JogoRepository jogos, InscricaoRepository inscricoes, UtilizadorRepository utilizadores,
-                       ApplicationEventPublisher eventos, Clock clock, Formatos fmt) {
+    public JogoService(JogoRepository jogos, InscricaoRepository inscricoes, GoloRepository golos,
+                       UtilizadorRepository utilizadores, ApplicationEventPublisher eventos, Clock clock, Formatos fmt) {
         this.jogos = jogos;
         this.inscricoes = inscricoes;
+        this.golos = golos;
         this.utilizadores = utilizadores;
         this.eventos = eventos;
         this.clock = clock;
@@ -289,7 +291,9 @@ public class JogoService {
         long ativos = inscricoes.countByJogoAndEstado(jogo, EstadoInscricao.ATIVA);
         return new JogoResumo(jogo.getId(), fmt.dia(jogo.getDataHora()), fmt.hora(jogo.getDataHora()),
             jogo.getLocal(), jogo.getEstado().getDescricao(), jogo.convocatoriaAberta(),
-            Math.min(ativos, jogo.getVagas()), jogo.getVagas());
+            Math.min(ativos, jogo.getVagas()), jogo.getVagas(),
+            jogo.temResultado() ? golos.countByJogoAndEquipa(jogo, Equipa.COLETES) + "–"
+                + golos.countByJogoAndEquipa(jogo, Equipa.SEM_COLETES) : null);
     }
 
     private static String descricaoPosicao(Jogo jogo, long posicao) {

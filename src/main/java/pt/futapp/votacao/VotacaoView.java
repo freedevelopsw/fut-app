@@ -60,7 +60,8 @@ public record VotacaoView(
      * Resultado de uma categoria. Vários vencedores = prémio partilhado.
      * {@code desempatePorGolos}: no MVP, havia empate nos votos e ganhou quem marcou mais.
      */
-    public record Resultado(String categoria, boolean mvp, List<String> vencedores, long votos, boolean desempatePorGolos) {
+    public record Resultado(String categoria, boolean mvp, List<String> vencedores, List<Long> inscricoes,
+                            long votos, boolean desempatePorGolos) {
 
         public boolean partilhado() {
             return vencedores.size() > 1;

@@ -68,8 +68,10 @@ class ConviteServiceTest {
     @Test
     void umTokenAlteradoOuDeOutraChaveEInvalido() {
         String token = em(AGORA).gerar(7, "admin").token();
-        char ultimo = token.charAt(token.length() - 1);
-        String alterado = token.substring(0, token.length() - 1) + (ultimo == 'A' ? 'B' : 'A');
+        // Um carácter do meio: o último pode ter só bits de enchimento do base64 e não mudar os bytes
+        int meio = token.length() / 2;
+        char c = token.charAt(meio);
+        String alterado = token.substring(0, meio) + (c == 'A' ? 'B' : 'A') + token.substring(meio + 1);
         ConviteService outraChave = new ConviteService("outro-segredo", 7, Clock.fixed(AGORA, ZONA));
 
         assertThat(em(AGORA).validar(alterado).estado()).isEqualTo(EstadoConvite.INVALIDO);

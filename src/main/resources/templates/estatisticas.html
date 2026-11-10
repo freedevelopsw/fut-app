@@ -2,14 +2,71 @@
 <html lang="pt-PT" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/layout :: head('Estatísticas')}"></head>
 <body hx-boost="true">
-<div class="app">
+<div class="app" th:with="e=${estatisticas}">
     <header class="app-header">
         <p class="etiqueta">Temporada</p>
         <h1 class="titulo">Estatísticas</h1>
+        <p class="m-0 small text-secondary"
+           th:text="${e.jogosFechados() == 1} ? 'Contas feitas a partir de 1 jogo fechado. Os convidados não entram.' : |Contas feitas a partir de ${e.jogosFechados()} jogos fechados. Os convidados não entram.|">Contas feitas a partir de 8 jogos fechados.</p>
     </header>
+
     <main class="app-main">
+        <p th:if="${e.jogosFechados() == 0}" class="lista-vazia">Ainda não há jogos fechados. Os rankings aparecem quando o primeiro jogo terminar a votação.</p>
+
+        <!-- Rankings -->
+        <section th:unless="${e.rankings().isEmpty()}" class="seccao">
+            <h2 class="etiqueta">Rankings</h2>
+            <div th:each="r : ${e.rankings()}" class="ranking">
+                <h3 th:text="${r.titulo()}">Melhores marcadores</h3>
+                <ol>
+                    <li th:each="l : ${r.lugares()}" th:classappend="${l.posicao() == 1} ? 'lider'">
+                        <span class="pos" th:text="${l.posicao()}">1</span>
+                        <a class="nome-r" th:href="@{/jogadores/{id}(id=${l.jogadorId()})}" th:text="${l.eu()} ? |${l.nome()} (tu)| : ${l.nome()}">Rui</a>
+                        <span><span class="val" th:text="${l.valor()}">5</span><span class="uni" th:text="${r.unidade(l.valor())}">golos</span></span>
+                    </li>
+                    <li th:if="${r.maisEmpatados() > 0}" class="small text-secondary">
+                        <span class="pos"></span>
+                        <span th:text="${r.maisEmpatados() == 1} ? |e mais 1 com ${r.ultimoValor()} ${r.unidade(r.ultimoValor())}| : |e mais ${r.maisEmpatados()} com ${r.ultimoValor()} ${r.unidade(r.ultimoValor())}|">e mais 5</span>
+                    </li>
+                </ol>
+            </div>
+        </section>
+
+        <!-- Tabela geral -->
+        <section th:unless="${e.tabela().isEmpty()}" class="seccao">
+            <h2 class="etiqueta">Todos os jogadores</h2>
+            <div class="tabela-caixa">
+                <table class="tabela-stats">
+                    <thead>
+                        <tr>
+                            <th scope="col">Jogador</th>
+                            <th scope="col" title="Jogos">J</th>
+                            <th scope="col" title="Vitórias">V</th>
+                            <th scope="col" title="Golos">G</th>
+                            <th scope="col" title="Assistências">A</th>
+                            <th scope="col" title="MVP">MVP</th>
+                            <th scope="col" title="Faltas">F</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="l : ${e.tabela()}" th:classappend="${l.eu()} ? 'eu'">
+                            <td><a th:href="@{/jogadores/{id}(id=${l.jogadorId()})}" th:text="${l.nome()}">Rui</a></td>
+                            <td th:text="${l.jogos()}">8</td>
+                            <td th:text="${l.vitorias()}">5</td>
+                            <td th:text="${l.golos()}">4</td>
+                            <td th:text="${l.assistencias()}">2</td>
+                            <td th:text="${l.mvps()}">1</td>
+                            <td th:text="${l.faltas()}">0</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="m-0 small text-secondary">J jogos · V vitórias · G golos · A assistências · F faltas</p>
+        </section>
+
+        <!-- Cartas -->
         <section class="seccao">
-            <h2 class="etiqueta" th:text="|Jogadores (${jogadores.size()})|">Jogadores</h2>
+            <h2 class="etiqueta" th:text="|Cartas dos jogadores (${jogadores.size()})|">Cartas dos jogadores</h2>
             <ul class="lista">
                 <li th:each="j : ${jogadores}" th:classappend="${j.eu()} ? 'eu'">
                     <a class="linha-link" th:href="@{/jogadores/{id}(id=${j.id()})}">
@@ -22,7 +79,6 @@
                 </li>
             </ul>
         </section>
-        <p class="lista-vazia">Golos, MVPs, presenças e rankings aparecem aqui depois de implementarmos o registo dos jogos e as votações.</p>
     </main>
     <div class="rodape">
         <nav th:replace="~{fragments/layout :: nav}"></nav>

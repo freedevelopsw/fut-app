@@ -9,4 +9,6 @@ public interface JogoRepository extends JpaRepository<Jogo, Long> {
     List<Jogo> findByEstadoNotOrderByDataHoraAsc(EstadoJogo estado);
 
     List<Jogo> findTop10ByEstadoOrderByDataHoraDesc(EstadoJogo estado);
+
+    List<Jogo> findByEstadoOrderByDataHoraAsc(EstadoJogo estado);
 }

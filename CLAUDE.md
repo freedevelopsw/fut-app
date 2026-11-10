@@ -79,6 +79,13 @@ O dono do projeto não escreve código: todo o código é gerado, testado automa
 - Empate MVP: mais golos no jogo; se continuar, partilhado. Outros prémios: empate = partilhado.
 - Admin: `/jogos/{id}/votos` vê quem votou em quem e anula votos.
 
+## Fecho do jogo e estatísticas (Fase 5) — pacote `estatisticas`
+- Jogo FECHADO: a página do jogo mostra MVP e prémios, resultado, linha de presenças e "Partilhar resumo no WhatsApp"
+  (`ResumoService`); a gestão e as vagas deixam de aparecer. Os jogos anteriores mostram o resultado no início.
+- `EstatisticasService` calcula tudo a partir dos jogos FECHADO (nada guardado à parte): jogos, V/E/D, golos,
+  assistências, MVPs, prémios, faltas. Convidados fora; bloqueados contam. Rankings com no máximo 5 nomes.
+- Ecrã Estatísticas: rankings, tabela de todos os jogadores, cartas. A carta mostra os números do jogador.
+
 ## Roles
 Cumulativas: `JOGADOR`, `ORGANIZADOR`, `ADMIN`. Convidado = inscrição sem conta (`Inscricao.nomeConvidado`).
 - Mudam-se na carta do jogador, num dropdown de nível de acesso (`NivelAcesso`: Jogador, Organizador, Admin;
@@ -87,6 +94,6 @@ Cumulativas: `JOGADOR`, `ORGANIZADOR`, `ADMIN`. Convidado = inscrição sem cont
   (`UtilizadorService.opcoesNivel`). O Admin não muda o próprio nível.
 
 ## Estado
-- Fatia 1 (M0 + M1): admin no arranque, registo só por convite, bloqueio de membros, mudar password, carta do jogador, equipas (Fase 2), registo do jogo (Fase 3), votação (Fase 4), login, roles, criar jogo, convocatória (12 vagas, espera a partir do 13º, cancelamentos registados, fecho manual), partilha WhatsApp, auditoria com limpeza.
+- Fatia 1 (M0 + M1): admin no arranque, registo só por convite, bloqueio de membros, mudar password, carta do jogador, equipas (Fase 2), registo do jogo (Fase 3), votação (Fase 4), fecho do jogo e estatísticas (Fase 5), login, roles, criar jogo, convocatória (12 vagas, espera a partir do 13º, cancelamentos registados, fecho manual), partilha WhatsApp, auditoria com limpeza.
 - Pendente: convidados passarem a utilizadores (ligar o histórico do convidado à nova conta).
-- Seguinte: resumo do jogo (Fase 5) e estatísticas.
+- Seguinte: publicar num alojamento; gráficos e gamificação (M3/M4); fecho de temporada (M5).

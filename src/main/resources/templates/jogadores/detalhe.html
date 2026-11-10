@@ -11,6 +11,18 @@
     <main class="app-main">
         <div th:replace="~{fragments/layout :: mensagens}"></div>
         <section th:replace="~{fragments/carta :: carta(${carta})}"></section>
+
+        <section class="seccao" aria-label="Números nos jogos fechados">
+            <div class="numeros">
+                <div class="numero-cartao"><span class="valor" th:text="${numeros.jogos()}">8</span><span class="rotulo">Jogos</span></div>
+                <div class="numero-cartao"><span class="valor" th:text="${numeros.golos()}">5</span><span class="rotulo">Golos</span></div>
+                <div class="numero-cartao"><span class="valor" th:text="${numeros.assistencias()}">3</span><span class="rotulo">Assist.</span></div>
+                <div class="numero-cartao"><span class="valor" th:text="${numeros.mvps()}">2</span><span class="rotulo">MVP</span></div>
+            </div>
+            <p class="m-0 small text-secondary" th:if="${numeros.temJogos()}"
+               th:text="(${numeros.vitorias() == 1} ? '1 vitória' : |${numeros.vitorias()} vitórias|) + ' · ' + (${numeros.empates() == 1} ? '1 empate' : |${numeros.empates()} empates|) + ' · ' + (${numeros.derrotas() == 1} ? '1 derrota' : |${numeros.derrotas()} derrotas|) + (${numeros.premios() > 0} ? (${numeros.premios() == 1} ? ' · 1 prémio' : | · ${numeros.premios()} prémios|) : '') + (${numeros.faltas() > 0} ? (${numeros.faltas() == 1} ? ' · 1 falta' : | · ${numeros.faltas()} faltas|) : '')">5 vitórias</p>
+            <p class="m-0 small text-secondary" th:unless="${numeros.temJogos()}">Ainda sem jogos fechados.</p>
+        </section>
         <p class="m-0 small text-secondary">Os atributos são uma auto-avaliação de 1 a 10. O rating é a média dos atributos preenchidos.</p>
 
         <!-- Nível de acesso: visível ao Organizador e ao Admin; o dropdown só tem as opções que cada um pode escolher -->

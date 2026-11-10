@@ -25,6 +25,7 @@
                 <div class="meta">
                     <span th:text="${j.hora()}">21:00</span>
                     <span th:text="${j.local()}">Local</span>
+                    <span th:if="${j.resultado()}" class="fw-semibold text-body" th:text="|Resultado ${j.resultado()}|">Resultado 3–2</span>
                 </div>
                 <div class="d-flex align-items-center gap-3">
                     <div class="barra-progresso flex-grow-1"><div th:style="|width: ${j.inscritos() * 100 / j.vagas()}%|"></div></div>
@@ -38,6 +39,7 @@
             <ul class="lista">
                 <li th:each="j : ${anteriores}">
                     <a class="nome text-reset text-decoration-none py-2" th:href="@{/jogos/{id}(id=${j.id()})}" th:text="|${j.dia()} · ${j.local()}|">Jogo</a>
+                    <span th:if="${j.resultado()}" class="numero pe-3" th:text="${j.resultado()}">3–2</span>
                 </li>
             </ul>
         </section>

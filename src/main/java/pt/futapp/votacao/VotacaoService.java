@@ -264,8 +264,8 @@ public class VotacaoService {
             .collect(Collectors.groupingBy(Inscricao::getId, Collectors.counting()));
     }
 
-    /** MVP primeiro, depois os prémios pela ordem; só categorias com votos. */
-    static List<VotacaoView.Resultado> resultados(List<Voto> validos, Map<Long, Long> golosPorInscricao,
+    /** MVP primeiro, depois os prémios pela ordem; só categorias com votos. Usado também pelas estatísticas. */
+    public static List<VotacaoView.Resultado> resultados(List<Voto> validos, Map<Long, Long> golosPorInscricao,
                                                   List<Premio> ordemPremios) {
         Map<Long, List<Voto>> porPremio = new LinkedHashMap<>();
         List<Voto> mvp = new ArrayList<>();
@@ -306,8 +306,9 @@ public class VotacaoService {
             desempate = porGolos.size() < empatados.size();
             empatados = porGolos;
         }
-        List<String> vencedores = empatados.stream().map(nomes::get).sorted().toList();
-        return new VotacaoView.Resultado(categoria, mvp, vencedores, max, desempate);
+        List<Long> ids = empatados.stream().sorted(Comparator.comparing(nomes::get)).toList();
+        List<String> vencedores = ids.stream().map(nomes::get).toList();
+        return new VotacaoView.Resultado(categoria, mvp, vencedores, ids, max, desempate);
     }
 
     private Utilizador exigirGestor(String username) {

@@ -14,6 +14,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.validation.Valid;
 import pt.futapp.comum.OperacaoInvalidaException;
+import pt.futapp.estatisticas.EstatisticasService;
 
 /** Carta de cada jogador (visível a todos) e edição dos dados (o próprio ou o Admin). */
 @Controller
@@ -21,16 +22,19 @@ public class JogadoresController {
 
     private final JogadorService jogadores;
     private final UtilizadorService utilizadores;
+    private final EstatisticasService estatisticas;
 
-    public JogadoresController(JogadorService jogadores, UtilizadorService utilizadores) {
+    public JogadoresController(JogadorService jogadores, UtilizadorService utilizadores, EstatisticasService estatisticas) {
         this.jogadores = jogadores;
         this.utilizadores = utilizadores;
+        this.estatisticas = estatisticas;
     }
 
     @GetMapping("/jogadores/{id}")
     public String carta(@PathVariable Long id, Principal principal, Model model) {
         CartaView carta = jogadores.carta(id, principal.getName());
         model.addAttribute("carta", carta);
+        model.addAttribute("numeros", estatisticas.doJogador(id, principal.getName()));
         model.addAttribute("nav", carta.eu() ? "perfil" : "estatisticas");
         return "jogadores/detalhe";
     }
