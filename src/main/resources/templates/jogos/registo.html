@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt-PT" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Registo do jogo')}"></head>
+<body hx-boost="true">
+<div class="app" th:with="r=${registo}">
+    <header class="app-header">
+        <div class="d-flex justify-content-between align-items-center gap-2">
+            <a th:href="@{/jogos/{id}(id=${r.jogoId()})}" class="etiqueta text-decoration-none">← Convocatória</a>
+            <span class="chip" th:classappend="${r.podeRegistar()} ? 'chip-verde' : 'chip-cinza'" th:text="${r.estado().descricao}">Em registo</span>
+        </div>
+        <h1 class="titulo">Registo do jogo</h1>
+        <p class="m-0 small text-secondary" th:text="|${r.dia()} · ${r.hora()}|">Quinta-feira, 12 nov. · 21:00</p>
+    </header>
+
+    <main class="app-main">
+        <div th:replace="~{fragments/layout :: mensagens}"></div>
+
+        <p th:if="${r.motivoSemRegisto() != null and !r.podeReabrir()}" class="lista-vazia" th:text="${r.motivoSemRegisto()}">Publica primeiro as equipas.</p>
+        <div th:if="${r.podeReabrir()}" class="aviso aviso-laranja" role="status">
+            <span>O jogo está fechado e a votação aberta. Se precisares de corrigir alguma coisa, reabre o registo.</span>
+        </div>
+
+        <section th:replace="~{fragments/placar :: placar(${r})}"></section>
+
+        <!-- Botões de golo -->
+        <div th:if="${r.podeRegistar() and goloDe == null}" class="d-grid gap-3" style="grid-template-columns: repeat(2, minmax(0, 1fr))">
+            <a th:href="@{/jogos/{id}/registo(id=${r.jogoId()},golo='COLETES')}" class="btn-golo"><span>+ Golo</span><small>Coletes</small></a>
+            <a th:href="@{/jogos/{id}/registo(id=${r.jogoId()},golo='SEM_COLETES')}" class="btn-golo"><span>+ Golo</span><small>Sem coletes</small></a>
+        </div>
+
+        <!-- Quem marcou? -->
+        <form th:if="${r.podeRegistar() and goloDe != null}" th:action="@{/jogos/{id}/gestao/registo/golos(id=${r.jogoId()})}" method="post"
+              class="cartao d-flex flex-column gap-3" style="border: 2px solid var(--fa-verde)">
+            <input type="hidden" name="equipa" th:value="${goloDe}">
+            <h2 class="m-0 fs-6 fw-bold" th:text="|Quem marcou? · ${goloDe.descricao}|">Quem marcou? · Coletes</h2>
+            <div>
+                <label class="form-label small m-0 mb-1" for="assistencia">Assistência (opcional)</label>
+                <select class="form-select" id="assistencia" name="assistencia">
+                    <option value="">Sem assistência</option>
+                    <option th:each="j : ${r.jogadoresDe(goloDe)}" th:unless="${j.faltou()}" th:value="${j.inscricaoId()}" th:text="${j.nome()}">Nuno</option>
+                </select>
+            </div>
+            <div class="d-grid gap-2" style="grid-template-columns: repeat(2, minmax(0, 1fr))">
+                <button th:each="j : ${r.jogadoresDe(goloDe)}" th:unless="${j.faltou()}" type="submit" name="marcador" th:value="${j.inscricaoId()}"
+                        class="escolha-marcador" th:text="${j.nome()}">Rui</button>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="submit" name="marcador" value="" class="btn btn-tracejado fw-semibold flex-grow-1" style="min-height: 44px; border-radius: 12px">Sem marcador</button>
+                <a th:href="@{/jogos/{id}/registo(id=${r.jogoId()})}" class="btn fw-semibold text-secondary flex-grow-1" style="min-height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center">Cancelar</a>
+            </div>
+            <p class="m-0 small text-secondary">Se escolheres uma assistência, escolhe-a antes de tocar no marcador.</p>
+        </form>
+
+        <!-- Golos -->
+        <section class="seccao" th:unless="${r.golos().isEmpty()}">
+            <h2 class="etiqueta" th:text="|Golos (${r.golos().size()})|">Golos</h2>
+            <ol class="lista">
+                <li th:each="g : ${r.golos()}">
+                    <span class="numero" style="width: 40px" th:text="${g.parcial()}">1–0</span>
+                    <span class="ponto-equipa" th:classappend="${g.equipa().name() == 'COLETES'} ? 'coletes' : 'sem'" aria-hidden="true"></span>
+                    <span class="nome">
+                        <span th:text="${g.marcador()} ?: 'Sem marcador'" th:classappend="${g.marcador() == null} ? 'text-secondary'">Rui</span>
+                        <span th:if="${g.assistencia()}" class="small text-secondary" th:text="|· assist. ${g.assistencia()}|">· assist. Nuno</span>
+                    </span>
+                    <form th:if="${r.podeRegistar()}" th:action="@{/jogos/{id}/gestao/registo/golos/{g}/apagar(id=${r.jogoId()},g=${g.id()})}" method="post"
+                          hx-confirm="Apagar este golo?">
+                        <button type="submit" class="btn-icone" aria-label="Apagar golo">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                        </button>
+                    </form>
+                </li>
+            </ol>
+        </section>
+
+        <!-- Só o resultado -->
+        <details th:if="${r.podeRegistar()}" class="cartao">
+            <summary><span>Introduzir só o resultado</span><span class="text-secondary small">abrir</span></summary>
+            <form th:action="@{/jogos/{id}/gestao/registo/resultado(id=${r.jogoId()})}" method="post" class="d-flex flex-column gap-3 mt-3">
+                <p class="m-0 small text-secondary">Para quando não registaram os marcadores. Os golos que faltam ficam sem marcador; os que já têm marcador mantêm-se.</p>
+                <div class="d-flex align-items-end gap-2">
+                    <div class="flex-grow-1">
+                        <label class="form-label" for="coletes">Coletes</label>
+                        <input class="form-control text-center" type="number" inputmode="numeric" min="0" max="99" id="coletes" name="coletes" th:value="${r.golosColetes()}">
+                    </div>
+                    <span class="pb-2 text-secondary">–</span>
+                    <div class="flex-grow-1">
+                        <label class="form-label" for="semColetes">Sem coletes</label>
+                        <input class="form-control text-center" type="number" inputmode="numeric" min="0" max="99" id="semColetes" name="semColetes" th:value="${r.golosSemColetes()}">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-fa btn-fa-sm btn-contorno">Guardar resultado</button>
+            </form>
+        </details>
+
+        <!-- Presenças -->
+        <details class="cartao" th:attr="open=${r.faltas() > 0} ? 'open' : null" th:unless="${r.coletes().isEmpty() and r.semColetes().isEmpty()}">
+            <summary>
+                <span th:text="|Presenças (${r.presentes()} de ${r.coletes().size() + r.semColetes().size()})|">Presenças</span>
+                <span class="text-secondary small" th:text="${r.faltas() == 0} ? 'sem faltas' : (${r.faltas() == 1} ? '1 falta' : |${r.faltas()} faltas|)">sem faltas</span>
+            </summary>
+            <ul class="list-unstyled m-0 mt-3 d-flex flex-column gap-1">
+                <th:block th:each="p : ${r.coletes()}"><li th:replace="~{fragments/presenca :: linhaPresenca(${p}, ${r})}"></li></th:block>
+                <th:block th:each="p : ${r.semColetes()}"><li th:replace="~{fragments/presenca :: linhaPresenca(${p}, ${r})}"></li></th:block>
+            </ul>
+            <p class="m-0 mt-2 small text-secondary">Quem faltou fica registado e não vota no MVP.</p>
+        </details>
+    </main>
+
+    <div class="rodape">
+        <div class="barra-acao" th:if="${r.podeRegistar()}">
+            <form th:action="@{/jogos/{id}/gestao/registo/fechar(id=${r.jogoId()})}" method="post"
+                  hx-confirm="Fechar o jogo e abrir a votação? Podes reabrir o registo enquanto a votação estiver aberta.">
+                <button type="submit" class="btn btn-fa btn-escuro">Fechar jogo e abrir votação</button>
+            </form>
+        </div>
+        <div class="barra-acao" th:if="${r.podeReabrir()}">
+            <form th:action="@{/jogos/{id}/gestao/registo/reabrir(id=${r.jogoId()})}" method="post">
+                <button type="submit" class="btn btn-fa btn-contorno">Reabrir registo</button>
+            </form>
+        </div>
+        <nav th:replace="~{fragments/layout :: nav}"></nav>
+    </div>
+</div>
+
+</body>
+</html>

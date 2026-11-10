@@ -62,6 +62,14 @@ O dono do projeto não escreve código: todo o código é gerado, testado automa
 - Quem sobe da lista de espera fica "sem equipa" e impede publicar até ser atribuído.
 - Não usar `eq`, `ne`, `gt`, `lt`, `ge`, `le`, `and`, `or`, `not` como nomes de variáveis no Thymeleaf (são operadores).
 
+## Registo do jogo (Fase 3)
+- `Golo` (equipa, marcador e assistência = inscrições, ambos opcionais) e `Inscricao.faltou`. `RegistoService`.
+- `/jogos/{id}/registo` (Organizador/Admin): "+ Golo" por equipa → escolher marcador (assistência opcional);
+  apagar golos; "Introduzir só o resultado" cria/retira golos sem marcador; marcar faltas.
+- Só com as equipas publicadas. A primeira ação passa o jogo para EM_REGISTO: a partir daí equipas e lista ficam fixas.
+- Fechar o jogo → VOTACAO_ABERTA (não exige golos). Enquanto a votação está aberta, pode-se reabrir o registo.
+- O resultado (placar + marcadores) aparece na convocatória de todos a partir de EM_REGISTO.
+
 ## Roles
 Cumulativas: `JOGADOR`, `ORGANIZADOR`, `ADMIN`. Convidado = inscrição sem conta (`Inscricao.nomeConvidado`).
 - Mudam-se na carta do jogador, num dropdown de nível de acesso (`NivelAcesso`: Jogador, Organizador, Admin;
@@ -70,6 +78,6 @@ Cumulativas: `JOGADOR`, `ORGANIZADOR`, `ADMIN`. Convidado = inscrição sem cont
   (`UtilizadorService.opcoesNivel`). O Admin não muda o próprio nível.
 
 ## Estado
-- Fatia 1 (M0 + M1): admin no arranque, registo só por convite, bloqueio de membros, mudar password, carta do jogador, equipas (Fase 2), login, roles, criar jogo, convocatória (12 vagas, espera a partir do 13º, cancelamentos registados, fecho manual), partilha WhatsApp, auditoria com limpeza.
+- Fatia 1 (M0 + M1): admin no arranque, registo só por convite, bloqueio de membros, mudar password, carta do jogador, equipas (Fase 2), registo do jogo (Fase 3), login, roles, criar jogo, convocatória (12 vagas, espera a partir do 13º, cancelamentos registados, fecho manual), partilha WhatsApp, auditoria com limpeza.
 - Pendente: convidados passarem a utilizadores (ligar o histórico do convidado à nova conta).
-- Seguinte: registo do jogo (Fase 3), votação (Fase 4), resumo (Fase 5).
+- Seguinte: votação (Fase 4), resumo (Fase 5).

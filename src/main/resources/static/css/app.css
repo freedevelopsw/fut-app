@@ -139,3 +139,21 @@ details.cartao summary::-webkit-details-marker { display: none; }
 .btn-verde:disabled, .btn-verde.disabled { background: var(--fa-verde); color: #FFFFFF; opacity: .4; }
 .btn-escuro:disabled, .btn-escuro.disabled { background: var(--fa-tinta); color: #FFFFFF; opacity: .4; }
 .btn-contorno:disabled, .btn-contorno.disabled { background: #FFFFFF; color: var(--fa-tinta); border-color: #C9CEC6; opacity: .5; }
+
+/* Registo do jogo */
+.placar { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; text-align: center; background: var(--fa-cartao); border: 1px solid var(--fa-linha); border-radius: 20px; padding: 16px 8px; }
+.placar .lado { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
+.placar .equipa-nome { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; }
+.placar .golos { font-family: "Space Grotesk", Inter, sans-serif; font-size: 52px; font-weight: 700; line-height: 1; }
+.placar .traco { font-family: "Space Grotesk", Inter, sans-serif; font-size: 28px; color: #9AA1A9; padding: 0 8px; }
+.placar .marcadores { font-size: 12px; color: var(--fa-suave); line-height: 1.5; padding: 0 4px; }
+.btn-golo { height: 64px; border: none; border-radius: 16px; background: var(--fa-verde); color: #FFFFFF; font-size: 16px; font-weight: 600; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; text-decoration: none; }
+.btn-golo:hover { background: var(--fa-verde-escuro); color: #FFFFFF; }
+.btn-golo small { font-size: 13px; font-weight: 500; opacity: .9; }
+.escolha-marcador { min-height: 48px; border: 1px solid var(--fa-linha); border-radius: 12px; background: #FAFBF9; color: var(--fa-tinta); font-size: 15px; font-weight: 500; padding: 4px 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.escolha-marcador:hover { border-color: var(--fa-verde); }
+.ponto-equipa { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.ponto-equipa.coletes { background: #E07A1F; }
+.ponto-equipa.sem { border: 2px solid var(--fa-suave); box-sizing: border-box; }
+.btn-presenca { min-height: 40px; min-width: 92px; border-radius: 10px; font-size: 14px; font-weight: 600; }
+.faltou .nome { text-decoration: line-through; color: var(--fa-suave); }

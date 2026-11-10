@@ -20,6 +20,7 @@ public record Convocatoria(
     boolean podeInscrever,
     boolean podeCancelar,
     boolean gestor,
+    boolean listaEditavel,
     List<MembroOpcao> membrosDisponiveis,
     String whatsappUrl) {
 

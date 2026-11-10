@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="pt-PT" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- Resultado do jogo. Parâmetro: r = RegistoView -->
+<section th:fragment="placar(r)" class="placar" aria-label="Resultado">
+    <div class="lado">
+        <span class="equipa-nome"><span class="cor-coletes" aria-hidden="true"></span>Coletes</span>
+        <span class="golos" th:text="${r.golosColetes()}">3</span>
+        <span class="marcadores">
+            <span th:each="m, s : ${r.marcadoresColetes()}" th:text="${m.golos() > 1} ? |${m.nome()} ${m.golos()}${s.last ? '' : ', '}| : |${m.nome()}${s.last ? '' : ', '}|">Rui 2</span>
+        </span>
+    </div>
+    <span class="traco" aria-hidden="true">–</span>
+    <div class="lado">
+        <span class="equipa-nome"><span class="cor-sem" aria-hidden="true"></span>Sem coletes</span>
+        <span class="golos" th:text="${r.golosSemColetes()}">2</span>
+        <span class="marcadores">
+            <span th:each="m, s : ${r.marcadoresSemColetes()}" th:text="${m.golos() > 1} ? |${m.nome()} ${m.golos()}${s.last ? '' : ', '}| : |${m.nome()}${s.last ? '' : ', '}|">Tiago</span>
+        </span>
+    </div>
+</section>
+</body>
+</html>

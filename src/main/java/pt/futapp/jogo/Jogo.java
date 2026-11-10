@@ -72,8 +72,10 @@ public class Jogo {
             || estado == EstadoJogo.EQUIPAS_PUBLICADAS;
     }
 
+    /** As equipas já foram publicadas (e continuam visíveis durante o registo, a votação e depois de fechado). */
     public boolean equipasPublicadas() {
-        return estado == EstadoJogo.EQUIPAS_PUBLICADAS;
+        return estado == EstadoJogo.EQUIPAS_PUBLICADAS || estado == EstadoJogo.EM_REGISTO
+            || estado == EstadoJogo.VOTACAO_ABERTA || estado == EstadoJogo.FECHADO;
     }
 
     public void publicarEquipas() {
@@ -84,6 +86,41 @@ public class Jogo {
             throw new OperacaoInvalidaException("Já não é possível mudar as equipas deste jogo.");
         }
         estado = EstadoJogo.EQUIPAS_PUBLICADAS;
+    }
+
+    /** O registo do jogo (golos, resultado, faltas) é possível depois de publicar as equipas e até fechar o jogo. */
+    public boolean permiteRegisto() {
+        return estado == EstadoJogo.EQUIPAS_PUBLICADAS || estado == EstadoJogo.EM_REGISTO;
+    }
+
+    /** A primeira ação de registo passa o jogo para "Em registo"; a partir daí as equipas e a lista ficam fixas. */
+    public void iniciarRegisto() {
+        if (!permiteRegisto()) {
+            throw new OperacaoInvalidaException(estado == EstadoJogo.VOTACAO_ABERTA || estado == EstadoJogo.FECHADO
+                ? "O jogo já foi fechado. Reabre o registo para fazer alterações."
+                : "Publica primeiro as equipas para registares o jogo.");
+        }
+        estado = EstadoJogo.EM_REGISTO;
+    }
+
+    /** Fecha o registo do jogo e abre a votação. */
+    public void fecharJogo() {
+        if (!permiteRegisto()) {
+            throw new OperacaoInvalidaException("Só se fecha um jogo com as equipas publicadas e ainda por fechar.");
+        }
+        estado = EstadoJogo.VOTACAO_ABERTA;
+    }
+
+    public void reabrirRegisto() {
+        if (estado != EstadoJogo.VOTACAO_ABERTA) {
+            throw new OperacaoInvalidaException("Só se reabre o registo enquanto a votação está aberta.");
+        }
+        estado = EstadoJogo.EM_REGISTO;
+    }
+
+    /** Já houve registo do jogo (há resultado para mostrar). */
+    public boolean temResultado() {
+        return estado == EstadoJogo.EM_REGISTO || estado == EstadoJogo.VOTACAO_ABERTA || estado == EstadoJogo.FECHADO;
     }
 
     public Long getId() { return id; }

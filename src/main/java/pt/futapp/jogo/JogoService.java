@@ -103,7 +103,7 @@ public class JogoService {
         return new Convocatoria(jogo.getId(), dia, hora, jogo.getLocal(), jogo.getVagas(), jogo.getEstado(),
             inscritos, espera, desistencias, minhaPosicao,
             aberta && minhaPosicao == null, aberta && minhaPosicao != null,
-            eu.ehGestor(), disponiveis, whatsapp);
+            eu.ehGestor(), eu.ehGestor() && jogo.permiteEquipas(), disponiveis, whatsapp);
     }
 
     // ---------------------------------------------------------------- ações do jogador
@@ -157,6 +157,7 @@ public class JogoService {
         Utilizador ator = carregarUtilizador(username);
         exigirGestor(ator);
         Jogo jogo = carregarJogo(jogoId);
+        exigirListaEditavel(jogo);
         Inscricao ins = inscricoes.findById(inscricaoId)
             .filter(i -> i.getJogo().getId().equals(jogo.getId()))
             .filter(i -> i.getEstado() == EstadoInscricao.ATIVA)
@@ -169,6 +170,7 @@ public class JogoService {
         Utilizador ator = carregarUtilizador(username);
         exigirGestor(ator);
         Jogo jogo = carregarJogo(jogoId);
+        exigirListaEditavel(jogo);
         Utilizador jogador = utilizadores.findById(utilizadorId)
             .orElseThrow(() -> new OperacaoInvalidaException("Jogador não encontrado."));
         if (jogador.isBloqueado()) {
@@ -188,6 +190,7 @@ public class JogoService {
         Utilizador ator = carregarUtilizador(username);
         exigirGestor(ator);
         Jogo jogo = carregarJogo(jogoId);
+        exigirListaEditavel(jogo);
         String limpo = nome == null ? "" : nome.trim();
         if (limpo.isEmpty() || limpo.length() > 60) {
             throw new OperacaoInvalidaException("Indica o nome do convidado (até 60 caracteres).");
@@ -251,6 +254,13 @@ public class JogoService {
         if (promovido != null) {
             audit(ator, Acao.PROMOCAO_LISTA_ESPERA, jogo, promovido.getId(),
                 promovido.getNomeVisivel() + " passou da lista de espera para os inscritos");
+        }
+    }
+
+    /** Depois de o registo do jogo começar, a lista fica fixa (quem não veio marca-se como falta no registo). */
+    private void exigirListaEditavel(Jogo jogo) {
+        if (!jogo.permiteEquipas()) {
+            throw new OperacaoInvalidaException("O jogo já está a ser registado: a lista já não muda. Marca as faltas no registo do jogo.");
         }
     }
 

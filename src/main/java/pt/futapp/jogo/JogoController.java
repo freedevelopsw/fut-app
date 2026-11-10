@@ -24,10 +24,12 @@ public class JogoController {
 
     private final JogoService jogos;
     private final EquipasService equipas;
+    private final RegistoService registo;
 
-    public JogoController(JogoService jogos, EquipasService equipas) {
+    public JogoController(JogoService jogos, EquipasService equipas, RegistoService registo) {
         this.jogos = jogos;
         this.equipas = equipas;
+        this.registo = registo;
     }
 
     @GetMapping("/{id}")
@@ -35,8 +37,77 @@ public class JogoController {
         String urlBase = urlBase(pedido);
         model.addAttribute("conv", jogos.convocatoria(id, principal.getName(), urlBase));
         model.addAttribute("equipas", equipas.vista(id, principal.getName(), urlBase));
+        model.addAttribute("registo", registo.vista(id, principal.getName()));
         model.addAttribute("nav", "jogo");
         return "jogos/detalhe";
+    }
+
+    // ---------------------------------------------------------------- registo do jogo (Organizador / Admin)
+
+    @GetMapping("/{id}/registo")
+    public String registo(@PathVariable Long id, @RequestParam(required = false) Equipa golo,
+                          Principal principal, Model model) {
+        model.addAttribute("registo", registo.vista(id, principal.getName()));
+        model.addAttribute("goloDe", golo);
+        model.addAttribute("nav", "jogo");
+        return "jogos/registo";
+    }
+
+    @PostMapping("/{id}/gestao/registo/golos")
+    public String adicionarGolo(@PathVariable Long id, @RequestParam Equipa equipa,
+                                @RequestParam(required = false) Long marcador,
+                                @RequestParam(required = false) Long assistencia,
+                                Principal principal, RedirectAttributes redirect) {
+        return executarRegisto(id, redirect, "Golo registado.",
+            () -> registo.adicionarGolo(id, equipa, marcador, assistencia, principal.getName()));
+    }
+
+    @PostMapping("/{id}/gestao/registo/golos/{goloId}/apagar")
+    public String apagarGolo(@PathVariable Long id, @PathVariable Long goloId,
+                             Principal principal, RedirectAttributes redirect) {
+        return executarRegisto(id, redirect, "Golo apagado.", () -> registo.apagarGolo(id, goloId, principal.getName()));
+    }
+
+    @PostMapping("/{id}/gestao/registo/resultado")
+    public String definirResultado(@PathVariable Long id, @RequestParam int coletes, @RequestParam int semColetes,
+                                   Principal principal, RedirectAttributes redirect) {
+        return executarRegisto(id, redirect, "Resultado guardado.",
+            () -> registo.definirResultado(id, coletes, semColetes, principal.getName()));
+    }
+
+    @PostMapping("/{id}/gestao/registo/faltas")
+    public String marcarFalta(@PathVariable Long id, @RequestParam Long inscricaoId, @RequestParam boolean faltou,
+                              Principal principal, RedirectAttributes redirect) {
+        return executarRegisto(id, redirect, null, () -> registo.marcarFalta(id, inscricaoId, faltou, principal.getName()));
+    }
+
+    @PostMapping("/{id}/gestao/registo/fechar")
+    public String fecharJogo(@PathVariable Long id, Principal principal, RedirectAttributes redirect) {
+        try {
+            registo.fechar(id, principal.getName());
+            redirect.addFlashAttribute("sucesso", "Jogo fechado. A votação está aberta.");
+        } catch (OperacaoInvalidaException e) {
+            redirect.addFlashAttribute("erro", e.getMessage());
+            return "redirect:/jogos/" + id + "/registo";
+        }
+        return "redirect:/jogos/" + id;
+    }
+
+    @PostMapping("/{id}/gestao/registo/reabrir")
+    public String reabrirRegisto(@PathVariable Long id, Principal principal, RedirectAttributes redirect) {
+        return executarRegisto(id, redirect, "Registo reaberto.", () -> registo.reabrir(id, principal.getName()));
+    }
+
+    private String executarRegisto(Long id, RedirectAttributes redirect, String sucesso, Runnable acao) {
+        try {
+            acao.run();
+            if (sucesso != null) {
+                redirect.addFlashAttribute("sucesso", sucesso);
+            }
+        } catch (OperacaoInvalidaException e) {
+            redirect.addFlashAttribute("erro", e.getMessage());
+        }
+        return "redirect:/jogos/" + id + "/registo";
     }
 
     // ---------------------------------------------------------------- equipas (Organizador / Admin)

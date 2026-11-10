@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="pt-PT" xmlns:th="http://www.thymeleaf.org">
+<body>
+<ul>
+<!-- Linha de presença (reutilizada nas duas equipas) -->
+<li th:fragment="linhaPresenca(p, r)" class="d-flex align-items-center gap-2" th:classappend="${p.faltou()} ? 'faltou'" style="min-height: 48px">
+    <span class="ponto-equipa" th:classappend="${p.equipa().name() == 'COLETES'} ? 'coletes' : 'sem'" aria-hidden="true"></span>
+    <span class="nome flex-grow-1 text-truncate" th:text="${p.nome()}">Rui</span>
+    <form th:if="${r.podeRegistar()}" th:action="@{/jogos/{id}/gestao/registo/faltas(id=${r.jogoId()})}" method="post">
+        <input type="hidden" name="inscricaoId" th:value="${p.inscricaoId()}">
+        <input type="hidden" name="faltou" th:value="${!p.faltou()}">
+        <button type="submit" class="btn btn-presenca" th:classappend="${p.faltou()} ? 'btn-escuro' : 'btn-contorno'"
+                th:aria-label="${p.faltou()} ? |${p.nome()} faltou. Marcar como presente| : |${p.nome()} presente. Marcar falta|"
+                th:text="${p.faltou()} ? 'Faltou' : 'Presente'">Presente</button>
+    </form>
+    <span th:unless="${r.podeRegistar()}" class="tag" th:text="${p.faltou()} ? 'Faltou' : 'Presente'">Presente</span>
+</li>
+</ul>
+</body>
+</html>

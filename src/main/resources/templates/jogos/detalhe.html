@@ -61,6 +61,15 @@
             </a>
         </section>
 
+        <!-- Resultado (visível a todos depois de o registo começar) -->
+        <section th:if="${registo.mostrarResultado()}" class="seccao">
+            <h2 class="etiqueta">Resultado</h2>
+            <section th:replace="~{fragments/placar :: placar(${registo})}"></section>
+            <p th:if="${c.estado().name() == 'VOTACAO_ABERTA'}" class="m-0 small text-secondary">
+                Jogo fechado. A votação do MVP chega na próxima versão da app.
+            </p>
+        </section>
+
         <!-- Equipas publicadas (visíveis a todos) -->
         <section th:if="${equipas.publicadas()}" class="seccao">
             <div class="d-flex justify-content-between align-items-center">
@@ -95,8 +104,8 @@
                        th:text="${l.eu()} ? |${l.nome()} (tu)| : ${l.nome()}">Rui</a>
                     <span th:unless="${l.jogadorId()}" class="nome" th:text="${l.nome()}">Zé</span>
                     <span th:if="${l.convidado()}" class="tag">Convidado</span>
-                    <span th:unless="${c.gestor()}" class="quando" th:text="${l.quando()}">seg. 18:02</span>
-                    <form th:if="${c.gestor()}" th:action="@{/jogos/{id}/gestao/inscricoes/{i}/remover(id=${c.jogoId()},i=${l.inscricaoId()})}" method="post"
+                    <span th:unless="${c.listaEditavel()}" class="quando" th:text="${l.quando()}">seg. 18:02</span>
+                    <form th:if="${c.listaEditavel()}" th:action="@{/jogos/{id}/gestao/inscricoes/{i}/remover(id=${c.jogoId()},i=${l.inscricaoId()})}" method="post"
                           th:hx-confirm="|Tirar ${l.nome()} da lista? Fica registado como desistência.|">
                         <button type="submit" class="btn-icone" th:aria-label="|Remover ${l.nome()}|">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
@@ -119,7 +128,7 @@
                        th:text="${l.eu()} ? |${l.nome()} (tu)| : ${l.nome()}">Sérgio</a>
                     <span th:unless="${l.jogadorId()}" class="nome" th:text="${l.nome()}">Zé</span>
                     <span class="tag tag-espera" th:text="|${s.count}º em espera|">1º em espera</span>
-                    <form th:if="${c.gestor()}" th:action="@{/jogos/{id}/gestao/inscricoes/{i}/remover(id=${c.jogoId()},i=${l.inscricaoId()})}" method="post"
+                    <form th:if="${c.listaEditavel()}" th:action="@{/jogos/{id}/gestao/inscricoes/{i}/remover(id=${c.jogoId()},i=${l.inscricaoId()})}" method="post"
                           th:hx-confirm="|Tirar ${l.nome()} da lista de espera?|">
                         <button type="submit" class="btn-icone" th:aria-label="|Remover ${l.nome()}|">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
@@ -138,11 +147,14 @@
                     Partilhar no WhatsApp
                 </a>
 
+                <a th:if="${registo.podeRegistar() or registo.podeReabrir()}" th:href="@{/jogos/{id}/registo(id=${c.jogoId()})}" class="btn btn-fa btn-fa-sm btn-verde"
+                   th:text="${registo.podeReabrir()} ? 'Ver registo do jogo' : (${registo.mostrarResultado()} ? 'Continuar registo do jogo' : 'Registar jogo')">Registar jogo</a>
+
                 <a th:if="${equipas.podeGerir()}" th:href="@{/jogos/{id}/equipas(id=${c.jogoId()})}" class="btn btn-fa btn-fa-sm"
                    th:classappend="${c.aberta()} ? 'btn-contorno' : 'btn-verde'"
                    th:text="${equipas.existem()} ? 'Ver e ajustar equipas' : (${c.aberta()} ? 'Preparar equipas' : 'Fazer equipas')">Fazer equipas</a>
 
-                <form th:unless="${c.membrosDisponiveis().isEmpty()}" th:action="@{/jogos/{id}/gestao/jogadores(id=${c.jogoId()})}" method="post" class="d-flex flex-column gap-2">
+                <form th:if="${c.listaEditavel() and !c.membrosDisponiveis().isEmpty()}" th:action="@{/jogos/{id}/gestao/jogadores(id=${c.jogoId()})}" method="post" class="d-flex flex-column gap-2">
                     <label class="form-label m-0" for="utilizadorId">Inscrever um jogador</label>
                     <div class="d-flex gap-2">
                         <select class="form-select" id="utilizadorId" name="utilizadorId" required>
@@ -152,7 +164,7 @@
                     </div>
                 </form>
 
-                <form th:action="@{/jogos/{id}/gestao/convidados(id=${c.jogoId()})}" method="post" class="d-flex flex-column gap-2">
+                <form th:if="${c.listaEditavel()}" th:action="@{/jogos/{id}/gestao/convidados(id=${c.jogoId()})}" method="post" class="d-flex flex-column gap-2">
                     <label class="form-label m-0" for="nomeConvidado">Adicionar convidado (sem conta)</label>
                     <div class="d-flex gap-2">
                         <input class="form-control" id="nomeConvidado" name="nome" maxlength="60" placeholder="Nome do convidado" required>

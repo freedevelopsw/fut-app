@@ -49,6 +49,10 @@ public class Inscricao {
     @Column(name = "equipa", length = 20)
     private Equipa equipa;
 
+    /** Estava inscrito para jogar mas não apareceu (marcado no registo do jogo). */
+    @Column(name = "faltou", nullable = false, columnDefinition = "boolean default false")
+    private boolean faltou;
+
     @Column(name = "cancelado_em")
     private LocalDateTime canceladoEm;
 
@@ -86,6 +90,10 @@ public class Inscricao {
         this.equipa = equipa;
     }
 
+    public void marcarFalta(boolean faltou) {
+        this.faltou = faltou;
+    }
+
     public boolean isConvidado() {
         return jogador == null;
     }
@@ -104,6 +112,7 @@ public class Inscricao {
     public String getNomeConvidado() { return nomeConvidado; }
     public EstadoInscricao getEstado() { return estado; }
     public Equipa getEquipa() { return equipa; }
+    public boolean isFaltou() { return faltou; }
     public LocalDateTime getInscritoEm() { return inscritoEm; }
     public LocalDateTime getCanceladoEm() { return canceladoEm; }
     public Utilizador getCanceladoPor() { return canceladoPor; }

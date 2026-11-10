@@ -42,6 +42,8 @@ class PaginasTest {
     @Autowired private WebApplicationContext contexto;
     @Autowired private UtilizadorService utilizadores;
     @Autowired private JogoService jogos;
+    @Autowired private pt.futapp.jogo.EquipasService equipas;
+    @Autowired private pt.futapp.jogo.RegistoService registoService;
 
     private MockMvc mvc;
     private String organizador;
@@ -77,7 +79,7 @@ class PaginasTest {
 
         Long adminId = utilizadores.vista(ADMIN).orElseThrow().id();
         for (String url : List.of("/", "/jogos/" + jogo, "/jogos/novo", "/perfil", "/estatisticas",
-                                  "/jogadores/" + adminId, "/jogadores/" + adminId + "/editar", "/jogos/" + jogo + "/equipas",
+                                  "/jogadores/" + adminId, "/jogadores/" + adminId + "/editar", "/jogos/" + jogo + "/equipas", "/jogos/" + jogo + "/registo",
                                   "/admin/membros", "/admin/convites", "/admin/auditoria", "/perfil/password")) {
             mvc.perform(get(url).with(comoOrganizador())).andExpect(status().isOk());
         }
@@ -356,6 +358,47 @@ class PaginasTest {
             .andExpect(content().string(containsString("equipa-cartao")))
             .andExpect(content().string(containsString("Equipas publicadas")));
         mvc.perform(post("/jogos/" + jogo + "/gestao/equipas/gerar").with(jogador).with(csrf()))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void oJogoRegistaSePeloEcraEOResultadoApareceATodos() throws Exception {
+        for (String u : List.of("r1", "r2", "r3", "r4")) {
+            jogos.inscrever(jogo, registar(utilizadores, u));
+        }
+        equipas.gerar(jogo, organizador);
+        jogos.fecharConvocatoria(jogo, organizador);
+        equipas.publicar(jogo, organizador, "http://localhost");
+        var jogador = user("r1").roles("JOGADOR");
+        var v = registoService.vista(jogo, organizador);
+        Long marcador = v.coletes().get(0).inscricaoId();
+
+        mvc.perform(get("/jogos/" + jogo + "/registo").with(jogador)).andExpect(status().isForbidden());
+        mvc.perform(get("/jogos/" + jogo + "/registo").with(comoOrganizador()).param("golo", "COLETES"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("Quem marcou?")));
+        mvc.perform(post("/jogos/" + jogo + "/gestao/registo/golos").with(comoOrganizador()).with(csrf())
+                .param("equipa", "COLETES").param("marcador", String.valueOf(marcador)).param("assistencia", ""))
+            .andExpect(redirectedUrl("/jogos/" + jogo + "/registo"));
+        mvc.perform(post("/jogos/" + jogo + "/gestao/registo/golos").with(comoOrganizador()).with(csrf())
+                .param("equipa", "SEM_COLETES").param("marcador", ""))
+            .andExpect(redirectedUrl("/jogos/" + jogo + "/registo"));
+        mvc.perform(post("/jogos/" + jogo + "/gestao/registo/faltas").with(comoOrganizador()).with(csrf())
+                .param("inscricaoId", String.valueOf(v.semColetes().get(0).inscricaoId())).param("faltou", "true"))
+            .andExpect(redirectedUrl("/jogos/" + jogo + "/registo"));
+        mvc.perform(get("/jogos/" + jogo + "/registo").with(comoOrganizador()))
+            .andExpect(content().string(containsString("Golos (2)")))
+            .andExpect(content().string(containsString("1 falta")));
+
+        mvc.perform(get("/jogos/" + jogo).with(jogador))
+            .andExpect(content().string(containsString("Resultado")))
+            .andExpect(content().string(containsString(v.coletes().get(0).nome())));
+
+        mvc.perform(post("/jogos/" + jogo + "/gestao/registo/fechar").with(comoOrganizador()).with(csrf()))
+            .andExpect(redirectedUrl("/jogos/" + jogo));
+        mvc.perform(get("/jogos/" + jogo).with(jogador))
+            .andExpect(content().string(containsString("Votação aberta")));
+        mvc.perform(post("/jogos/" + jogo + "/gestao/registo/reabrir").with(jogador).with(csrf()))
             .andExpect(status().isForbidden());
     }
 
