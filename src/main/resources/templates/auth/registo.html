@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-PT" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Criar conta')}"></head>
+<body>
+<main class="ecra-entrada">
+    <div class="d-flex flex-column gap-2">
+        <h1 class="titulo">Criar conta</h1>
+        <p class="m-0 text-secondary">Só precisas de fazer isto uma vez. Depois o telemóvel lembra-se de ti.</p>
+    </div>
+
+    <div th:if="${conviteErro}" class="aviso aviso-laranja" role="alert" th:text="${conviteErro}">O link de convite expirou.</div>
+
+    <form th:if="${form != null and conviteErro == null}" th:action="@{/registo}" th:object="${form}" method="post" class="d-flex flex-column gap-3" novalidate>
+        <input type="hidden" name="convite" th:if="${convite}" th:value="${convite}">
+        <div>
+            <label class="form-label" for="nome">Nome (como aparece nas listas)</label>
+            <input class="form-control" th:field="*{nome}" th:classappend="${#fields.hasErrors('nome')} ? 'is-invalid'" autocomplete="name" required>
+            <div class="invalid-feedback" th:errors="*{nome}"></div>
+        </div>
+        <div>
+            <label class="form-label" for="username">Utilizador</label>
+            <input class="form-control" th:field="*{username}" th:classappend="${#fields.hasErrors('username')} ? 'is-invalid'" autocomplete="username" autocapitalize="none" required>
+            <div class="invalid-feedback" th:errors="*{username}"></div>
+        </div>
+        <div>
+            <label class="form-label" for="password">Password</label>
+            <input class="form-control" type="password" id="password" name="password" th:classappend="${#fields.hasErrors('password')} ? 'is-invalid'" autocomplete="new-password" required>
+            <div class="invalid-feedback" th:errors="*{password}"></div>
+        </div>
+        <button type="submit" class="btn btn-fa btn-verde">Criar conta</button>
+    </form>
+
+    <p class="m-0 text-center">Já tens conta? <a th:href="@{/login}">Entrar</a></p>
+</main>
+</body>
+</html>

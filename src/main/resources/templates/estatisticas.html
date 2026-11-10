@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="pt-PT" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Estatísticas')}"></head>
+<body hx-boost="true">
+<div class="app">
+    <header class="app-header">
+        <p class="etiqueta">Temporada</p>
+        <h1 class="titulo">Estatísticas</h1>
+    </header>
+    <main class="app-main">
+        <p class="lista-vazia">Golos, MVPs, presenças e rankings aparecem aqui depois de implementarmos o registo dos jogos e as votações.</p>
+    </main>
+    <div class="rodape">
+        <nav th:replace="~{fragments/layout :: nav}"></nav>
+    </div>
+</div>
+</body>
+</html>

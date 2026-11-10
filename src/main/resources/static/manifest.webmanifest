@@ -1,0 +1,13 @@
+{
+  "name": "FutApp",
+  "short_name": "FutApp",
+  "description": "Convocatórias, equipas e votações do nosso futebol",
+  "lang": "pt-PT",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F4F5F2",
+  "theme_color": "#1C7148",
+  "icons": [
+    { "src": "/img/icone.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

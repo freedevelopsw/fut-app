@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-PT" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Novo jogo')}"></head>
+<body hx-boost="true">
+<div class="app">
+    <header class="app-header">
+        <a th:href="@{/}" class="etiqueta text-decoration-none">← Jogos</a>
+        <h1 class="titulo">Novo jogo</h1>
+    </header>
+
+    <form th:action="@{/jogos/novo}" th:object="${form}" method="post" class="d-flex flex-column flex-grow-1" novalidate>
+        <main class="app-main">
+            <div>
+                <label class="form-label" for="dataHora">Data e hora</label>
+                <input class="form-control" type="datetime-local" th:field="*{dataHora}" th:classappend="${#fields.hasErrors('dataHora')} ? 'is-invalid'" required>
+                <div class="invalid-feedback" th:errors="*{dataHora}"></div>
+            </div>
+            <div>
+                <label class="form-label" for="local">Local</label>
+                <input class="form-control" th:field="*{local}" th:classappend="${#fields.hasErrors('local')} ? 'is-invalid'" placeholder="Pavilhão, campo…" required>
+                <div class="invalid-feedback" th:errors="*{local}"></div>
+            </div>
+            <div>
+                <label class="form-label" for="vagas">Vagas</label>
+                <input class="form-control" type="number" inputmode="numeric" min="2" max="40" th:field="*{vagas}" th:classappend="${#fields.hasErrors('vagas')} ? 'is-invalid'">
+                <div class="invalid-feedback" th:errors="*{vagas}"></div>
+                <div class="form-text">A partir da vaga seguinte, os jogadores ficam em lista de espera.</div>
+            </div>
+        </main>
+
+        <div class="rodape">
+            <div class="barra-acao">
+                <button type="submit" class="btn btn-fa btn-verde">Criar e abrir convocatória</button>
+            </div>
+            <nav th:replace="~{fragments/layout :: nav}"></nav>
+        </div>
+    </form>
+</div>
+</body>
+</html>

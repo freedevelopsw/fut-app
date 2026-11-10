@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-PT" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Link de convite')}"></head>
+<body hx-boost="true">
+<div class="app">
+    <header class="app-header">
+        <a th:href="@{/admin/membros}" class="etiqueta text-decoration-none">← Membros</a>
+        <h1 class="titulo">Link de convite</h1>
+        <p class="m-0 small text-secondary">Quem abrir o link pode criar conta como Jogador. O mesmo link serve para várias pessoas até expirar, por isso partilha-o só no grupo.</p>
+    </header>
+
+    <main class="app-main">
+        <div th:replace="~{fragments/layout :: mensagens}"></div>
+
+        <section th:if="${link}" class="cartao d-flex flex-column gap-3">
+            <div>
+                <div class="fw-semibold">Link pronto</div>
+                <div class="small text-secondary" th:text="|Válido até ${validoAte}|">Válido até…</div>
+            </div>
+            <label class="visually-hidden" for="link">Link de convite</label>
+            <input class="form-control small" id="link" th:value="${link}" readonly onclick="this.select()">
+            <button type="button" class="btn btn-fa btn-fa-sm btn-contorno" th:data-link="${link}"
+                    onclick="navigator.clipboard.writeText(this.dataset.link).then(() => { this.textContent = 'Copiado'; })">Copiar link</button>
+            <a th:href="${whatsappUrl}" target="_blank" rel="noopener" hx-boost="false" class="btn btn-fa btn-fa-sm btn-verde">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+                Partilhar no WhatsApp
+            </a>
+            <p class="m-0 small text-secondary">O link não fica guardado na app. Se o perderes, gera um novo.</p>
+        </section>
+
+        <form th:action="@{/admin/convites}" method="post" class="cartao d-flex flex-column gap-3">
+            <div>
+                <label class="form-label" for="dias">Validade</label>
+                <select class="form-select" id="dias" name="dias">
+                    <option th:each="d : ${opcoesDias}" th:value="${d}" th:selected="${d == diasEscolhidos}"
+                            th:text="${d == 1} ? '1 dia' : |${d} dias|">7 dias</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-fa btn-fa-sm btn-verde" th:text="${link} ? 'Gerar outro link' : 'Gerar link'">Gerar link</button>
+        </form>
+    </main>
+
+    <div class="rodape">
+        <nav th:replace="~{fragments/layout :: nav}"></nav>
+    </div>
+</div>
+</body>
+</html>

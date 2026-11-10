@@ -1,0 +1,15 @@
+# Build
+target/
+
+# Base de dados H2 de desenvolvimento
+data/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Sistema
+*.log
+.DS_Store
+Thumbs.db

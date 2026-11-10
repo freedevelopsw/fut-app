@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-PT" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Membros')}"></head>
+<body hx-boost="true">
+<div class="app">
+    <header class="app-header">
+        <a th:href="@{/perfil}" class="etiqueta text-decoration-none">← Perfil</a>
+        <h1 class="titulo">Membros</h1>
+        <p class="m-0 small text-secondary">Todos são jogadores. Toca numa role para a ativar ou retirar. Novos membros entram por link de convite.</p>
+    </header>
+
+    <main class="app-main">
+        <div th:replace="~{fragments/layout :: mensagens}"></div>
+
+        <a th:href="@{/admin/convites}" class="btn btn-fa btn-fa-sm btn-verde">Gerar link de convite</a>
+
+        <section class="seccao">
+            <h2 class="etiqueta" th:text="|Ativos (${ativos.size()})|">Ativos</h2>
+            <ul class="lista">
+                <li th:each="m : ${ativos}" class="py-2 pe-2 flex-wrap">
+                    <div class="d-flex flex-column flex-grow-1" style="min-width: 0">
+                        <span class="fw-semibold text-truncate" th:text="${m.eu()} ? |${m.nome()} (tu)| : ${m.nome()}">Nome</span>
+                        <span class="small text-secondary" th:text="${m.username()}">utilizador</span>
+                    </div>
+                    <div class="d-flex gap-1 align-items-center">
+                        <form th:action="@{/admin/membros/{id}/roles(id=${m.id()})}" method="post">
+                            <input type="hidden" name="role" value="ORGANIZADOR">
+                            <input type="hidden" name="ativa" th:value="${!m.organizador()}">
+                            <button type="submit" class="btn btn-sm fw-semibold px-2"
+                                    th:classappend="${m.organizador()} ? 'btn-verde' : 'btn-contorno'"
+                                    th:aria-pressed="${m.organizador()}" style="min-height: 44px; border-radius: 10px">Organizador</button>
+                        </form>
+                        <form th:action="@{/admin/membros/{id}/roles(id=${m.id()})}" method="post">
+                            <input type="hidden" name="role" value="ADMIN">
+                            <input type="hidden" name="ativa" th:value="${!m.admin()}">
+                            <button type="submit" class="btn btn-sm fw-semibold px-2"
+                                    th:classappend="${m.admin()} ? 'btn-verde' : 'btn-contorno'"
+                                    th:aria-pressed="${m.admin()}" th:disabled="${m.eu() and m.admin()}"
+                                    style="min-height: 44px; border-radius: 10px">Admin</button>
+                        </form>
+                        <form th:unless="${m.eu()}" th:action="@{/admin/membros/{id}/bloqueio(id=${m.id()})}" method="post"
+                              th:hx-confirm="|Bloquear ${m.nome()}? Deixa de conseguir entrar e sai das convocatórias abertas. O histórico mantém-se.|">
+                            <input type="hidden" name="bloquear" value="true">
+                            <button type="submit" class="btn-icone" th:aria-label="|Bloquear ${m.nome()}|" title="Bloquear">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg>
+                            </button>
+                        </form>
+                    </div>
+                </li>
+            </ul>
+        </section>
+
+        <section th:unless="${bloqueados.isEmpty()}" class="seccao">
+            <h2 class="etiqueta" th:text="|Bloqueados (${bloqueados.size()})|">Bloqueados</h2>
+            <p class="m-0 small text-secondary">Não conseguem entrar, mas continuam nas estatísticas dos jogos em que participaram.</p>
+            <ul class="lista">
+                <li th:each="m : ${bloqueados}" class="py-2 pe-2">
+                    <div class="d-flex flex-column flex-grow-1" style="min-width: 0">
+                        <span class="fw-semibold text-truncate text-secondary" th:text="${m.nome()}">Nome</span>
+                        <span class="small text-secondary" th:text="|${m.username()} · bloqueado em ${m.bloqueadoEm()}|">utilizador</span>
+                    </div>
+                    <form th:action="@{/admin/membros/{id}/bloqueio(id=${m.id()})}" method="post">
+                        <input type="hidden" name="bloquear" value="false">
+                        <button type="submit" class="btn btn-sm btn-contorno fw-semibold px-3" style="min-height: 44px; border-radius: 10px">Desbloquear</button>
+                    </form>
+                </li>
+            </ul>
+        </section>
+    </main>
+
+    <div class="rodape">
+        <nav th:replace="~{fragments/layout :: nav}"></nav>
+    </div>
+</div>
+</body>
+</html>

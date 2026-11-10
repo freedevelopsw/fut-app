@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pt-PT" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Convocatória')}"></head>
+<body hx-boost="true">
+<div class="app" th:with="c=${conv}">
+
+    <header class="app-header">
+        <div class="d-flex justify-content-between align-items-center gap-2">
+            <a th:href="@{/}" class="etiqueta text-decoration-none">← Jogos</a>
+            <span class="chip" th:classappend="${c.aberta()} ? 'chip-verde' : 'chip-cinza'" th:text="${c.estado().descricao}">Convocatória aberta</span>
+        </div>
+        <h1 class="titulo" th:text="${c.dia()}">Quinta-feira, 12 nov.</h1>
+        <div class="meta">
+            <span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                <span th:text="${c.hora()}">21:00</span>
+            </span>
+            <span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+                <span th:text="${c.local()}">Local</span>
+            </span>
+        </div>
+    </header>
+
+    <main class="app-main">
+        <div th:replace="~{fragments/layout :: mensagens}"></div>
+
+        <!-- Vagas -->
+        <section class="cartao d-flex flex-column gap-2" aria-label="Vagas">
+            <div class="d-flex justify-content-between align-items-baseline">
+                <span class="numero" style="font-size: 30px">
+                    <span th:text="${c.numInscritos()}">11</span><span class="text-secondary fs-5" th:text="| / ${c.vagas()}|"> / 12</span>
+                </span>
+                <span th:if="${c.vagasLivres() > 0}" class="fw-semibold small" style="color: var(--fa-verde-escuro)"
+                      th:text="${c.vagasLivres() == 1} ? '1 vaga livre' : |${c.vagasLivres()} vagas livres|">1 vaga livre</span>
+                <span th:if="${c.vagasLivres() == 0}" class="fw-semibold small" style="color: var(--fa-laranja)"
+                      th:text="${c.espera().isEmpty()} ? 'Completo' : |Completo · ${c.espera().size()} em espera|">Completo</span>
+            </div>
+            <div class="barra-progresso"><div th:style="|width: ${c.percentagem()}%|"></div></div>
+        </section>
+
+        <!-- O meu estado -->
+        <div th:if="${c.inscrito() and !c.emEspera()}" class="aviso aviso-verde">
+            <span><strong>Estás inscrito.</strong>
+                <span th:if="${c.aberta()}">Podes cancelar enquanto a convocatória estiver aberta.</span></span>
+        </div>
+        <div th:if="${c.emEspera()}" class="aviso aviso-laranja">
+            <span><strong th:text="|Estás em ${c.posicaoNaEspera()}º na lista de espera.|">Estás em 1º na lista de espera.</strong>
+                Se alguém sair, sobes automaticamente.</span>
+        </div>
+
+        <!-- Partilha depois de a lista mudar -->
+        <section th:if="${listaMudou}" class="cartao d-flex flex-column gap-3">
+            <div>
+                <div class="fw-semibold">A lista mudou</div>
+                <div class="small text-secondary">Avisa o grupo com a lista atualizada.</div>
+            </div>
+            <a th:href="${c.whatsappUrl()}" target="_blank" rel="noopener" hx-boost="false" class="btn btn-fa btn-fa-sm btn-verde">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+                Partilhar no WhatsApp
+            </a>
+        </section>
+
+        <!-- Inscritos -->
+        <section class="seccao">
+            <h2 class="etiqueta">Inscritos</h2>
+            <p th:if="${c.inscritos().isEmpty()}" class="lista-vazia">Ainda ninguém se inscreveu.</p>
+            <ol th:unless="${c.inscritos().isEmpty()}" class="lista">
+                <li th:each="l : ${c.inscritos()}" th:classappend="${l.eu()} ? 'eu'">
+                    <span class="pos" th:text="${l.posicao()}">1</span>
+                    <span class="avatar" aria-hidden="true" th:text="${l.iniciais()}">RU</span>
+                    <span class="nome" th:text="${l.eu()} ? |${l.nome()} (tu)| : ${l.nome()}">Rui</span>
+                    <span th:if="${l.convidado()}" class="tag">Convidado</span>
+                    <span th:unless="${c.gestor()}" class="quando" th:text="${l.quando()}">seg. 18:02</span>
+                    <form th:if="${c.gestor()}" th:action="@{/jogos/{id}/gestao/inscricoes/{i}/remover(id=${c.jogoId()},i=${l.inscricaoId()})}" method="post"
+                          th:hx-confirm="|Tirar ${l.nome()} da lista? Fica registado como desistência.|">
+                        <button type="submit" class="btn-icone" th:aria-label="|Remover ${l.nome()}|">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                        </button>
+                    </form>
+                </li>
+            </ol>
+        </section>
+
+        <!-- Lista de espera -->
+        <section class="seccao">
+            <h2 class="etiqueta">Lista de espera</h2>
+            <p th:if="${c.espera().isEmpty()}" class="lista-vazia"
+               th:text="|Ninguém em espera. A partir do ${c.vagas() + 1}º inscrito, os jogadores ficam aqui por ordem de inscrição.|">Ninguém em espera.</p>
+            <ol th:unless="${c.espera().isEmpty()}" class="lista">
+                <li th:each="l, s : ${c.espera()}" th:classappend="${l.eu()} ? 'eu'">
+                    <span class="pos" th:text="${l.posicao()}">13</span>
+                    <span class="avatar avatar-espera" aria-hidden="true" th:text="${l.iniciais()}">SE</span>
+                    <span class="nome" th:text="${l.eu()} ? |${l.nome()} (tu)| : ${l.nome()}">Sérgio</span>
+                    <span class="tag tag-espera" th:text="|${s.count}º em espera|">1º em espera</span>
+                    <form th:if="${c.gestor()}" th:action="@{/jogos/{id}/gestao/inscricoes/{i}/remover(id=${c.jogoId()},i=${l.inscricaoId()})}" method="post"
+                          th:hx-confirm="|Tirar ${l.nome()} da lista de espera?|">
+                        <button type="submit" class="btn-icone" th:aria-label="|Remover ${l.nome()}|">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                        </button>
+                    </form>
+                </li>
+            </ol>
+        </section>
+
+        <!-- Gestão (Organizador / Admin) -->
+        <section th:if="${c.gestor()}" class="seccao">
+            <h2 class="etiqueta">Gestão do jogo</h2>
+            <div class="cartao d-flex flex-column gap-3">
+                <a th:href="${c.whatsappUrl()}" target="_blank" rel="noopener" hx-boost="false" class="btn btn-fa btn-fa-sm btn-contorno">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+                    Partilhar no WhatsApp
+                </a>
+
+                <form th:unless="${c.membrosDisponiveis().isEmpty()}" th:action="@{/jogos/{id}/gestao/jogadores(id=${c.jogoId()})}" method="post" class="d-flex flex-column gap-2">
+                    <label class="form-label m-0" for="utilizadorId">Inscrever um jogador</label>
+                    <div class="d-flex gap-2">
+                        <select class="form-select" id="utilizadorId" name="utilizadorId" required>
+                            <option th:each="m : ${c.membrosDisponiveis()}" th:value="${m.id()}" th:text="${m.nome()}">Nome</option>
+                        </select>
+                        <button type="submit" class="btn btn-contorno fw-semibold px-3" style="border-radius: 12px">Inscrever</button>
+                    </div>
+                </form>
+
+                <form th:action="@{/jogos/{id}/gestao/convidados(id=${c.jogoId()})}" method="post" class="d-flex flex-column gap-2">
+                    <label class="form-label m-0" for="nomeConvidado">Adicionar convidado (sem conta)</label>
+                    <div class="d-flex gap-2">
+                        <input class="form-control" id="nomeConvidado" name="nome" maxlength="60" placeholder="Nome do convidado" required>
+                        <button type="submit" class="btn btn-contorno fw-semibold px-3" style="border-radius: 12px">Adicionar</button>
+                    </div>
+                </form>
+
+                <form th:if="${c.aberta()}" th:action="@{/jogos/{id}/gestao/fechar(id=${c.jogoId()})}" method="post"
+                      hx-confirm="Fechar a convocatória? Depois disso, só o Organizador ou o Admin podem alterar a lista.">
+                    <button type="submit" class="btn btn-fa btn-fa-sm btn-escuro">Fechar convocatória</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Desistências -->
+        <details th:unless="${c.desistencias().isEmpty()}" class="cartao">
+            <summary>
+                <span th:text="${c.desistencias().size() == 1} ? '1 desistência' : |${c.desistencias().size()} desistências|">Desistências</span>
+                <span class="text-secondary small">ver</span>
+            </summary>
+            <ul class="list-unstyled m-0 mt-3 d-flex flex-column gap-2 small">
+                <li th:each="d : ${c.desistencias()}" class="d-flex justify-content-between gap-2">
+                    <span>
+                        <span class="fw-semibold" th:text="${d.nome()}">Bruno</span>
+                        <span th:if="${d.registadaPor()}" class="text-secondary" th:text="|· registada por ${d.registadaPor()}|"></span>
+                    </span>
+                    <span class="text-secondary text-nowrap" th:text="${d.quando()}">ter. 22:10</span>
+                </li>
+            </ul>
+        </details>
+    </main>
+
+    <div class="rodape">
+        <div class="barra-acao">
+            <form th:if="${c.podeInscrever()}" th:action="@{/jogos/{id}/inscricao(id=${c.jogoId()})}" method="post">
+                <button type="submit" class="btn btn-fa btn-verde"
+                        th:text="${c.vagasLivres() > 0} ? 'Inscrever-me' : 'Entrar na lista de espera'">Inscrever-me</button>
+            </form>
+            <form th:if="${c.podeCancelar()}" th:action="@{/jogos/{id}/inscricao/cancelar(id=${c.jogoId()})}" method="post"
+                  hx-confirm="Cancelar a tua inscrição?">
+                <button type="submit" class="btn btn-fa btn-contorno">Cancelar inscrição</button>
+            </form>
+            <p th:unless="${c.aberta()}" class="m-0 text-center text-secondary small py-2">
+                A convocatória está fechada. Para mudanças, fala com o organizador.
+            </p>
+        </div>
+        <nav th:replace="~{fragments/layout :: nav}"></nav>
+    </div>
+</div>
+</body>
+</html>

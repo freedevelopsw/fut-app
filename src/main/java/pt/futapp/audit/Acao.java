@@ -1,0 +1,26 @@
+package pt.futapp.audit;
+
+/** Tipos de ação registados na auditoria. */
+public enum Acao {
+    LOGIN,
+    REGISTO_UTILIZADOR,
+    CRIACAO_CONVITE,
+    ALTERACAO_ROLE,
+    ALTERACAO_PASSWORD,
+    BLOQUEIO_UTILIZADOR,
+    DESBLOQUEIO_UTILIZADOR,
+    CRIACAO_JOGO,
+    INSCRICAO_JOGO,
+    CANCELAMENTO_INSCRICAO,
+    PROMOCAO_LISTA_ESPERA,
+    ADICAO_CONVIDADO,
+    FECHO_CONVOCATORIA,
+    // Fases seguintes (ainda não usadas)
+    PUBLICACAO_EQUIPAS,
+    REGISTO_GOLO,
+    FECHO_JOGO,
+    VOTO,
+    ALTERACAO_VOTO,
+    ANULACAO_VOTO,
+    REABERTURA_FASE
+}

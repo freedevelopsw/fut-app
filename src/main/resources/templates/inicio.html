@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-PT" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Jogos')}"></head>
+<body hx-boost="true">
+<div class="app">
+    <header class="app-header">
+        <p class="etiqueta" th:text="|Olá, ${eu.nome()}|">Olá</p>
+        <h1 class="titulo">Jogos</h1>
+    </header>
+
+    <main class="app-main">
+        <div th:replace="~{fragments/layout :: mensagens}"></div>
+
+        <section class="seccao">
+            <h2 class="etiqueta">Próximos</h2>
+            <p th:if="${#lists.isEmpty(proximos)}" class="lista-vazia">
+                Ainda não há jogos marcados.
+                <span th:if="${eu.gestor()}">Cria o próximo e partilha a convocatória no grupo.</span>
+            </p>
+            <a th:each="j : ${proximos}" th:href="@{/jogos/{id}(id=${j.id()})}" class="cartao cartao-link">
+                <div class="d-flex justify-content-between align-items-center gap-2">
+                    <strong class="numero fs-5" th:text="${j.dia()}">Quinta-feira, 12 nov.</strong>
+                    <span class="chip" th:classappend="${j.aberta()} ? 'chip-verde' : 'chip-cinza'" th:text="${j.estado()}">Convocatória aberta</span>
+                </div>
+                <div class="meta">
+                    <span th:text="${j.hora()}">21:00</span>
+                    <span th:text="${j.local()}">Local</span>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="barra-progresso flex-grow-1"><div th:style="|width: ${j.inscritos() * 100 / j.vagas()}%|"></div></div>
+                    <span class="small fw-semibold" th:text="|${j.inscritos()} / ${j.vagas()}|">11 / 12</span>
+                </div>
+            </a>
+        </section>
+
+        <section th:unless="${#lists.isEmpty(anteriores)}" class="seccao">
+            <h2 class="etiqueta">Anteriores</h2>
+            <ul class="lista">
+                <li th:each="j : ${anteriores}">
+                    <a class="nome text-reset text-decoration-none py-2" th:href="@{/jogos/{id}(id=${j.id()})}" th:text="|${j.dia()} · ${j.local()}|">Jogo</a>
+                </li>
+            </ul>
+        </section>
+    </main>
+
+    <div class="rodape">
+        <div class="barra-acao" th:if="${eu.gestor()}">
+            <a th:href="@{/jogos/novo}" class="btn btn-fa btn-verde">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                Criar jogo
+            </a>
+        </div>
+        <nav th:replace="~{fragments/layout :: nav}"></nav>
+    </div>
+</div>
+</body>
+</html>

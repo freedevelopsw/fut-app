@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-PT" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Auditoria')}"></head>
+<body hx-boost="true">
+<div class="app">
+    <header class="app-header">
+        <a th:href="@{/perfil}" class="etiqueta text-decoration-none">← Perfil</a>
+        <h1 class="titulo">Auditoria</h1>
+        <p class="m-0 small text-secondary">Últimos 200 eventos. Os eventos com mais de 3 meses são apagados automaticamente.</p>
+    </header>
+
+    <main class="app-main">
+        <form th:action="@{/admin/auditoria}" method="get" class="d-flex gap-2">
+            <input class="form-control" name="ator" th:value="${filtroAtor}" placeholder="Utilizador" aria-label="Filtrar por utilizador">
+            <input class="form-control" name="jogo" th:value="${filtroJogo}" inputmode="numeric" placeholder="Jogo nº" aria-label="Filtrar por número do jogo" style="max-width: 110px">
+            <button type="submit" class="btn btn-contorno fw-semibold px-3" style="border-radius: 12px">Filtrar</button>
+        </form>
+
+        <p th:if="${#lists.isEmpty(eventos)}" class="lista-vazia">Sem eventos.</p>
+        <ul th:unless="${#lists.isEmpty(eventos)}" class="list-unstyled m-0 d-flex flex-column gap-2">
+            <li th:each="e : ${eventos}" class="cartao py-2 px-3 d-flex flex-column gap-1">
+                <div class="d-flex justify-content-between gap-2 small">
+                    <span class="fw-semibold" th:text="${e.acao()}">LOGIN</span>
+                    <span class="text-secondary text-nowrap" th:text="${e.quando()}">10/11/2026 21:03</span>
+                </div>
+                <span class="small" th:text="${e.detalhes()}">Detalhes</span>
+                <span class="small text-secondary">
+                    <span th:text="${e.ator()}">utilizador</span>
+                    <a th:if="${e.jogoId()}" th:href="@{/admin/auditoria(jogo=${e.jogoId()})}" th:text="|· jogo ${e.jogoId()}|">· jogo 1</a>
+                </span>
+            </li>
+        </ul>
+    </main>
+
+    <div class="rodape">
+        <nav th:replace="~{fragments/layout :: nav}"></nav>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt-PT" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Entrar')}"></head>
+<body>
+<main class="ecra-entrada">
+    <div class="d-flex flex-column gap-3">
+        <div class="logo" aria-hidden="true">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7l4 3-1.5 5h-5L8 10z"/></svg>
+        </div>
+        <h1 class="titulo">FutApp</h1>
+        <p class="m-0 text-secondary">Entra para veres a convocatória e te inscreveres no próximo jogo.</p>
+    </div>
+
+    <div th:if="${param.error}" class="aviso aviso-erro" role="alert">Utilizador ou password errados.</div>
+    <div th:if="${param.bloqueado}" class="aviso aviso-laranja" role="alert">A tua conta está bloqueada. Se voltares a jogar, fala com o administrador.</div>
+    <div th:if="${param.passwordAlterada}" class="aviso aviso-verde" role="status">Password alterada. Entra com a nova password.</div>
+    <div th:if="${param.saiu}" class="aviso aviso-verde" role="status">Saíste da tua conta.</div>
+    <div th:if="${param.registado}" class="aviso aviso-verde" role="status">Conta criada. Já podes entrar.</div>
+
+    <form th:action="@{/login}" method="post" class="d-flex flex-column gap-3">
+        <div>
+            <label class="form-label" for="username">Utilizador</label>
+            <input class="form-control" id="username" name="username" autocomplete="username" autocapitalize="none" required autofocus>
+        </div>
+        <div>
+            <label class="form-label" for="password">Password</label>
+            <input class="form-control" id="password" name="password" type="password" autocomplete="current-password" required>
+        </div>
+        <button type="submit" class="btn btn-fa btn-verde">Entrar</button>
+    </form>
+
+    <p class="m-0 text-center text-secondary small">Ainda não tens conta? Pede um link de convite ao administrador do grupo.</p>
+</main>
+</body>
+</html>
