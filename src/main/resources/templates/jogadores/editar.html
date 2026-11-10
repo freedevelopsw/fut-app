@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-PT" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Editar dados')}"></head>
+<body hx-boost="true">
+<div class="app">
+    <header class="app-header">
+        <a th:href="@{/jogadores/{id}(id=${carta.id()})}" class="etiqueta text-decoration-none">← Carta</a>
+        <h1 class="titulo" th:text="${carta.eu()} ? 'Os meus dados' : |Dados de ${carta.nomeVisivel()}|">Os meus dados</h1>
+        <p class="m-0 small text-secondary">Só o nome é obrigatório. O resto aparece na tua carta e ajuda a fazer equipas equilibradas.</p>
+    </header>
+
+    <form th:action="@{/jogadores/{id}/editar(id=${carta.id()})}" th:object="${form}" method="post" class="d-flex flex-column flex-grow-1" novalidate>
+        <main class="app-main">
+            <div th:replace="~{fragments/layout :: mensagens}"></div>
+
+            <section class="seccao">
+                <h2 class="etiqueta">Identificação</h2>
+                <div>
+                    <label class="form-label" for="nome">Nome</label>
+                    <input class="form-control" th:field="*{nome}" th:classappend="${#fields.hasErrors('nome')} ? 'is-invalid'" maxlength="60" required>
+                    <div class="invalid-feedback" th:errors="*{nome}"></div>
+                </div>
+                <div>
+                    <label class="form-label" for="alcunha">Alcunha <span class="text-secondary fw-normal">(opcional)</span></label>
+                    <input class="form-control" th:field="*{alcunha}" th:classappend="${#fields.hasErrors('alcunha')} ? 'is-invalid'" maxlength="30">
+                    <div class="invalid-feedback" th:errors="*{alcunha}"></div>
+                    <div class="form-text">Se preencheres, aparece nas listas em vez do nome.</div>
+                </div>
+            </section>
+
+            <section class="seccao">
+                <h2 class="etiqueta">Em campo</h2>
+                <div>
+                    <label class="form-label" for="posicao">Posição preferida</label>
+                    <select class="form-select" th:field="*{posicao}">
+                        <option value="">—</option>
+                        <option th:each="p : ${posicoes}" th:value="${p}" th:text="${p.descricao}">Médio</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label" for="posicaoSecundaria">Posição secundária <span class="text-secondary fw-normal">(opcional)</span></label>
+                    <select class="form-select" th:field="*{posicaoSecundaria}" th:classappend="${#fields.hasErrors('posicaoSecundaria')} ? 'is-invalid'">
+                        <option value="">—</option>
+                        <option th:each="p : ${posicoes}" th:value="${p}" th:text="${p.descricao}">Defesa</option>
+                    </select>
+                    <div class="invalid-feedback" th:errors="*{posicaoSecundaria}"></div>
+                </div>
+                <div>
+                    <label class="form-label" for="pe">Pé preferido</label>
+                    <select class="form-select" th:field="*{pe}">
+                        <option value="">—</option>
+                        <option th:each="p : ${pes}" th:value="${p}" th:text="${p.descricao}">Direito</option>
+                    </select>
+                </div>
+            </section>
+
+            <section class="seccao">
+                <h2 class="etiqueta">Auto-avaliação (1 a 10)</h2>
+                <div class="d-grid gap-3" style="grid-template-columns: repeat(2, minmax(0, 1fr))">
+                    <div>
+                        <label class="form-label" for="velocidade">Velocidade</label>
+                        <select class="form-select" th:field="*{velocidade}" th:classappend="${#fields.hasErrors('velocidade')} ? 'is-invalid'">
+                            <option value="">—</option>
+                            <option th:each="n : ${#numbers.sequence(1, 10)}" th:value="${n}" th:text="${n}">5</option>
+                        </select>
+                        <div class="invalid-feedback" th:errors="*{velocidade}"></div>
+                    </div>
+                    <div>
+                        <label class="form-label" for="tecnica">Técnica</label>
+                        <select class="form-select" th:field="*{tecnica}" th:classappend="${#fields.hasErrors('tecnica')} ? 'is-invalid'">
+                            <option value="">—</option>
+                            <option th:each="n : ${#numbers.sequence(1, 10)}" th:value="${n}" th:text="${n}">5</option>
+                        </select>
+                        <div class="invalid-feedback" th:errors="*{tecnica}"></div>
+                    </div>
+                    <div>
+                        <label class="form-label" for="remate">Remate</label>
+                        <select class="form-select" th:field="*{remate}" th:classappend="${#fields.hasErrors('remate')} ? 'is-invalid'">
+                            <option value="">—</option>
+                            <option th:each="n : ${#numbers.sequence(1, 10)}" th:value="${n}" th:text="${n}">5</option>
+                        </select>
+                        <div class="invalid-feedback" th:errors="*{remate}"></div>
+                    </div>
+                    <div>
+                        <label class="form-label" for="passe">Passe</label>
+                        <select class="form-select" th:field="*{passe}" th:classappend="${#fields.hasErrors('passe')} ? 'is-invalid'">
+                            <option value="">—</option>
+                            <option th:each="n : ${#numbers.sequence(1, 10)}" th:value="${n}" th:text="${n}">5</option>
+                        </select>
+                        <div class="invalid-feedback" th:errors="*{passe}"></div>
+                    </div>
+                    <div>
+                        <label class="form-label" for="defesa">Defesa</label>
+                        <select class="form-select" th:field="*{defesa}" th:classappend="${#fields.hasErrors('defesa')} ? 'is-invalid'">
+                            <option value="">—</option>
+                            <option th:each="n : ${#numbers.sequence(1, 10)}" th:value="${n}" th:text="${n}">5</option>
+                        </select>
+                        <div class="invalid-feedback" th:errors="*{defesa}"></div>
+                    </div>
+                </div>
+                <p class="m-0 small text-secondary">Sê honesto: as equipas equilibradas dependem disto.</p>
+            </section>
+        </main>
+
+        <div class="rodape">
+            <div class="barra-acao">
+                <button type="submit" class="btn btn-fa btn-verde">Guardar</button>
+            </div>
+            <nav th:replace="~{fragments/layout :: nav}"></nav>
+        </div>
+    </form>
+</div>
+</body>
+</html>

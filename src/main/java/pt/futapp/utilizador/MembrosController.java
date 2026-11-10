@@ -18,7 +18,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import pt.futapp.comum.OperacaoInvalidaException;
 import pt.futapp.web.Formatos;
 
-/** Gestão de membros pelo Admin: roles, bloqueio e links de convite (a única forma de registo). */
+/** Gestão de membros pelo Admin: bloqueio e links de convite (a única forma de registo). As roles mudam-se na carta do jogador. */
 @Controller
 public class MembrosController {
 
@@ -37,21 +37,6 @@ public class MembrosController {
         model.addAttribute("bloqueados", membros.stream().filter(MembroView::bloqueado).toList());
         model.addAttribute("nav", "perfil");
         return "admin/membros";
-    }
-
-    @PostMapping("/admin/membros/{id}/roles")
-    public String alterarRole(@PathVariable Long id,
-                              @RequestParam Role role,
-                              @RequestParam boolean ativa,
-                              Principal principal,
-                              RedirectAttributes redirect) {
-        try {
-            utilizadores.alterarRole(id, role, ativa, principal.getName());
-            redirect.addFlashAttribute("sucesso", "Roles atualizadas.");
-        } catch (OperacaoInvalidaException e) {
-            redirect.addFlashAttribute("erro", e.getMessage());
-        }
-        return "redirect:/admin/membros";
     }
 
     // ---------------------------------------------------------------- bloquear / desbloquear

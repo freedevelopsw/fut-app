@@ -52,7 +52,7 @@ public record Convocatoria(
     }
 
     /** Uma pessoa na lista: {@code posicao} conta a partir de 1 sobre todas as inscrições ativas. */
-    public record Linha(Long inscricaoId, int posicao, String nome, String iniciais, boolean convidado,
+    public record Linha(Long inscricaoId, Long jogadorId, int posicao, String nome, String iniciais, boolean convidado,
                         String quando, boolean eu) {
     }
 

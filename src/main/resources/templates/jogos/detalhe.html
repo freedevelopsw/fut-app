@@ -69,7 +69,9 @@
                 <li th:each="l : ${c.inscritos()}" th:classappend="${l.eu()} ? 'eu'">
                     <span class="pos" th:text="${l.posicao()}">1</span>
                     <span class="avatar" aria-hidden="true" th:text="${l.iniciais()}">RU</span>
-                    <span class="nome" th:text="${l.eu()} ? |${l.nome()} (tu)| : ${l.nome()}">Rui</span>
+                    <a th:if="${l.jogadorId()}" class="nome text-reset text-decoration-none" th:href="@{/jogadores/{j}(j=${l.jogadorId()})}"
+                       th:text="${l.eu()} ? |${l.nome()} (tu)| : ${l.nome()}">Rui</a>
+                    <span th:unless="${l.jogadorId()}" class="nome" th:text="${l.nome()}">Zé</span>
                     <span th:if="${l.convidado()}" class="tag">Convidado</span>
                     <span th:unless="${c.gestor()}" class="quando" th:text="${l.quando()}">seg. 18:02</span>
                     <form th:if="${c.gestor()}" th:action="@{/jogos/{id}/gestao/inscricoes/{i}/remover(id=${c.jogoId()},i=${l.inscricaoId()})}" method="post"
@@ -91,7 +93,9 @@
                 <li th:each="l, s : ${c.espera()}" th:classappend="${l.eu()} ? 'eu'">
                     <span class="pos" th:text="${l.posicao()}">13</span>
                     <span class="avatar avatar-espera" aria-hidden="true" th:text="${l.iniciais()}">SE</span>
-                    <span class="nome" th:text="${l.eu()} ? |${l.nome()} (tu)| : ${l.nome()}">Sérgio</span>
+                    <a th:if="${l.jogadorId()}" class="nome text-reset text-decoration-none" th:href="@{/jogadores/{j}(j=${l.jogadorId()})}"
+                       th:text="${l.eu()} ? |${l.nome()} (tu)| : ${l.nome()}">Sérgio</a>
+                    <span th:unless="${l.jogadorId()}" class="nome" th:text="${l.nome()}">Zé</span>
                     <span class="tag tag-espera" th:text="|${s.count}º em espera|">1º em espera</span>
                     <form th:if="${c.gestor()}" th:action="@{/jogos/{id}/gestao/inscricoes/{i}/remover(id=${c.jogoId()},i=${l.inscricaoId()})}" method="post"
                           th:hx-confirm="|Tirar ${l.nome()} da lista de espera?|">

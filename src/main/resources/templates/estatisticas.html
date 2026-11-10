@@ -8,6 +8,20 @@
         <h1 class="titulo">Estatísticas</h1>
     </header>
     <main class="app-main">
+        <section class="seccao">
+            <h2 class="etiqueta" th:text="|Jogadores (${jogadores.size()})|">Jogadores</h2>
+            <ul class="lista">
+                <li th:each="j : ${jogadores}" th:classappend="${j.eu()} ? 'eu'">
+                    <a class="linha-link" th:href="@{/jogadores/{id}(id=${j.id()})}">
+                        <span class="avatar" aria-hidden="true" th:text="${j.iniciais()}">RU</span>
+                        <span class="nome" th:text="${j.eu()} ? |${j.nomeVisivel()} (tu)| : ${j.nomeVisivel()}">Rui</span>
+                        <span class="tag" th:if="${j.posicaoSigla()}" th:text="${j.posicaoSigla()}">MED</span>
+                        <span class="rating-mini me-2" th:classappend="${j.rating() == null} ? 'vazio'" th:text="${j.rating()} ?: '–'"
+                              th:aria-label="${j.rating() != null} ? |Rating ${j.rating()}| : 'Sem rating'">78</span>
+                    </a>
+                </li>
+            </ul>
+        </section>
         <p class="lista-vazia">Golos, MVPs, presenças e rankings aparecem aqui depois de implementarmos o registo dos jogos e as votações.</p>
     </main>
     <div class="rodape">

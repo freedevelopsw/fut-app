@@ -75,7 +75,9 @@ class PaginasTest {
         jogos.inscrever(jogo, organizador);
         jogos.adicionarConvidado(jogo, "Zé", organizador);
 
+        Long adminId = utilizadores.vista(ADMIN).orElseThrow().id();
         for (String url : List.of("/", "/jogos/" + jogo, "/jogos/novo", "/perfil", "/estatisticas",
+                                  "/jogadores/" + adminId, "/jogadores/" + adminId + "/editar",
                                   "/admin/membros", "/admin/convites", "/admin/auditoria", "/perfil/password")) {
             mvc.perform(get(url).with(comoOrganizador())).andExpect(status().isOk());
         }
@@ -217,6 +219,114 @@ class PaginasTest {
             .andExpect(content().string(containsString("password atual não está certa")));
 
         mvc.perform(formLogin("/login").user(rui).password("segredo123")).andExpect(redirectedUrl("/"));
+    }
+
+    @Test
+    void umJogadorVeACartaDosOutrosMasNaoAEdita() throws Exception {
+        String rui = registar(utilizadores, "rui");
+        String nuno = registar(utilizadores, "nuno");
+        Long idRui = utilizadores.vista(rui).orElseThrow().id();
+        var comoNuno = user(nuno).roles("JOGADOR");
+
+        mvc.perform(get("/jogadores/" + idRui).with(comoNuno))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("Nome rui")))
+            .andExpect(content().string(not(containsString("/editar"))));
+        mvc.perform(get("/jogadores/" + idRui + "/editar").with(comoNuno)).andExpect(status().isBadRequest());
+        mvc.perform(post("/jogadores/" + idRui + "/editar").with(comoNuno).with(csrf()).param("nome", "Hackeado"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("Só podes alterar os teus próprios dados")));
+        mvc.perform(get("/estatisticas").with(comoNuno))
+            .andExpect(content().string(containsString("/jogadores/" + idRui)));
+    }
+
+    @Test
+    void oJogadorPreencheACartaPeloEcra() throws Exception {
+        String rui = registar(utilizadores, "rui");
+        Long idRui = utilizadores.vista(rui).orElseThrow().id();
+        var comoRui = user(rui).roles("JOGADOR");
+
+        mvc.perform(get("/perfil/dados").with(comoRui)).andExpect(redirectedUrl("/jogadores/" + idRui + "/editar"));
+        mvc.perform(get("/jogadores/" + idRui + "/editar").with(comoRui)).andExpect(status().isOk());
+        mvc.perform(post("/jogadores/" + idRui + "/editar").with(comoRui).with(csrf())
+                .param("nome", "Rui Costa")
+                .param("alcunha", "Maestro")
+                .param("posicao", "MEDIO")
+                .param("posicaoSecundaria", "")
+                .param("pe", "DIREITO")
+                .param("velocidade", "7")
+                .param("tecnica", "9")
+                .param("remate", "")
+                .param("passe", "8")
+                .param("defesa", ""))
+            .andExpect(redirectedUrl("/jogadores/" + idRui));
+
+        mvc.perform(get("/jogadores/" + idRui).with(comoRui))
+            .andExpect(content().string(containsString("Maestro")))
+            .andExpect(content().string(containsString("MED")));
+        mvc.perform(get("/perfil").with(comoRui)).andExpect(content().string(containsString("Maestro")));
+    }
+
+    @Test
+    void semNomeOFormularioDeDadosVoltaComErro() throws Exception {
+        String rui = registar(utilizadores, "rui");
+        Long idRui = utilizadores.vista(rui).orElseThrow().id();
+
+        mvc.perform(post("/jogadores/" + idRui + "/editar").with(user(rui).roles("JOGADOR")).with(csrf()).param("nome", ""))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("O nome é obrigatório")));
+    }
+
+    @Test
+    void osMembrosJaNaoTemBotoesDeRoles() throws Exception {
+        registar(utilizadores, "rui");
+
+        mvc.perform(get("/admin/membros").with(comoOrganizador()))
+            .andExpect(status().isOk())
+            .andExpect(content().string(not(containsString("name=\"nivel\""))));
+    }
+
+    @Test
+    void oNivelMudaNumDropdownNaCartaConformeQuemEsta() throws Exception {
+        String rui = registar(utilizadores, "rui");
+        String nuno = registar(utilizadores, "nuno");
+        Long idRui = utilizadores.vista(rui).orElseThrow().id();
+        Long idNuno = utilizadores.vista(nuno).orElseThrow().id();
+        Long idAdmin = utilizadores.vista(ADMIN).orElseThrow().id();
+
+        // Jogador: não vê o nível de acesso
+        mvc.perform(get("/jogadores/" + idNuno).with(user(rui).roles("JOGADOR")))
+            .andExpect(content().string(not(containsString("name=\"nivel\""))));
+
+        // Admin: dropdown com os três níveis; torna o Rui organizador
+        mvc.perform(get("/jogadores/" + idRui).with(comoOrganizador()))
+            .andExpect(content().string(containsString("name=\"nivel\"")))
+            .andExpect(content().string(containsString("value=\"ADMIN\"")));
+        mvc.perform(post("/jogadores/" + idRui + "/nivel").with(comoOrganizador()).with(csrf()).param("nivel", "ORGANIZADOR"))
+            .andExpect(redirectedUrl("/jogadores/" + idRui));
+        assertThat(utilizadores.vista(rui).orElseThrow().gestor()).isTrue();
+
+        // Admin na própria carta: sem dropdown
+        mvc.perform(get("/jogadores/" + idAdmin).with(comoOrganizador()))
+            .andExpect(content().string(not(containsString("name=\"nivel\""))))
+            .andExpect(content().string(containsString("Não podes mudar o teu próprio nível de Admin")));
+
+        // Organizador: dropdown só com Jogador e Organizador; não consegue dar Admin
+        var comoRui = user(rui).roles("JOGADOR", "ORGANIZADOR");
+        mvc.perform(get("/jogadores/" + idNuno).with(comoRui))
+            .andExpect(content().string(containsString("name=\"nivel\"")))
+            .andExpect(content().string(not(containsString("value=\"ADMIN\""))));
+        mvc.perform(post("/jogadores/" + idNuno + "/nivel").with(comoRui).with(csrf()).param("nivel", "ADMIN"))
+            .andExpect(redirectedUrl("/jogadores/" + idNuno));
+        assertThat(utilizadores.vista(nuno).orElseThrow().admin()).isFalse();
+        mvc.perform(post("/jogadores/" + idNuno + "/nivel").with(comoRui).with(csrf()).param("nivel", "ORGANIZADOR"))
+            .andExpect(redirectedUrl("/jogadores/" + idNuno));
+        assertThat(utilizadores.vista(nuno).orElseThrow().gestor()).isTrue();
+
+        // Organizador na carta de um Admin: vê o nível mas não o muda
+        mvc.perform(get("/jogadores/" + idAdmin).with(comoRui))
+            .andExpect(content().string(not(containsString("name=\"nivel\""))))
+            .andExpect(content().string(containsString("Só o Admin pode dar ou retirar o nível de Admin")));
     }
 
     @Test

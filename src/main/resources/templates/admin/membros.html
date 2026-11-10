@@ -6,7 +6,7 @@
     <header class="app-header">
         <a th:href="@{/perfil}" class="etiqueta text-decoration-none">← Perfil</a>
         <h1 class="titulo">Membros</h1>
-        <p class="m-0 small text-secondary">Todos são jogadores. Toca numa role para a ativar ou retirar. Novos membros entram por link de convite.</p>
+        <p class="m-0 small text-secondary">Todos são jogadores. Para mudar as roles de alguém, abre a carta dessa pessoa. Novos membros entram por link de convite.</p>
     </header>
 
     <main class="app-main">
@@ -19,25 +19,12 @@
             <ul class="lista">
                 <li th:each="m : ${ativos}" class="py-2 pe-2 flex-wrap">
                     <div class="d-flex flex-column flex-grow-1" style="min-width: 0">
-                        <span class="fw-semibold text-truncate" th:text="${m.eu()} ? |${m.nome()} (tu)| : ${m.nome()}">Nome</span>
+                        <a class="fw-semibold text-truncate text-reset" th:href="@{/jogadores/{id}(id=${m.id()})}" th:text="${m.eu()} ? |${m.nome()} (tu)| : ${m.nome()}">Nome</a>
                         <span class="small text-secondary" th:text="${m.username()}">utilizador</span>
                     </div>
                     <div class="d-flex gap-1 align-items-center">
-                        <form th:action="@{/admin/membros/{id}/roles(id=${m.id()})}" method="post">
-                            <input type="hidden" name="role" value="ORGANIZADOR">
-                            <input type="hidden" name="ativa" th:value="${!m.organizador()}">
-                            <button type="submit" class="btn btn-sm fw-semibold px-2"
-                                    th:classappend="${m.organizador()} ? 'btn-verde' : 'btn-contorno'"
-                                    th:aria-pressed="${m.organizador()}" style="min-height: 44px; border-radius: 10px">Organizador</button>
-                        </form>
-                        <form th:action="@{/admin/membros/{id}/roles(id=${m.id()})}" method="post">
-                            <input type="hidden" name="role" value="ADMIN">
-                            <input type="hidden" name="ativa" th:value="${!m.admin()}">
-                            <button type="submit" class="btn btn-sm fw-semibold px-2"
-                                    th:classappend="${m.admin()} ? 'btn-verde' : 'btn-contorno'"
-                                    th:aria-pressed="${m.admin()}" th:disabled="${m.eu() and m.admin()}"
-                                    style="min-height: 44px; border-radius: 10px">Admin</button>
-                        </form>
+                        <span class="tag" th:if="${m.organizador() and !m.admin()}">Organizador</span>
+                        <span class="tag" th:if="${m.admin()}">Admin</span>
                         <form th:unless="${m.eu()}" th:action="@{/admin/membros/{id}/bloqueio(id=${m.id()})}" method="post"
                               th:hx-confirm="|Bloquear ${m.nome()}? Deixa de conseguir entrar e sai das convocatórias abertas. O histórico mantém-se.|">
                             <input type="hidden" name="bloquear" value="true">
@@ -56,7 +43,7 @@
             <ul class="lista">
                 <li th:each="m : ${bloqueados}" class="py-2 pe-2">
                     <div class="d-flex flex-column flex-grow-1" style="min-width: 0">
-                        <span class="fw-semibold text-truncate text-secondary" th:text="${m.nome()}">Nome</span>
+                        <a class="fw-semibold text-truncate text-secondary" th:href="@{/jogadores/{id}(id=${m.id()})}" th:text="${m.nome()}">Nome</a>
                         <span class="small text-secondary" th:text="|${m.username()} · bloqueado em ${m.bloqueadoEm()}|">utilizador</span>
                     </div>
                     <form th:action="@{/admin/membros/{id}/bloqueio(id=${m.id()})}" method="post">

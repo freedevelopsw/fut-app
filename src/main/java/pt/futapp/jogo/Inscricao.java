@@ -85,7 +85,7 @@ public class Inscricao {
     }
 
     public String getNomeVisivel() {
-        return jogador != null ? jogador.getNome() : nomeConvidado;
+        return jogador != null ? jogador.getNomeVisivel() : nomeConvidado;
     }
 
     public Long getId() { return id; }

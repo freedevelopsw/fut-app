@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-PT" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- Carta do jogador. Parâmetro: c = CartaView -->
+<section th:fragment="carta(c)" class="carta" th:aria-label="|Carta de ${c.nomeVisivel()}|">
+    <div class="carta-topo">
+        <div class="carta-rating">
+            <span class="valor" th:text="${c.rating()} ?: '–'">78</span>
+            <span class="sigla" th:text="${c.posicaoSigla()} ?: '—'">MED</span>
+        </div>
+        <span class="carta-avatar" aria-hidden="true" th:text="${c.iniciais()}">RU</span>
+        <div class="d-flex flex-column gap-1" style="min-width: 0">
+            <h2 class="carta-nome" th:text="${c.nomeVisivel()}">Rui</h2>
+            <span class="carta-sub" th:if="${c.alcunha() != null}" th:text="${c.nome()}">Rui Costa</span>
+        </div>
+    </div>
+
+    <div class="carta-factos" th:if="${c.posicao() != null or c.pe() != null or c.bloqueado()}">
+        <span class="carta-facto" th:if="${c.posicao()}" th:text="${c.posicao()}">Médio</span>
+        <span class="carta-facto" th:if="${c.posicaoSecundaria()}" th:text="|também ${c.posicaoSecundaria()}|">também Defesa</span>
+        <span class="carta-facto" th:if="${c.pe()}" th:text="|Pé ${c.pe()}|">Pé direito</span>
+        <span class="carta-facto" th:if="${c.bloqueado()}">Bloqueado</span>
+    </div>
+
+    <ul class="carta-atributos" th:if="${c.rating() != null}">
+        <li th:each="a : ${c.atributos()}">
+            <span class="linha"><span th:text="${a.nome()}">Velocidade</span><span class="num" th:text="${a.valor()} ?: '–'">8</span></span>
+            <span class="carta-barra" aria-hidden="true"><div th:style="|width: ${a.percentagem()}%|"></div></span>
+        </li>
+    </ul>
+
+    <p class="carta-vazia" th:unless="${c.preenchida()}"
+       th:text="${c.eu()} ? 'Ainda não preencheste a tua carta. Diz aos outros onde jogas e como te avalias.' : 'Este jogador ainda não preencheu a carta.'">Ainda sem caracterização.</p>
+</section>
+</body>
+</html>

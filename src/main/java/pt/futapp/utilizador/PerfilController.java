@@ -20,9 +20,18 @@ import pt.futapp.config.Sessoes;
 public class PerfilController {
 
     private final UtilizadorService utilizadores;
+    private final JogadorService jogadores;
 
-    public PerfilController(UtilizadorService utilizadores) {
+    public PerfilController(UtilizadorService utilizadores, JogadorService jogadores) {
         this.utilizadores = utilizadores;
+        this.jogadores = jogadores;
+    }
+
+    @GetMapping("/perfil")
+    public String perfil(Principal principal, Model model) {
+        model.addAttribute("carta", jogadores.carta(jogadores.idDe(principal.getName()), principal.getName()));
+        model.addAttribute("nav", "perfil");
+        return "perfil";
     }
 
     @GetMapping("/perfil/password")

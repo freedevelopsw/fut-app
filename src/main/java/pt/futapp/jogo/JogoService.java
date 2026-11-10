@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import pt.futapp.audit.Acao;
 import pt.futapp.audit.AuditEvent;
+import pt.futapp.comum.Nomes;
 import pt.futapp.comum.OperacaoInvalidaException;
 import pt.futapp.utilizador.Utilizador;
 import pt.futapp.utilizador.UtilizadorRepository;
@@ -73,8 +74,9 @@ public class JogoService {
             if (ins.getJogador() != null) {
                 jaInscritos.add(ins.getJogador().getId());
             }
-            Convocatoria.Linha linha = new Convocatoria.Linha(ins.getId(), i + 1, ins.getNomeVisivel(),
-                iniciais(ins.getNomeVisivel()), ins.isConvidado(), fmt.curto(ins.getInscritoEm()), minha);
+            Convocatoria.Linha linha = new Convocatoria.Linha(ins.getId(),
+                ins.getJogador() != null ? ins.getJogador().getId() : null, i + 1, ins.getNomeVisivel(),
+                Nomes.iniciais(ins.getNomeVisivel()), ins.isConvidado(), fmt.curto(ins.getInscritoEm()), minha);
             (i < jogo.getVagas() ? inscritos : espera).add(linha);
         }
 
@@ -87,7 +89,7 @@ public class JogoService {
         List<Convocatoria.MembroOpcao> disponiveis = eu.ehGestor()
             ? utilizadores.findByBloqueadoFalseOrderByNomeAsc().stream()
                 .filter(u -> !jaInscritos.contains(u.getId()))
-                .map(u -> new Convocatoria.MembroOpcao(u.getId(), u.getNome()))
+                .map(u -> new Convocatoria.MembroOpcao(u.getId(), u.getNomeVisivel()))
                 .toList()
             : List.of();
 
@@ -284,17 +286,6 @@ public class JogoService {
         return posicao <= jogo.getVagas()
             ? "inscrito em " + posicao + "º lugar"
             : "em lista de espera (" + (posicao - jogo.getVagas()) + "º)";
-    }
-
-    static String iniciais(String nome) {
-        if (nome == null || nome.isBlank()) {
-            return "?";
-        }
-        String[] partes = nome.trim().split("\\s+");
-        if (partes.length == 1) {
-            return partes[0].substring(0, Math.min(2, partes[0].length())).toUpperCase();
-        }
-        return (partes[0].substring(0, 1) + partes[partes.length - 1].substring(0, 1)).toUpperCase();
     }
 
     private LocalDateTime agora() {

@@ -47,10 +47,20 @@ O dono do projeto não escreve código: todo o código é gerado, testado automa
 - Cada utilizador muda a própria password em `/perfil/password` (confirma a atual). Depois a sessão termina
   (`Sessoes.terminar`) e entra-se com a nova; os cookies remember-me dos outros dispositivos deixam de valer.
 
+## Carta do jogador
+- `Utilizador.alcunha` + `Caracterizacao` (@Embeddable): posição, posição secundária, pé, 5 atributos 1–10. Só o nome é obrigatório.
+- Rating = média arredondada dos atributos preenchidos. Nas listas usa-se `getNomeVisivel()` (alcunha ou nome).
+- `/jogadores/{id}`: carta visível a todos; `/jogadores/{id}/editar`: o próprio ou o Admin (`JogadorService`).
+- Lista de jogadores ativos no ecrã Estatísticas; nomes nas convocatórias e nos membros ligam à carta.
+
 ## Roles
 Cumulativas: `JOGADOR`, `ORGANIZADOR`, `ADMIN`. Convidado = inscrição sem conta (`Inscricao.nomeConvidado`).
+- Mudam-se na carta do jogador, num dropdown de nível de acesso (`NivelAcesso`: Jogador, Organizador, Admin;
+  cumulativos) via `POST /jogadores/{id}/nivel`, não na lista de Membros.
+- Admin escolhe qualquer nível; Organizador só Jogador/Organizador e não mexe em Admins; Jogador não muda nada
+  (`UtilizadorService.opcoesNivel`). O Admin não muda o próprio nível.
 
 ## Estado
-- Fatia 1 (M0 + M1): admin no arranque, registo só por convite, bloqueio de membros, mudar password, login, roles, criar jogo, convocatória (12 vagas, espera a partir do 13º, cancelamentos registados, fecho manual), partilha WhatsApp, auditoria com limpeza.
+- Fatia 1 (M0 + M1): admin no arranque, registo só por convite, bloqueio de membros, mudar password, carta do jogador, login, roles, criar jogo, convocatória (12 vagas, espera a partir do 13º, cancelamentos registados, fecho manual), partilha WhatsApp, auditoria com limpeza.
 - Pendente: convidados passarem a utilizadores (ligar o histórico do convidado à nova conta).
 - Seguinte: equipas (Fase 2), registo do jogo (Fase 3), votação (Fase 4), resumo (Fase 5).

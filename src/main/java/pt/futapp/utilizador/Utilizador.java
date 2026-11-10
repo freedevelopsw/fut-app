@@ -7,6 +7,7 @@ import java.util.Set;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -30,6 +31,13 @@ public class Utilizador {
 
     @Column(nullable = false, length = 60)
     private String nome;
+
+    /** Opcional: quando existe, é o nome que aparece nas listas. */
+    @Column(length = 30)
+    private String alcunha;
+
+    @Embedded
+    private Caracterizacao caracterizacao;
 
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
@@ -66,6 +74,17 @@ public class Utilizador {
         this.bloqueadoEm = quando;
     }
 
+    /** Nome que aparece nas listas: a alcunha, se existir, senão o nome. */
+    public String getNomeVisivel() {
+        return alcunha != null && !alcunha.isBlank() ? alcunha : nome;
+    }
+
+    public void atualizarDados(String nome, String alcunha, Caracterizacao caracterizacao) {
+        this.nome = nome;
+        this.alcunha = alcunha;
+        this.caracterizacao = caracterizacao;
+    }
+
     public void alterarPasswordHash(String novoHash) {
         this.passwordHash = novoHash;
     }
@@ -87,6 +106,12 @@ public class Utilizador {
     public Long getId() { return id; }
     public String getUsername() { return username; }
     public String getNome() { return nome; }
+    public String getAlcunha() { return alcunha; }
+
+    /** Nunca null (o Hibernate devolve null quando todas as colunas estão vazias). */
+    public Caracterizacao getCaracterizacao() {
+        return caracterizacao != null ? caracterizacao : new Caracterizacao();
+    }
     public String getPasswordHash() { return passwordHash; }
     public Set<Role> getRoles() { return roles; }
     public LocalDateTime getCriadoEm() { return criadoEm; }

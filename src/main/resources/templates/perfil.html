@@ -4,22 +4,29 @@
 <body hx-boost="true">
 <div class="app">
     <header class="app-header">
-        <p class="etiqueta">Perfil</p>
-        <h1 class="titulo" th:text="${eu.nome()}">Nome</h1>
-        <div class="d-flex flex-wrap gap-2">
-            <span class="tag">Jogador</span>
-            <span class="tag" th:if="${eu.gestor() and !eu.admin()}">Organizador</span>
-            <span class="tag" th:if="${eu.admin()}">Admin</span>
+        <div class="d-flex justify-content-between align-items-center gap-2">
+            <p class="etiqueta">Perfil</p>
+            <div class="d-flex flex-wrap gap-2">
+                <span class="tag" th:if="${eu.gestor() and !eu.admin()}">Organizador</span>
+                <span class="tag" th:if="${eu.admin()}">Admin</span>
+            </div>
         </div>
     </header>
 
     <main class="app-main">
         <div th:replace="~{fragments/layout :: mensagens}"></div>
 
-        <section class="cartao d-flex flex-column gap-1">
-            <span class="small text-secondary">Utilizador</span>
-            <span class="fw-semibold" th:text="${eu.username()}">utilizador</span>
-            <span class="small text-secondary mt-2">A caracterização do jogador (posição, atributos) chega numa próxima versão.</span>
+        <section th:replace="~{fragments/carta :: carta(${carta})}"></section>
+        <a th:href="@{/perfil/dados}" class="btn btn-fa btn-fa-sm"
+           th:classappend="${carta.preenchida()} ? 'btn-contorno' : 'btn-verde'"
+           th:text="${carta.preenchida()} ? 'Editar os meus dados' : 'Preencher a minha carta'">Editar os meus dados</a>
+
+        <section class="seccao">
+            <h2 class="etiqueta">Conta</h2>
+            <ul class="lista">
+                <li><span class="nome text-secondary py-3" th:text="|Utilizador: ${eu.username()}|">Utilizador</span></li>
+                <li><a class="nome text-reset text-decoration-none py-3" th:href="@{/perfil/password}">Mudar password</a></li>
+            </ul>
         </section>
 
         <section th:if="${eu.admin()}" class="seccao">
@@ -28,13 +35,6 @@
                 <li><a class="nome text-reset text-decoration-none py-3" th:href="@{/admin/membros}">Membros</a></li>
                 <li><a class="nome text-reset text-decoration-none py-3" th:href="@{/admin/convites}">Links de convite</a></li>
                 <li><a class="nome text-reset text-decoration-none py-3" th:href="@{/admin/auditoria}">Auditoria</a></li>
-            </ul>
-        </section>
-
-        <section class="seccao">
-            <h2 class="etiqueta">Conta</h2>
-            <ul class="lista">
-                <li><a class="nome text-reset text-decoration-none py-3" th:href="@{/perfil/password}">Mudar password</a></li>
             </ul>
         </section>
 

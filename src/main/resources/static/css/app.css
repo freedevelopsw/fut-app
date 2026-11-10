@@ -15,6 +15,7 @@
   --bs-body-font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
   --bs-body-color: var(--fa-tinta);
   --bs-body-bg: var(--fa-fundo);
+  --bs-heading-color: var(--fa-tinta);
   --bs-link-color-rgb: 28, 113, 72;
   --bs-link-hover-color-rgb: 20, 86, 55;
 }
@@ -25,7 +26,7 @@ body { background: var(--fa-fundo); font-size: 15px; }
 .app-header { padding: 24px 20px 12px; display: flex; flex-direction: column; gap: 10px; }
 .app-main { flex: 1; padding: 4px 20px 24px; display: flex; flex-direction: column; gap: 16px; }
 
-.titulo { margin: 0; font-family: "Space Grotesk", Inter, sans-serif; font-size: 30px; font-weight: 700; line-height: 1.1; }
+.titulo { color: var(--fa-tinta); margin: 0; font-family: "Space Grotesk", Inter, sans-serif; font-size: 30px; font-weight: 700; line-height: 1.1; }
 .etiqueta { font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--fa-suave); margin: 0; }
 .meta { display: flex; flex-wrap: wrap; gap: 6px 16px; color: var(--fa-suave); font-size: 14px; }
 .meta span { display: inline-flex; align-items: center; gap: 6px; }
@@ -93,3 +94,26 @@ body { background: var(--fa-fundo); font-size: 15px; }
 
 details.cartao summary { cursor: pointer; font-weight: 600; list-style: none; display: flex; justify-content: space-between; align-items: center; min-height: 28px; }
 details.cartao summary::-webkit-details-marker { display: none; }
+
+/* Carta do jogador (estilo FUT) */
+.carta { background: #14532F; color: #FFFFFF; border-radius: 20px; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.carta-topo { display: flex; align-items: center; gap: 16px; }
+.carta-rating { display: flex; flex-direction: column; align-items: center; min-width: 56px; }
+.carta-rating .valor { font-family: "Space Grotesk", Inter, sans-serif; font-size: 44px; font-weight: 700; line-height: 1; }
+.carta-rating .sigla { font-size: 14px; font-weight: 700; letter-spacing: .06em; color: #CFE8D9; }
+.carta-avatar { width: 64px; height: 64px; flex: none; border-radius: 999px; background: #FFFFFF; color: #14532F; display: flex; align-items: center; justify-content: center; font-family: "Space Grotesk", Inter, sans-serif; font-size: 22px; font-weight: 700; }
+.carta-nome { color: #FFFFFF; font-family: "Space Grotesk", Inter, sans-serif; font-size: 24px; font-weight: 700; line-height: 1.1; margin: 0; overflow-wrap: anywhere; }
+.carta-sub { font-size: 13px; color: #CFE8D9; }
+.carta-atributos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; margin: 0; padding: 0; list-style: none; }
+.carta-atributos li { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.carta-atributos .linha { display: flex; justify-content: space-between; }
+.carta-atributos .num { font-weight: 700; }
+.carta-barra { height: 6px; border-radius: 999px; background: rgba(255, 255, 255, .18); overflow: hidden; }
+.carta-barra > div { height: 100%; background: #FFFFFF; border-radius: 999px; }
+.carta-factos { display: flex; flex-wrap: wrap; gap: 6px; }
+.carta-facto { font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; background: rgba(255, 255, 255, .14); color: #FFFFFF; }
+.carta-vazia { font-size: 14px; color: #CFE8D9; margin: 0; }
+
+.rating-mini { min-width: 36px; height: 28px; padding: 0 8px; border-radius: 8px; background: #14532F; color: #FFFFFF; font-family: "Space Grotesk", Inter, sans-serif; font-weight: 700; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.rating-mini.vazio { background: var(--fa-linha-suave); color: var(--fa-suave); }
+.lista a.linha-link { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; color: inherit; text-decoration: none; min-height: 48px; }

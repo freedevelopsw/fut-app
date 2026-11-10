@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-PT" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${carta.nomeVisivel()})}"></head>
+<body hx-boost="true">
+<div class="app">
+    <header class="app-header">
+        <a th:if="${carta.eu()}" th:href="@{/perfil}" class="etiqueta text-decoration-none">← Perfil</a>
+        <a th:unless="${carta.eu()}" th:href="@{/estatisticas}" class="etiqueta text-decoration-none">← Jogadores</a>
+    </header>
+
+    <main class="app-main">
+        <div th:replace="~{fragments/layout :: mensagens}"></div>
+        <section th:replace="~{fragments/carta :: carta(${carta})}"></section>
+        <p class="m-0 small text-secondary">Os atributos são uma auto-avaliação de 1 a 10. O rating é a média dos atributos preenchidos.</p>
+
+        <!-- Nível de acesso: visível ao Organizador e ao Admin; o dropdown só tem as opções que cada um pode escolher -->
+        <section th:if="${carta.mostraNivel()}" class="seccao">
+            <h2 class="etiqueta">Nível de acesso</h2>
+            <form th:if="${carta.podeMudarNivel()}" th:action="@{/jogadores/{id}/nivel(id=${carta.id()})}" method="post" class="cartao d-flex flex-column gap-2">
+                <label class="form-label m-0" for="nivel">Role</label>
+                <div class="d-flex gap-2">
+                    <select class="form-select" id="nivel" name="nivel">
+                        <option th:each="n : ${carta.opcoesNivel()}" th:value="${n}" th:text="${n.descricao}"
+                                th:selected="${n == carta.nivel()}">Jogador</option>
+                    </select>
+                    <button type="submit" class="btn btn-contorno fw-semibold px-3" style="border-radius: 12px">Guardar</button>
+                </div>
+                <span class="small text-secondary">Organizador cria jogos e gere convocatórias. Admin gere também membros, convites e roles.</span>
+            </form>
+            <div th:unless="${carta.podeMudarNivel()}" class="cartao d-flex justify-content-between align-items-center gap-3">
+                <span class="small text-secondary" th:text="${carta.motivoNivelFixo()}">Só o Admin pode mudar.</span>
+                <span class="tag" th:text="${carta.nivel().descricao}">Admin</span>
+            </div>
+        </section>
+    </main>
+
+    <div class="rodape">
+        <div class="barra-acao" th:if="${carta.podeEditar()}">
+            <a th:href="@{/jogadores/{id}/editar(id=${carta.id()})}" class="btn btn-fa btn-verde"
+               th:text="${carta.eu()} ? 'Editar os meus dados' : 'Editar dados (Admin)'">Editar</a>
+        </div>
+        <nav th:replace="~{fragments/layout :: nav}"></nav>
+    </div>
+</div>
+</body>
+</html>

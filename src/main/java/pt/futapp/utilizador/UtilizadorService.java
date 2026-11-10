@@ -138,7 +138,7 @@ public class UtilizadorService implements UserDetailsService {
     @Transactional(readOnly = true)
     public Optional<EuView> vista(String username) {
         return repo.findByUsernameIgnoreCase(username)
-            .map(u -> new EuView(u.getId(), u.getNome(), u.getUsername(), u.ehGestor(), u.temRole(Role.ADMIN)));
+            .map(u -> new EuView(u.getId(), u.getNomeVisivel(), u.getUsername(), u.ehGestor(), u.temRole(Role.ADMIN)));
     }
 
     // ---------------------------------------------------------------- password
@@ -179,23 +179,52 @@ public class UtilizadorService implements UserDetailsService {
             .toList();
     }
 
-    /** Ativa ou retira a role de Organizador ou Admin a um membro. Só o Admin o pode fazer. */
+    /**
+     * Define o nível de acesso de um membro (Jogador, Organizador ou Admin).
+     * O Admin muda todos os níveis; o Organizador muda entre Jogador e Organizador, mas não mexe em Admins;
+     * o Jogador não muda nada. Ninguém tira a si próprio o nível de Admin.
+     */
     @Transactional
-    public void alterarRole(Long membroId, Role role, boolean ativa, String usernameAtor) {
-        Utilizador ator = exigirAdmin(usernameAtor);
-        if (role == Role.JOGADOR) {
-            throw new OperacaoInvalidaException("Todos os membros são jogadores.");
-        }
+    public void definirNivel(Long membroId, NivelAcesso nivel, String usernameAtor) {
+        Utilizador ator = repo.findByUsernameIgnoreCase(usernameAtor)
+            .orElseThrow(() -> new OperacaoInvalidaException("Utilizador desconhecido."));
         Utilizador membro = carregarMembro(membroId);
-        if (!ativa && role == Role.ADMIN && membro.getId().equals(ator.getId())) {
-            throw new OperacaoInvalidaException("Não podes retirar a role de Admin a ti próprio.");
+        NivelAcesso anterior = NivelAcesso.de(membro);
+        if (nivel == null || !opcoesNivel(ator, membro).contains(nivel)) {
+            throw new OperacaoInvalidaException(motivoSemPermissao(ator, membro));
         }
-        boolean mudou = ativa ? membro.getRoles().add(role) : membro.getRoles().remove(role);
-        if (mudou) {
-            String texto = (ativa ? "Role " + role + " atribuída a " : "Role " + role + " retirada a ") + membro.getNome();
-            eventos.publishEvent(new AuditEvent(ator.getUsername(), Acao.ALTERACAO_ROLE, null,
-                "UTILIZADOR", membro.getId(), texto));
+        if (nivel == anterior && membro.getRoles().equals(nivel.roles())) {
+            return;
         }
+        membro.getRoles().clear();
+        membro.getRoles().addAll(nivel.roles());
+        eventos.publishEvent(new AuditEvent(ator.getUsername(), Acao.ALTERACAO_ROLE, null, "UTILIZADOR",
+            membro.getId(), "Nível de " + membro.getNome() + ": " + anterior.getDescricao() + " → " + nivel.getDescricao()));
+    }
+
+    /** Níveis que o ator pode escolher para o membro (vazio = não pode mudar). Usado também para o dropdown. */
+    public static List<NivelAcesso> opcoesNivel(Utilizador ator, Utilizador membro) {
+        if (ator.isBloqueado()) {
+            return List.of();
+        }
+        if (ator.temRole(Role.ADMIN)) {
+            return ator.getId().equals(membro.getId()) ? List.of() : List.of(NivelAcesso.values());
+        }
+        if (ator.temRole(Role.ORGANIZADOR)) {
+            return membro.temRole(Role.ADMIN) ? List.of() : List.of(NivelAcesso.JOGADOR, NivelAcesso.ORGANIZADOR);
+        }
+        return List.of();
+    }
+
+    /** Explica porque é que o ator não pode mudar o nível deste membro. */
+    public static String motivoSemPermissao(Utilizador ator, Utilizador membro) {
+        if (ator.temRole(Role.ADMIN) && !ator.isBloqueado() && ator.getId().equals(membro.getId())) {
+            return "Não podes mudar o teu próprio nível de Admin.";
+        }
+        if (ator.temRole(Role.ORGANIZADOR) && !ator.isBloqueado()) {
+            return "Só o Admin pode dar ou retirar o nível de Admin.";
+        }
+        return "Só o Organizador ou o Admin podem mudar roles.";
     }
 
     /**

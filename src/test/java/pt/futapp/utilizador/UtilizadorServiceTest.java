@@ -155,27 +155,60 @@ class UtilizadorServiceTest {
         assertThat(passwordEncoder.matches("outra-password", utilizadores.loadUserByUsername(ADMIN).getPassword())).isTrue();
     }
 
-    // ---------------------------------------------------------------- roles
+    // ---------------------------------------------------------------- nível de acesso (roles)
 
     @Test
-    void oAdminAtribuiERetiraOrganizador() {
+    void oAdminMudaQualquerNivelEAsRolesSaoCumulativas() {
         String rui = registar(utilizadores, "rui");
 
-        utilizadores.alterarRole(idDe(rui), Role.ORGANIZADOR, true, ADMIN);
-        assertThat(utilizadores.vista(rui).orElseThrow().gestor()).isTrue();
+        utilizadores.definirNivel(idDe(rui), NivelAcesso.ADMIN, ADMIN);
+        assertThat(utilizadores.loadUserByUsername(rui).getAuthorities()).extracting(Object::toString)
+            .containsExactlyInAnyOrder("ROLE_JOGADOR", "ROLE_ORGANIZADOR", "ROLE_ADMIN");
 
-        utilizadores.alterarRole(idDe(rui), Role.ORGANIZADOR, false, ADMIN);
+        utilizadores.definirNivel(idDe(rui), NivelAcesso.ORGANIZADOR, ADMIN);
+        assertThat(utilizadores.vista(rui).orElseThrow().gestor()).isTrue();
+        assertThat(utilizadores.vista(rui).orElseThrow().admin()).isFalse();
+
+        utilizadores.definirNivel(idDe(rui), NivelAcesso.JOGADOR, ADMIN);
         assertThat(utilizadores.vista(rui).orElseThrow().gestor()).isFalse();
     }
 
     @Test
-    void soOAdminAlteraRolesENaoRetiraAdminASiProprio() {
-        String rui = registar(utilizadores, "rui");
+    void oAdminNaoMudaOProprioNivel() {
+        assertThatThrownBy(() -> utilizadores.definirNivel(idDe(ADMIN), NivelAcesso.JOGADOR, ADMIN))
+            .isInstanceOf(OperacaoInvalidaException.class)
+            .hasMessageContaining("próprio");
+        assertThat(utilizadores.vista(ADMIN).orElseThrow().admin()).isTrue();
+    }
 
-        assertThatThrownBy(() -> utilizadores.alterarRole(idDe(ADMIN), Role.ORGANIZADOR, false, rui))
+    @Test
+    void oOrganizadorMudaEntreJogadorEOrganizadorMasNaoMexeEmAdmin() {
+        String rui = registar(utilizadores, "rui");
+        String nuno = registar(utilizadores, "nuno");
+        utilizadores.definirNivel(idDe(rui), NivelAcesso.ORGANIZADOR, ADMIN);
+
+        utilizadores.definirNivel(idDe(nuno), NivelAcesso.ORGANIZADOR, rui);
+        assertThat(utilizadores.vista(nuno).orElseThrow().gestor()).isTrue();
+
+        assertThatThrownBy(() -> utilizadores.definirNivel(idDe(nuno), NivelAcesso.ADMIN, rui))
+            .isInstanceOf(OperacaoInvalidaException.class)
+            .hasMessageContaining("Só o Admin");
+        assertThatThrownBy(() -> utilizadores.definirNivel(idDe(ADMIN), NivelAcesso.JOGADOR, rui))
             .isInstanceOf(OperacaoInvalidaException.class);
-        assertThatThrownBy(() -> utilizadores.alterarRole(idDe(ADMIN), Role.ADMIN, false, ADMIN))
+        assertThat(utilizadores.vista(nuno).orElseThrow().admin()).isFalse();
+        assertThat(utilizadores.vista(ADMIN).orElseThrow().admin()).isTrue();
+    }
+
+    @Test
+    void umJogadorNaoMudaNiveisNemOSeu() {
+        String rui = registar(utilizadores, "rui");
+        String nuno = registar(utilizadores, "nuno");
+
+        assertThatThrownBy(() -> utilizadores.definirNivel(idDe(rui), NivelAcesso.ORGANIZADOR, rui))
             .isInstanceOf(OperacaoInvalidaException.class);
+        assertThatThrownBy(() -> utilizadores.definirNivel(idDe(nuno), NivelAcesso.ORGANIZADOR, rui))
+            .isInstanceOf(OperacaoInvalidaException.class);
+        assertThat(utilizadores.vista(rui).orElseThrow().gestor()).isFalse();
     }
 
     // ---------------------------------------------------------------- bloqueio
@@ -215,7 +248,7 @@ class UtilizadorServiceTest {
     @Test
     void umAdminBloqueadoPerdeOsPoderesDeAdmin() {
         String rui = registar(utilizadores, "rui");
-        utilizadores.alterarRole(idDe(rui), Role.ADMIN, true, ADMIN);
+        utilizadores.definirNivel(idDe(rui), NivelAcesso.ADMIN, ADMIN);
         utilizadores.bloquear(idDe(rui), ADMIN);
 
         assertThatThrownBy(() -> utilizadores.gerarConvite(7, rui)).isInstanceOf(OperacaoInvalidaException.class);
