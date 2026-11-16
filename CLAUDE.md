@@ -113,11 +113,13 @@ Cumulativas: `JOGADOR`, `ORGANIZADOR`, `ADMIN`. Convidado = inscrição sem cont
   `MaxRAMPercentage=75`, SerialGC e `TieredStopAtLevel=1` (arranque rápido quando a app acorda).
 - `application-prod.properties`: porta `${PORT:8080}`, `forward-headers-strategy=framework` (links em https atrás do
   proxy), cookies de sessão `secure`, Hikari com no máximo 3 ligações e `minimum-idle=0` (o Neon pode adormecer).
+- Sem `DATABASE_URL`, o perfil prod usa H2 em `/tmp/futapp` (escolha do dono, por agora): no Cloud Run os dados
+  perdem-se quando a instância se desliga ou sai uma versão nova. Com `DATABASE_URL`, PostgreSQL.
 - `UrlBaseDados` (chamado no `main`): aceita `DATABASE_URL` no formato do Neon (`postgresql://user:pass@host/db?...`)
   e converte para `spring.datasource.*`; um URL `jdbc:` fica como está.
 - Cloud Run: europe-west1, faturação por pedido, 1 GiB, 1 CPU, min 0 / max 1 instâncias, startup CPU boost,
   acesso público, deploy contínuo a partir do GitHub (ramo main) com o Dockerfile.
-- Variáveis: `DATABASE_URL`, `FUTAPP_ADMIN_PASSWORD`, `FUTAPP_REMEMBER_KEY`, `FUTAPP_CONVITE_KEY`.
+- Variáveis: `FUTAPP_ADMIN_PASSWORD`, `FUTAPP_REMEMBER_KEY`, `FUTAPP_CONVITE_KEY` e, para PostgreSQL, `DATABASE_URL`.
 - Com a instância desligada, o job das 4h não corre; a limpeza da auditoria corre também no arranque.
 
 ## Estado
