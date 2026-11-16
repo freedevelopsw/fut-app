@@ -1,0 +1,7 @@
+target/
+data/
+video/
+.git/
+.idea/
+*.iml
+*.log

@@ -21,3 +21,9 @@ Arrancar com o perfil `prod` e as variáveis de ambiente:
 `SPRING_PROFILES_ACTIVE=prod`, `FUTAPP_ADMIN_PASSWORD` (e opcionalmente `FUTAPP_ADMIN_USERNAME`), `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, `FUTAPP_REMEMBER_KEY`, `FUTAPP_CONVITE_KEY`.
 
 As duas chaves devem ser textos longos e aleatórios. Mudar a `FUTAPP_CONVITE_KEY` invalida todos os links de convite e de mudança de password já enviados.
+
+## Publicar no Google Cloud Run
+
+O projeto tem um `Dockerfile` pronto para o Cloud Run (deploy contínuo a partir do GitHub) com a base de dados no Neon.
+`DATABASE_URL` aceita o link de ligação do Neon tal como aparece (`postgresql://...`). Ver o guia passo a passo da publicação.
+

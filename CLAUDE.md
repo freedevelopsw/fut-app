@@ -108,6 +108,18 @@ Cumulativas: `JOGADOR`, `ORGANIZADOR`, `ADMIN`. Convidado = inscrição sem cont
 - Admin escolhe qualquer nível; Organizador só Jogador/Organizador e não mexe em Admins; Jogador não muda nada
   (`UtilizadorService.opcoesNivel`). O Admin não muda o próprio nível.
 
+## Publicação (Google Cloud Run + Neon)
+- `Dockerfile` multi-stage (Maven + Temurin 17 JRE), `SPRING_PROFILES_ACTIVE=prod`, `JAVA_TOOL_OPTIONS` com
+  `MaxRAMPercentage=75`, SerialGC e `TieredStopAtLevel=1` (arranque rápido quando a app acorda).
+- `application-prod.properties`: porta `${PORT:8080}`, `forward-headers-strategy=framework` (links em https atrás do
+  proxy), cookies de sessão `secure`, Hikari com no máximo 3 ligações e `minimum-idle=0` (o Neon pode adormecer).
+- `UrlBaseDados` (chamado no `main`): aceita `DATABASE_URL` no formato do Neon (`postgresql://user:pass@host/db?...`)
+  e converte para `spring.datasource.*`; um URL `jdbc:` fica como está.
+- Cloud Run: europe-west1, faturação por pedido, 1 GiB, 1 CPU, min 0 / max 1 instâncias, startup CPU boost,
+  acesso público, deploy contínuo a partir do GitHub (ramo main) com o Dockerfile.
+- Variáveis: `DATABASE_URL`, `FUTAPP_ADMIN_PASSWORD`, `FUTAPP_REMEMBER_KEY`, `FUTAPP_CONVITE_KEY`.
+- Com a instância desligada, o job das 4h não corre; a limpeza da auditoria corre também no arranque.
+
 ## Estado
 - Fatia 1 (M0 + M1): admin no arranque, registo só por convite, bloqueio de membros, mudar password, carta do jogador, equipas (Fase 2), registo do jogo (Fase 3), votação (Fase 4), fecho do jogo e estatísticas (Fase 5), login, roles, criar jogo, convocatória (12 vagas, espera a partir do 13º, cancelamentos registados, fecho manual), partilha WhatsApp, auditoria com limpeza.
 - Pendente: convidados passarem a utilizadores (ligar o histórico do convidado à nova conta).
