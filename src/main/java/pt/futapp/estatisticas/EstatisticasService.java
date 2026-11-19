@@ -38,6 +38,10 @@ public class EstatisticasService {
 
     private static final int TOPO = 5;
 
+    /** Membros primeiro, convidados (e removidos) depois. */
+    private static final Comparator<EstatisticasView.Linha> CONVIDADOS_NO_FIM =
+        Comparator.comparing(EstatisticasView.Linha::convidado);
+
     private final JogoRepository jogos;
     private final InscricaoRepository inscricoes;
     private final GoloRepository golos;
@@ -57,12 +61,29 @@ public class EstatisticasService {
 
     @Transactional(readOnly = true)
     public EstatisticasView temporada(String usernameAtual) {
+        return temporada(usernameAtual, OrdemTabela.VITORIAS);
+    }
+
+    /**
+     * Estatísticas da temporada, com a tabela "Todos os jogadores" ordenada por vitórias ou por golos (o outro critério
+     * desempata, depois os jogos e o nome). Os convidados (e os removidos) ficam sempre no fundo da tabela; nos
+     * rankings manda o valor e, em empate, os membros aparecem antes dos convidados.
+     */
+    @Transactional(readOnly = true)
+    public EstatisticasView temporada(String usernameAtual, OrdemTabela ordem) {
         List<Jogo> fechados = jogos.findByEstadoOrderByDataHoraAsc(EstadoJogo.FECHADO);
         Map<String, Acumulado> porJogador = calcular(fechados);
 
+        ToIntFunction<EstatisticasView.Linha> primeiro = ordem == OrdemTabela.GOLOS
+            ? EstatisticasView.Linha::golos : EstatisticasView.Linha::vitorias;
+        ToIntFunction<EstatisticasView.Linha> segundo = ordem == OrdemTabela.GOLOS
+            ? EstatisticasView.Linha::vitorias : EstatisticasView.Linha::golos;
         List<EstatisticasView.Linha> tabela = porJogador.values().stream()
             .map(a -> a.linha(usernameAtual))
-            .sorted(Comparator.comparingInt(EstatisticasView.Linha::jogos).reversed()
+            .sorted(CONVIDADOS_NO_FIM
+                .thenComparing(Comparator.comparingInt(primeiro).reversed())
+                .thenComparing(Comparator.comparingInt(segundo).reversed())
+                .thenComparing(Comparator.comparingInt(EstatisticasView.Linha::jogos).reversed())
                 .thenComparing(l -> l.nome().toLowerCase()))
             .toList();
 
@@ -73,7 +94,7 @@ public class EstatisticasService {
         adicionar(rankings, "Mais vitórias", "vitória", "vitórias", tabela, EstatisticasView.Linha::vitorias);
         adicionar(rankings, "Mais presenças", "jogo", "jogos", tabela, EstatisticasView.Linha::jogos);
         adicionar(rankings, "Mais faltas", "falta", "faltas", tabela, EstatisticasView.Linha::faltas);
-        return new EstatisticasView(fechados.size(), rankings, tabela);
+        return new EstatisticasView(fechados.size(), rankings, tabela, ordem);
     }
 
     /** Números de um jogador (para a carta). */
@@ -155,7 +176,8 @@ public class EstatisticasService {
     private static void adicionar(List<EstatisticasView.Ranking> rankings, String titulo, String singular, String plural,
                                   List<EstatisticasView.Linha> tabela, ToIntFunction<EstatisticasView.Linha> valor) {
         List<EstatisticasView.Linha> ordenada = tabela.stream().filter(l -> valor.applyAsInt(l) > 0)
-            .sorted(Comparator.comparingInt(valor).reversed().thenComparing(l -> l.nome().toLowerCase()))
+            .sorted(Comparator.comparingInt(valor).reversed().thenComparing(CONVIDADOS_NO_FIM)
+                .thenComparing(l -> l.nome().toLowerCase()))
             .toList();
         if (ordenada.isEmpty()) {
             return;

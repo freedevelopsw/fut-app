@@ -146,7 +146,17 @@ O dono do projeto não escreve código: todo o código é gerado, testado automa
   (`ResumoService`); a gestão e as vagas deixam de aparecer. Os jogos anteriores mostram o resultado no início.
 - `EstatisticasService` calcula tudo a partir dos jogos FECHADO (nada guardado à parte): jogos, V/E/D, golos,
   assistências, MVPs, prémios, faltas. Convidados contam (agregados pelo nome, sem carta); bloqueados contam. Rankings com no máximo 5 nomes.
-- Ecrã Estatísticas: rankings, tabela de todos os jogadores, cartas. A carta mostra os números do jogador.
+- Ecrã Estatísticas: três secções colapsáveis (`<details class="colapsavel">`, sem JavaScript), todas fechadas ao
+  entrar: Rankings, Todos os jogadores, Cartas dos jogadores. A carta mostra os números do jogador.
+  Ordenação (pedido do dono, 19/11/2026), sempre com os convidados (e removidos) no fundo:
+  - Rankings: do valor maior para o menor; em empate, membros antes de convidados, depois o nome. Um convidado com
+    mais do que um membro fica à frente dele (não se troca a ordem dos valores).
+  - Todos os jogadores: por vitórias (omissão) ou por golos (`OrdemTabela`, `/estatisticas?ordem=golos|vitorias`);
+    o outro critério desempata, depois jogos e nome. Convidados sempre no fim da tabela. Sem coluna de faltas
+    (as faltas continuam no ranking "Mais faltas" e na carta). Ordena-se tocando nos cabeçalhos V e G (links, com seta no ativo); trocam só a secção da tabela
+    (htmx `hx-select`/`hx-target="#todos-jogadores"`), por isso as outras secções ficam abertas/fechadas como estavam;
+    com `ordem` no endereço a tabela vem aberta.
+  - Cartas dos jogadores: do rating maior para o menor, sem rating no fim, depois o nome (`JogadorService.jogadores`).
 
 ## Lista de jogos e histórico
 - Ecrã Jogos: os próximos aparecem sempre (todos os jogos ainda não fechados nem cancelados, mesmo do mês seguinte);

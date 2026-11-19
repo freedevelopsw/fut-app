@@ -455,7 +455,20 @@ class PaginasTest {
             .andExpect(content().string(containsString("4 jogaram")));
         mvc.perform(get("/estatisticas").with(v1))
             .andExpect(content().string(containsString("Mais MVPs")))
-            .andExpect(content().string(containsString("Todos os jogadores")));
+            .andExpect(content().string(containsString("Todos os jogadores")))
+            // três secções colapsáveis, fechadas ao entrar; sem coluna de faltas na tabela
+            .andExpect(content().string(containsString("<details id=\"rankings\" class=\"colapsavel\">")))
+            .andExpect(content().string(containsString("<details id=\"todos-jogadores\" class=\"colapsavel\">")))
+            .andExpect(content().string(containsString("<details id=\"cartas\" class=\"colapsavel\">")))
+            .andExpect(content().string(not(containsString("title=\"Faltas\""))))
+            .andExpect(content().string(containsString("title=\"Vitórias\" class=\"ordenavel ordenada\" aria-sort=\"descending\"")))
+            // ordena-se pelos cabeçalhos V e G (links que trocam só a tabela)
+            .andExpect(content().string(containsString("hx-get=\"/estatisticas?ordem=golos\"")))
+            .andExpect(content().string(containsString("hx-target=\"#todos-jogadores\"")));
+        // ordenar por golos: a tabela vem aberta e ordenada pelo G
+        mvc.perform(get("/estatisticas").param("ordem", "golos").with(v1))
+            .andExpect(content().string(containsString("<details id=\"todos-jogadores\" class=\"colapsavel\" open=\"open\">")))
+            .andExpect(content().string(containsString("title=\"Golos\" class=\"ordenavel ordenada\" aria-sort=\"descending\"")));
         mvc.perform(get("/").with(v1))
             .andExpect(content().string(containsString("Anteriores")))
             .andExpect(content().string(containsString("0–0")));

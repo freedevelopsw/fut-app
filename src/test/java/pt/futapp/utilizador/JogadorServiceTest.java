@@ -158,4 +158,33 @@ class JogadorServiceTest {
         assertThat(jogadores.jogadores(ADMIN)).extracting(JogadorResumo::nome).doesNotContain("Nome rui");
         assertThat(jogadores.carta(jogadores.idDe(rui), ADMIN).bloqueado()).isTrue();
     }
+
+    // 19/11/2026: cartas do ecrã Estatísticas do rating maior para o menor, sem rating no fim
+    @Test
+    void asCartasVemDoRatingMaiorParaOMenorESemRatingNoFim() {
+        String ana = registar(utilizadores, "ana");
+        String bia = registar(utilizadores, "bia");
+        String rui = registar(utilizadores, "rui");
+        String zeca = registar(utilizadores, "zeca");
+        DadosForm fraco = dados("Ana");
+        fraco.setVelocidade(4);
+        jogadores.atualizar(jogadores.idDe(ana), fraco, ana);
+        DadosForm forte = dados("Zeca");
+        forte.setVelocidade(9);
+        forte.setTecnica(9);
+        jogadores.atualizar(jogadores.idDe(zeca), forte, zeca);
+        DadosForm medio = dados("Rui");
+        medio.setRemate(7);
+        jogadores.atualizar(jogadores.idDe(rui), medio, rui);
+        DadosForm medio2 = dados("Bia");
+        medio2.setPasse(7);
+        jogadores.atualizar(jogadores.idDe(bia), medio2, bia);
+
+        assertThat(jogadores.jogadores(ADMIN))
+            .filteredOn(j -> j.rating() != null)
+            .extracting(JogadorResumo::nomeVisivel).containsExactly("Zeca", "Bia", "Rui", "Ana");
+        var todos = jogadores.jogadores(ADMIN);
+        assertThat(todos.subList(0, 4)).extracting(JogadorResumo::nomeVisivel).containsExactly("Zeca", "Bia", "Rui", "Ana");
+        assertThat(todos.subList(4, todos.size())).allSatisfy(j -> assertThat(j.rating()).isNull());
+    }
 }

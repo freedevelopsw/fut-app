@@ -14,76 +14,98 @@
         <p th:if="${e.jogosFechados() == 0}" class="lista-vazia">Ainda não há jogos fechados. Os rankings aparecem quando o primeiro jogo terminar a votação.</p>
 
         <!-- Rankings -->
-        <section th:unless="${e.rankings().isEmpty()}" class="seccao">
-            <h2 class="etiqueta">Rankings</h2>
-            <div th:each="r : ${e.rankings()}" class="ranking">
-                <h3 th:text="${r.titulo()}">Melhores marcadores</h3>
-                <ol>
-                    <li th:each="l : ${r.lugares()}" th:classappend="${l.posicao() == 1} ? 'lider'">
-                        <span class="pos" th:text="${l.posicao()}">1</span>
-                        <a th:if="${l.jogadorId()}" class="nome-r" th:href="@{/jogadores/{id}(id=${l.jogadorId()})}" th:text="${l.eu()} ? |${l.nome()} (tu)| : ${l.nome()}">Rui</a>
-                        <span th:unless="${l.jogadorId()}" class="nome-r" th:text="|${l.nome()} (convidado)|">Zé (convidado)</span>
-                        <span><span class="val" th:text="${l.valor()}">5</span><span class="uni" th:text="${r.unidade(l.valor())}">golos</span></span>
-                    </li>
-                    <li th:if="${r.maisEmpatados() > 0}" class="small text-secondary">
-                        <span class="pos"></span>
-                        <span th:text="${r.maisEmpatados() == 1} ? |e mais 1 com ${r.ultimoValor()} ${r.unidade(r.ultimoValor())}| : |e mais ${r.maisEmpatados()} com ${r.ultimoValor()} ${r.unidade(r.ultimoValor())}|">e mais 5</span>
-                    </li>
-                </ol>
+        <details th:unless="${e.rankings().isEmpty()}" id="rankings" class="colapsavel">
+            <summary>
+                <span class="titulo-seccao">Rankings</span>
+                <span class="seta" aria-hidden="true"></span>
+            </summary>
+            <div class="corpo">
+                <div th:each="r : ${e.rankings()}" class="ranking">
+                    <h3 th:text="${r.titulo()}">Melhores marcadores</h3>
+                    <ol>
+                        <li th:each="l : ${r.lugares()}" th:classappend="${l.posicao() == 1} ? 'lider'">
+                            <span class="pos" th:text="${l.posicao()}">1</span>
+                            <a th:if="${l.jogadorId()}" class="nome-r" th:href="@{/jogadores/{id}(id=${l.jogadorId()})}" th:text="${l.eu()} ? |${l.nome()} (tu)| : ${l.nome()}">Rui</a>
+                            <span th:unless="${l.jogadorId()}" class="nome-r" th:text="|${l.nome()} (convidado)|">Zé (convidado)</span>
+                            <span><span class="val" th:text="${l.valor()}">5</span><span class="uni" th:text="${r.unidade(l.valor())}">golos</span></span>
+                        </li>
+                        <li th:if="${r.maisEmpatados() > 0}" class="small text-secondary">
+                            <span class="pos"></span>
+                            <span th:text="${r.maisEmpatados() == 1} ? |e mais 1 com ${r.ultimoValor()} ${r.unidade(r.ultimoValor())}| : |e mais ${r.maisEmpatados()} com ${r.ultimoValor()} ${r.unidade(r.ultimoValor())}|">e mais 5</span>
+                        </li>
+                    </ol>
+                </div>
             </div>
-        </section>
+        </details>
 
-        <!-- Tabela geral -->
-        <section th:unless="${e.tabela().isEmpty()}" class="seccao">
-            <h2 class="etiqueta">Todos os jogadores</h2>
-            <div class="tabela-caixa">
-                <table class="tabela-stats">
-                    <thead>
-                        <tr>
-                            <th scope="col">Jogador</th>
-                            <th scope="col" title="Jogos">J</th>
-                            <th scope="col" title="Vitórias">V</th>
-                            <th scope="col" title="Golos">G</th>
-                            <th scope="col" title="Assistências">A</th>
-                            <th scope="col" title="MVP">MVP</th>
-                            <th scope="col" title="Faltas">F</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr th:each="l : ${e.tabela()}" th:classappend="${l.eu()} ? 'eu'">
-                            <td>
-                                <a th:if="${l.jogadorId()}" th:href="@{/jogadores/{id}(id=${l.jogadorId()})}" th:text="${l.nome()}">Rui</a>
-                                <span th:unless="${l.jogadorId()}" th:text="${l.nome()}">Zé</span>
-                                <span th:if="${l.convidado()}" class="tag ms-1">conv.</span>
-                            </td>
-                            <td th:text="${l.jogos()}">8</td>
-                            <td th:text="${l.vitorias()}">5</td>
-                            <td th:text="${l.golos()}">4</td>
-                            <td th:text="${l.assistencias()}">2</td>
-                            <td th:text="${l.mvps()}">1</td>
-                            <td th:text="${l.faltas()}">0</td>
-                        </tr>
-                    </tbody>
-                </table>
+        <!-- Tabela geral: ordenar por V ou G troca só esta secção (as outras ficam como estão) -->
+        <details th:unless="${e.tabela().isEmpty()}" id="todos-jogadores" class="colapsavel" th:open="${tabelaAberta}"
+                 th:with="porGolos=${e.ordem().name() == 'GOLOS'}">
+            <summary>
+                <span class="titulo-seccao" th:text="|Todos os jogadores (${e.tabela().size()})|">Todos os jogadores (14)</span>
+                <span class="seta" aria-hidden="true"></span>
+            </summary>
+            <div class="corpo">
+                <div class="tabela-caixa">
+                    <table class="tabela-stats">
+                        <thead>
+                            <tr>
+                                <th scope="col">Jogador</th>
+                                <th scope="col" title="Jogos">J</th>
+                                <th scope="col" title="Vitórias" class="ordenavel" th:classappend="${!porGolos} ? 'ordenada'" th:attr="aria-sort=${!porGolos} ? 'descending' : null">
+                                    <a th:href="@{/estatisticas(ordem='vitorias')}" th:attr="hx-get=@{/estatisticas(ordem='vitorias')}"
+                                       hx-select="#todos-jogadores" hx-target="#todos-jogadores" hx-swap="outerHTML" hx-push-url="false"
+                                       aria-label="Ordenar por vitórias">V<span class="seta-ordem" aria-hidden="true"></span></a>
+                                </th>
+                                <th scope="col" title="Golos" class="ordenavel" th:classappend="${porGolos} ? 'ordenada'" th:attr="aria-sort=${porGolos} ? 'descending' : null">
+                                    <a th:href="@{/estatisticas(ordem='golos')}" th:attr="hx-get=@{/estatisticas(ordem='golos')}"
+                                       hx-select="#todos-jogadores" hx-target="#todos-jogadores" hx-swap="outerHTML" hx-push-url="false"
+                                       aria-label="Ordenar por golos">G<span class="seta-ordem" aria-hidden="true"></span></a>
+                                </th>
+                                <th scope="col" title="Assistências">A</th>
+                                <th scope="col" title="MVP">MVP</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="l : ${e.tabela()}" th:classappend="${l.eu()} ? 'eu'">
+                                <td>
+                                    <a th:if="${l.jogadorId()}" th:href="@{/jogadores/{id}(id=${l.jogadorId()})}" th:text="${l.nome()}">Rui</a>
+                                    <span th:unless="${l.jogadorId()}" th:text="${l.nome()}">Zé</span>
+                                    <span th:if="${l.convidado()}" class="tag ms-1">conv.</span>
+                                </td>
+                                <td th:text="${l.jogos()}">8</td>
+                                <td th:text="${l.vitorias()}" th:classappend="${!porGolos} ? 'ordenada'">5</td>
+                                <td th:text="${l.golos()}" th:classappend="${porGolos} ? 'ordenada'">4</td>
+                                <td th:text="${l.assistencias()}">2</td>
+                                <td th:text="${l.mvps()}">1</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="m-0 small text-secondary">Toca em V ou G para ordenar · J jogos · A assistências · convidados no fim</p>
             </div>
-            <p class="m-0 small text-secondary">J jogos · V vitórias · G golos · A assistências · F faltas</p>
-        </section>
+        </details>
 
         <!-- Cartas -->
-        <section class="seccao">
-            <h2 class="etiqueta" th:text="|Cartas dos jogadores (${jogadores.size()})|">Cartas dos jogadores</h2>
-            <ul class="lista">
-                <li th:each="j : ${jogadores}" th:classappend="${j.eu()} ? 'eu'">
-                    <a class="linha-link" th:href="@{/jogadores/{id}(id=${j.id()})}">
-                        <span class="avatar" aria-hidden="true" th:text="${j.iniciais()}">RU</span>
-                        <span class="nome" th:text="${j.eu()} ? |${j.nomeVisivel()} (tu)| : ${j.nomeVisivel()}">Rui</span>
-                        <span class="tag" th:if="${j.posicaoSigla()}" th:text="${j.posicaoSigla()}">MED</span>
-                        <span class="rating-mini me-2" th:classappend="${j.rating() == null} ? 'vazio'" th:text="${j.rating()} ?: '–'"
-                              th:aria-label="${j.rating() != null} ? |Rating ${j.rating()}| : 'Sem rating'">78</span>
-                    </a>
-                </li>
-            </ul>
-        </section>
+        <details id="cartas" class="colapsavel">
+            <summary>
+                <span class="titulo-seccao" th:text="|Cartas dos jogadores (${jogadores.size()})|">Cartas dos jogadores (14)</span>
+                <span class="seta" aria-hidden="true"></span>
+            </summary>
+            <div class="corpo">
+                <ul class="lista">
+                    <li th:each="j : ${jogadores}" th:classappend="${j.eu()} ? 'eu'">
+                        <a class="linha-link" th:href="@{/jogadores/{id}(id=${j.id()})}">
+                            <span class="avatar" aria-hidden="true" th:text="${j.iniciais()}">RU</span>
+                            <span class="nome" th:text="${j.eu()} ? |${j.nomeVisivel()} (tu)| : ${j.nomeVisivel()}">Rui</span>
+                            <span class="tag" th:if="${j.posicaoSigla()}" th:text="${j.posicaoSigla()}">MED</span>
+                            <span class="rating-mini me-2" th:classappend="${j.rating() == null} ? 'vazio'" th:text="${j.rating()} ?: '–'"
+                                  th:aria-label="${j.rating() != null} ? |Rating ${j.rating()}| : 'Sem rating'">78</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </details>
     </main>
     <div class="rodape">
         <nav th:replace="~{fragments/layout :: nav}"></nav>

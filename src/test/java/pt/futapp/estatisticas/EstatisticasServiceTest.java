@@ -208,4 +208,78 @@ class EstatisticasServiceTest {
         assertThat(zes).hasSize(2).allSatisfy(l -> assertThat(l.convidado()).isTrue());
         assertThat(zes).extracting(EstatisticasView.Linha::golos).containsExactlyInAnyOrder(1, 0);
     }
+
+    // ------------------------------------------------------------ ordenação (19/11/2026)
+
+    /**
+     * Segundo jogo fechado: Abel (convidado, sem coletes) marca e ganha 1–0 a j1 (coletes). Abel fica com V1 G1,
+     * valores que o poriam no topo; tem de ficar no fundo da tabela e atrás dos membros empatados nos rankings.
+     */
+    private void jogoComConvidadoQueGanha() {
+        Long outro = criarJogo(jogos, ADMIN);
+        jogos.inscrever(outro, "j1");
+        jogos.adicionarConvidado(outro, "Abel", ADMIN);
+        Map<String, Long> i2 = new HashMap<>();
+        for (Convocatoria.Linha l : jogos.convocatoria(outro, ADMIN, URL).inscritos()) {
+            i2.put(l.nome().replace("Nome ", ""), l.inscricaoId());
+        }
+        equipas.gerar(outro, ADMIN);
+        equipas.mover(outro, i2.get("j1"), Equipa.COLETES, ADMIN);
+        equipas.mover(outro, i2.get("Abel"), Equipa.SEM_COLETES, ADMIN);
+        jogos.fecharConvocatoria(outro, ADMIN);
+        equipas.publicar(outro, ADMIN, URL);
+        registo.adicionarGolo(outro, Equipa.SEM_COLETES, i2.get("Abel"), null, ADMIN);
+        registo.fechar(outro, ADMIN);
+        votacao.votar(outro, mvp(i2.get("Abel")), "j1"); // único votante: fecha sozinha
+    }
+
+    private java.util.List<String> nomesDaTabela(OrdemTabela ordem) {
+        return estatisticas.temporada(ADMIN, ordem).tabela().stream().map(EstatisticasView.Linha::nome).toList();
+    }
+
+    @Test
+    void aTabelaVemPorVitoriasEOsGolosDesempatam() {
+        // j1 V1 G2 · j2 V1 G0 · j3 V0 G1 · j4 só faltou · Zé convidado
+        assertThat(estatisticas.temporada(ADMIN).ordem()).isEqualTo(OrdemTabela.VITORIAS);
+        assertThat(nomesDaTabela(OrdemTabela.VITORIAS)).containsExactly("Nome j1", "Nome j2", "Nome j3", "Nome j4", "Zé");
+    }
+
+    @Test
+    void aTabelaPodeVirPorGolosEAsVitoriasDesempatam() {
+        assertThat(nomesDaTabela(OrdemTabela.GOLOS)).containsExactly("Nome j1", "Nome j3", "Nome j2", "Nome j4", "Zé");
+    }
+
+    @Test
+    void osConvidadosFicamNoFundoDaTabelaMesmoComMaisVitoriasOuGolos() {
+        jogoComConvidadoQueGanha();
+
+        // j1 agora V1 G2 em 2 jogos; Abel V1 G1 mas é convidado. Convidados entre si pela mesma regra.
+        assertThat(nomesDaTabela(OrdemTabela.VITORIAS)).containsExactly("Nome j1", "Nome j2", "Nome j3", "Nome j4", "Abel", "Zé");
+        assertThat(nomesDaTabela(OrdemTabela.GOLOS)).containsExactly("Nome j1", "Nome j3", "Nome j2", "Nome j4", "Abel", "Zé");
+    }
+
+    @Test
+    void nosRankingsMandaOValorEEmEmpateOsConvidadosVemDepois() {
+        jogoComConvidadoQueGanha();
+        EstatisticasView e = estatisticas.temporada(ADMIN);
+
+        EstatisticasView.Ranking vitorias = e.rankings().stream()
+            .filter(r -> r.titulo().equals("Mais vitórias")).findFirst().orElseThrow();
+        assertThat(vitorias.lugares()).extracting(EstatisticasView.Lugar::nome).containsExactly("Nome j1", "Nome j2", "Abel");
+        assertThat(vitorias.lugares()).extracting(EstatisticasView.Lugar::posicao).containsExactly(1, 1, 1);
+
+        EstatisticasView.Ranking marcadores = e.rankings().stream()
+            .filter(r -> r.titulo().equals("Melhores marcadores")).findFirst().orElseThrow();
+        assertThat(marcadores.lugares()).extracting(EstatisticasView.Lugar::nome).containsExactly("Nome j1", "Nome j3", "Abel");
+        assertThat(marcadores.lugares()).extracting(EstatisticasView.Lugar::valor).containsExactly(2L, 1L, 1L);
+    }
+
+    @Test
+    void aOrdemDaTabelaLeOParametroDoEndereco() {
+        assertThat(OrdemTabela.de("golos")).isEqualTo(OrdemTabela.GOLOS);
+        assertThat(OrdemTabela.de("GOLOS")).isEqualTo(OrdemTabela.GOLOS);
+        assertThat(OrdemTabela.de("vitorias")).isEqualTo(OrdemTabela.VITORIAS);
+        assertThat(OrdemTabela.de(null)).isEqualTo(OrdemTabela.VITORIAS);
+        assertThat(OrdemTabela.de("faltas")).isEqualTo(OrdemTabela.VITORIAS);
+    }
 }

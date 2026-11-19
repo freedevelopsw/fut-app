@@ -2,8 +2,11 @@ package pt.futapp.estatisticas;
 
 import java.util.List;
 
-/** Estatísticas da temporada, calculadas a partir dos jogos fechados. Os convidados contam (agregados pelo nome). */
-public record EstatisticasView(int jogosFechados, List<Ranking> rankings, List<Linha> tabela) {
+/**
+ * Estatísticas da temporada, calculadas a partir dos jogos fechados. Os convidados contam (agregados pelo nome).
+ * {@code ordem}: como a tabela vem ordenada.
+ */
+public record EstatisticasView(int jogosFechados, List<Ranking> rankings, List<Linha> tabela, OrdemTabela ordem) {
 
     /**
      * Um ranking (por exemplo, melhores marcadores): no máximo 5 nomes, empates na mesma posição.

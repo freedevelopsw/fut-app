@@ -25,17 +25,18 @@ public class JogadorService {
         this.eventos = eventos;
     }
 
-    /** Jogadores ativos, por nome visível. */
+    /** Jogadores ativos, do rating maior para o menor (sem rating no fim); em empate, por nome visível. */
     @Transactional(readOnly = true)
     public List<JogadorResumo> jogadores(String usernameAtual) {
         return repo.findByBloqueadoFalseOrderByNomeAsc().stream()
-            .sorted(Comparator.comparing(u -> u.getNomeVisivel().toLowerCase()))
             .map(u -> {
                 Caracterizacao c = u.getCaracterizacao();
                 return new JogadorResumo(u.getId(), u.getNomeVisivel(), u.getNome(), Nomes.iniciais(u.getNomeVisivel()),
                     c.getPosicao() != null ? c.getPosicao().getSigla() : null, c.rating(),
                     u.getUsername().equalsIgnoreCase(usernameAtual));
             })
+            .sorted(Comparator.comparing(JogadorResumo::rating, Comparator.nullsLast(Comparator.<Integer>reverseOrder()))
+                .thenComparing(j -> j.nomeVisivel().toLowerCase()))
             .toList();
     }
 
