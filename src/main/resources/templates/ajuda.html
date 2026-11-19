@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-PT" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Ajuda')}"></head>
+<body hx-boost="true">
+<div class="app">
+    <header class="app-header">
+        <a th:href="@{/perfil}" class="etiqueta text-decoration-none">← Perfil</a>
+        <h1 class="titulo">Ajuda</h1>
+    </header>
+
+    <main class="app-main">
+        <section class="cartao d-flex align-items-center gap-3">
+            <div class="logo flex-shrink-0" aria-hidden="true">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7l4 3-1.5 5h-5L8 10z"/></svg>
+            </div>
+            <div class="d-flex flex-column">
+                <span class="fw-bold">FutApp</span>
+                <span class="small text-secondary" th:text="|Versão ${versao}|">Versão 1.0.0</span>
+                <span class="small text-secondary">Os jogos de futebol do grupo, num só sítio.</span>
+            </div>
+        </section>
+
+        <section class="seccao ajuda">
+            <h2 class="etiqueta">Como funciona</h2>
+
+            <details class="cartao">
+                <summary>Inscrever-me num jogo<span aria-hidden="true">+</span></summary>
+                <p>Em Jogos, abre o jogo e carrega em "Inscrever-me". Quando as vagas acabam (normalmente 12), ficas em
+                    lista de espera e sobes sozinho se alguém desistir. Podes cancelar enquanto a convocatória estiver
+                    aberta.</p>
+            </details>
+
+            <details class="cartao">
+                <summary>Equipas<span aria-hidden="true">+</span></summary>
+                <p>Depois de fechar a convocatória, o Organizador gera as equipas (Coletes e Sem coletes) e publica-as.
+                    Aparecem na página do jogo.</p>
+            </details>
+
+            <details class="cartao">
+                <summary>Marcar golos<span aria-hidden="true">+</span></summary>
+                <p>Com as equipas publicadas, qualquer jogador pode marcar golos: na página do jogo, "Marcar golos",
+                    escolhe a equipa e quem marcou (a assistência é opcional). Um golo errado pode ser apagado.</p>
+            </details>
+
+            <details class="cartao">
+                <summary>Votação<span aria-hidden="true">+</span></summary>
+                <p>Quando o jogo é fechado, quem jogou vota no MVP e, se quiser, nos prémios. Ninguém vota em si
+                    próprio e podes mudar o voto enquanto a votação estiver aberta. Fecha sozinha quando todos votaram.</p>
+            </details>
+
+            <details class="cartao">
+                <summary>Estatísticas<span aria-hidden="true">+</span></summary>
+                <p>Jogos, vitórias, golos, assistências, MVPs e prémios de cada jogador. Só contam os jogos fechados;
+                    os cancelados não contam.</p>
+            </details>
+
+            <details class="cartao">
+                <summary>A minha carta<span aria-hidden="true">+</span></summary>
+                <p>Em Perfil podes pôr a alcunha, as posições, o pé preferido e uma nota de 1 a 10 em cada atributo.
+                    O rating é a média das notas e ajuda a equilibrar as equipas.</p>
+            </details>
+        </section>
+
+        <section class="seccao ajuda">
+            <h2 class="etiqueta">Dúvidas</h2>
+
+            <details class="cartao">
+                <summary>Esqueci-me da password<span aria-hidden="true">+</span></summary>
+                <p>Pede ao Admin: ele gera um link (válido 24 horas) para escolheres uma password nova.</p>
+            </details>
+
+            <details class="cartao">
+                <summary>Quem pode fazer o quê<span aria-hidden="true">+</span></summary>
+                <p><strong>Jogador:</strong> inscreve-se, marca golos e vota.<br>
+                    <strong>Organizador:</strong> também cria e cancela jogos, faz as equipas e fecha os jogos.<br>
+                    <strong>Admin:</strong> também convida e gere os membros.</p>
+            </details>
+
+            <details class="cartao">
+                <summary>A app demora a abrir<span aria-hidden="true">+</span></summary>
+                <p>Se ninguém a usou nos últimos minutos, a primeira abertura pode demorar uns segundos enquanto a app
+                    acorda. Depois fica rápida.</p>
+            </details>
+        </section>
+    </main>
+
+    <div class="rodape">
+        <nav th:replace="~{fragments/layout :: nav}"></nav>
+    </div>
+</div>
+</body>
+</html>

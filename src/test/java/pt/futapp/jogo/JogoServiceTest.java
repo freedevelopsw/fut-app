@@ -27,6 +27,8 @@ class JogoServiceTest {
 
     private static final String URL = "http://localhost:8080";
 
+    @Autowired private org.springframework.jdbc.core.JdbcTemplate jdbc;
+    @jakarta.persistence.PersistenceContext private jakarta.persistence.EntityManager em;
     @Autowired
     private UtilizadorService utilizadores;
 
@@ -191,15 +193,32 @@ class JogoServiceTest {
     }
 
     @Test
-    void reativarVoltaAoEstadoAnterior() {
+    void umJogoCanceladoNaoVoltaAAbrir() {
         jogos.fecharConvocatoria(jogo, organizador);
         jogos.cancelar(jogo, null, organizador);
 
-        jogos.reativar(jogo, organizador);
+        assertThat(java.util.Arrays.stream(JogoService.class.getMethods()).map(java.lang.reflect.Method::getName))
+            .doesNotContain("reativar");
+        assertThat(convocatoria().estado()).isEqualTo(EstadoJogo.CANCELADO);
+        assertThatThrownBy(() -> jogos.fecharConvocatoria(jogo, organizador)).isInstanceOf(OperacaoInvalidaException.class);
+    }
 
-        Convocatoria c = convocatoria();
-        assertThat(c.estado()).isEqualTo(EstadoJogo.CONVOCATORIA_FECHADA);
-        assertThat(c.motivoCancelamento()).isNull();
+    @Test
+    void umLocalSoComEspacosContaComoSemLocal() {
+        NovoJogoForm form = new NovoJogoForm();
+        form.setDataHora(java.time.LocalDateTime.now().plusDays(4).withSecond(0).withNano(0));
+        form.setLocal("  Pavilhão  ");
+        Long comLocal = jogos.criar(form, organizador);
+        assertThat(jogos.convocatoria(comLocal, organizador, URL).local()).isEqualTo("Pavilhão");
+
+        // linha antiga gravada só com espaços: nem as listas nem o WhatsApp mostram local
+        jdbc.update("UPDATE jogo SET local_jogo = '   ' WHERE id = ?", comLocal);
+        em.clear();
+        Convocatoria c = jogos.convocatoria(comLocal, organizador, URL);
+        assertThat(c.local()).isNull();
+        assertThat(URLDecoder.decode(c.whatsappUrl(), StandardCharsets.UTF_8)).doesNotContain("Local:");
+        assertThat(jogos.proximosJogos()).filteredOn(j -> j.id().equals(comLocal)).extracting(JogoResumo::local)
+            .containsOnlyNulls();
     }
 
     @Test
@@ -222,5 +241,114 @@ class JogoServiceTest {
             .contains("1. Nome j1")
             .contains("Faltam 10 jogadores!")
             .contains(URL + "/jogos/" + jogo);
+    }
+
+    @Test
+    void oLocalEOpcional() {
+        NovoJogoForm form = new NovoJogoForm();
+        form.setDataHora(java.time.LocalDateTime.now().plusDays(3).withSecond(0).withNano(0));
+        form.setLocal("   ");
+        Long semLocal = jogos.criar(form, organizador);
+
+        Convocatoria c = jogos.convocatoria(semLocal, organizador, URL);
+        assertThat(c.local()).isNull();
+        String texto = URLDecoder.decode(c.whatsappUrl().substring("https://wa.me/?text=".length()), StandardCharsets.UTF_8);
+        assertThat(texto).doesNotContain("Local:").contains("Inscritos (0/12)");
+        assertThat(jogos.proximosJogos()).anySatisfy(j -> {
+            assertThat(j.id()).isEqualTo(semLocal);
+            assertThat(j.local()).isNull();
+        });
+
+        jogos.cancelar(semLocal, null, organizador);
+        String aviso = URLDecoder.decode(jogos.convocatoria(semLocal, organizador, URL).whatsappCancelamentoUrl()
+            .substring("https://wa.me/?text=".length()), StandardCharsets.UTF_8);
+        assertThat(aviso).doesNotContain("null").contains("foi cancelado");
+    }
+
+    @Test
+    void comLocalAMensagemIndicaO() {
+        String texto = URLDecoder.decode(convocatoria().whatsappUrl().substring("https://wa.me/?text=".length()),
+            StandardCharsets.UTF_8);
+        assertThat(texto).contains("Local: Pavilhão");
+    }
+
+    private Long jogoCanceladoEm(java.time.LocalDateTime quando) {
+        NovoJogoForm form = new NovoJogoForm();
+        form.setDataHora(quando);
+        Long id = jogos.criar(form, organizador);
+        jogos.cancelar(id, null, organizador);
+        return id;
+    }
+
+    @Test
+    void osAnterioresSaoSoDoMesAtualEOHistoricoTemOAnoCorrente() {
+        java.time.LocalDate hoje = java.time.LocalDate.now(pt.futapp.config.AppConfig.ZONA);
+        java.time.LocalDateTime inicioMes = hoje.withDayOfMonth(1).atTime(21, 0);
+        Long esteMes = jogoCanceladoEm(inicioMes);
+        Long mesPassado = jogoCanceladoEm(inicioMes.minusMonths(1));
+        Long anoPassado = jogoCanceladoEm(hoje.withDayOfYear(1).minusDays(1).atTime(21, 0));
+
+        assertThat(jogos.jogosAnteriores()).extracting(JogoResumo::id)
+            .contains(esteMes).doesNotContain(mesPassado, anoPassado);
+
+        var noHistorico = jogos.historico(organizador).stream().flatMap(m -> m.jogos().stream()).map(JogoResumo::id).toList();
+        assertThat(noHistorico).contains(esteMes).doesNotContain(anoPassado);
+        if (inicioMes.minusMonths(1).getYear() == hoje.getYear()) {
+            assertThat(noHistorico).contains(mesPassado);
+        } else {
+            assertThat(noHistorico).doesNotContain(mesPassado);
+        }
+        // o jogo continua a abrir pelo link
+        assertThat(jogos.convocatoria(mesPassado, organizador, URL).cancelado()).isTrue();
+    }
+
+    @Test
+    void soOOrganizadorEOAdminVeemOHistorico() {
+        String j1 = registar(utilizadores, "j1");
+
+        assertThatThrownBy(() -> jogos.historico(j1)).isInstanceOf(OperacaoInvalidaException.class);
+    }
+
+    @Test
+    void osProximosAparecemSempreMesmoQueSejamDoMesSeguinte() {
+        NovoJogoForm form = new NovoJogoForm();
+        form.setDataHora(java.time.LocalDate.now(pt.futapp.config.AppConfig.ZONA).plusMonths(1).withDayOfMonth(2).atTime(21, 0));
+        Long proximoMes = jogos.criar(form, organizador);
+
+        assertThat(jogos.proximosJogos()).extracting(JogoResumo::id).contains(proximoMes);
+    }
+
+    // review 4: um jogo cancelado do ano seguinte não aparece no histórico deste ano
+    @Test
+    void oHistoricoNaoIncluiJogosDoAnoSeguinte() {
+        java.time.LocalDate hoje = java.time.LocalDate.now(pt.futapp.config.AppConfig.ZONA);
+        Long janeiroSeguinte = jogoCanceladoEm(hoje.plusYears(1).withDayOfYear(1).atTime(21, 0));
+        Long janeiroDeste = jogoCanceladoEm(hoje.withDayOfYear(1).atTime(21, 0));
+
+        var historico = jogos.historico(organizador);
+        var ids = historico.stream().flatMap(m -> m.jogos().stream()).map(JogoResumo::id).toList();
+        assertThat(ids).contains(janeiroDeste).doesNotContain(janeiroSeguinte);
+        assertThat(historico.get(historico.size() - 1).mes()).isEqualTo("Janeiro");
+    }
+
+    // review 9: o histórico faz um número fixo de consultas, seja qual for o número de jogos
+    @Test
+    void oHistoricoNaoFazUmaConsultaPorJogo() {
+        java.time.LocalDate hoje = java.time.LocalDate.now(pt.futapp.config.AppConfig.ZONA);
+        for (int i = 0; i < 20; i++) {
+            jogoCanceladoEm(hoje.withDayOfYear(1).atTime(21, 0).plusDays(i));
+        }
+        em.flush();
+        em.clear();
+        org.hibernate.stat.Statistics stats = em.getEntityManagerFactory()
+            .unwrap(org.hibernate.SessionFactory.class).getStatistics();
+        stats.setStatisticsEnabled(true);
+        stats.clear();
+        try {
+            assertThat(jogos.historico(organizador).stream().mapToInt(m -> m.jogos().size()).sum()).isGreaterThanOrEqualTo(20);
+            assertThat(stats.getPrepareStatementCount()).isLessThanOrEqualTo(5);
+        } finally {
+            stats.setStatisticsEnabled(false);
+        }
     }
 }

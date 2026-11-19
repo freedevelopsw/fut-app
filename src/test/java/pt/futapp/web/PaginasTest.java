@@ -8,6 +8,7 @@ import static org.springframework.security.test.web.servlet.setup.SecurityMockMv
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.hamcrest.Matchers.containsString;
@@ -80,7 +81,7 @@ class PaginasTest {
         Long adminId = utilizadores.vista(ADMIN).orElseThrow().id();
         for (String url : List.of("/", "/jogos/" + jogo, "/jogos/novo", "/perfil", "/estatisticas",
                                   "/jogadores/" + adminId, "/jogadores/" + adminId + "/editar", "/jogos/" + jogo + "/equipas", "/jogos/" + jogo + "/registo",
-                                  "/jogos/" + jogo + "/votar", "/jogos/" + jogo + "/votos", "/gestao/premios",
+                                  "/jogos/" + jogo + "/votar", "/jogos/" + jogo + "/votos", "/gestao/premios", "/jogos/historico",
                                   "/admin/membros", "/admin/convites", "/admin/auditoria", "/perfil/password")) {
             mvc.perform(get(url).with(comoOrganizador())).andExpect(status().isOk());
         }
@@ -93,6 +94,9 @@ class PaginasTest {
 
         mvc.perform(get("/jogos/" + jogo).with(jogador)).andExpect(status().isOk());
         mvc.perform(get("/jogos/novo").with(jogador)).andExpect(status().isForbidden());
+        mvc.perform(get("/jogos/historico").with(jogador)).andExpect(status().isForbidden());
+        mvc.perform(get("/").with(jogador)).andExpect(content().string(not(containsString("Histórico de jogos"))));
+        mvc.perform(get("/").with(comoOrganizador())).andExpect(content().string(containsString("Histórico de jogos")));
         mvc.perform(get("/admin/membros").with(jogador)).andExpect(status().isForbidden());
         mvc.perform(post("/jogos/" + jogo + "/gestao/fechar").with(jogador).with(csrf()))
             .andExpect(status().isForbidden());
@@ -374,14 +378,22 @@ class PaginasTest {
         var v = registoService.vista(jogo, organizador);
         Long marcador = v.coletes().get(0).inscricaoId();
 
-        mvc.perform(get("/jogos/" + jogo + "/registo").with(jogador)).andExpect(status().isForbidden());
+        mvc.perform(get("/jogos/" + jogo).with(jogador)).andExpect(content().string(containsString("Marcar golos")));
+        mvc.perform(get("/jogos/" + jogo + "/registo").with(jogador).param("golo", "COLETES"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("Quem marcou?")))
+            .andExpect(content().string(not(containsString("Fechar jogo e abrir votação"))))
+            .andExpect(content().string(not(containsString("Introduzir só o resultado"))));
+        mvc.perform(post("/jogos/" + jogo + "/gestao/registo/faltas").with(jogador).with(csrf())
+                .param("inscricaoId", String.valueOf(marcador)).param("faltou", "true"))
+            .andExpect(status().isForbidden());
         mvc.perform(get("/jogos/" + jogo + "/registo").with(comoOrganizador()).param("golo", "COLETES"))
             .andExpect(status().isOk())
             .andExpect(content().string(containsString("Quem marcou?")));
-        mvc.perform(post("/jogos/" + jogo + "/gestao/registo/golos").with(comoOrganizador()).with(csrf())
+        mvc.perform(post("/jogos/" + jogo + "/registo/golos").with(jogador).with(csrf())
                 .param("equipa", "COLETES").param("marcador", String.valueOf(marcador)).param("assistencia", ""))
             .andExpect(redirectedUrl("/jogos/" + jogo + "/registo"));
-        mvc.perform(post("/jogos/" + jogo + "/gestao/registo/golos").with(comoOrganizador()).with(csrf())
+        mvc.perform(post("/jogos/" + jogo + "/registo/golos").with(comoOrganizador()).with(csrf())
                 .param("equipa", "SEM_COLETES").param("marcador", ""))
             .andExpect(redirectedUrl("/jogos/" + jogo + "/registo"));
         mvc.perform(post("/jogos/" + jogo + "/gestao/registo/faltas").with(comoOrganizador()).with(csrf())
@@ -455,7 +467,7 @@ class PaginasTest {
 
     @Test
     void osPremiosGeremSeNoEcraDoOrganizador() throws Exception {
-        mvc.perform(get("/gestao/premios").with(user("x").roles("JOGADOR"))).andExpect(status().isForbidden());
+        mvc.perform(get("/gestao/premios").with(user(registar(utilizadores, "x")).roles("JOGADOR"))).andExpect(status().isForbidden());
         mvc.perform(post("/gestao/premios").with(comoOrganizador()).with(csrf()).param("nome", "Bota de ouro"))
             .andExpect(redirectedUrl("/gestao/premios"));
         mvc.perform(get("/gestao/premios").with(comoOrganizador()))
@@ -464,7 +476,7 @@ class PaginasTest {
     }
 
     @Test
-    void cancelarEReativarPeloEcra() throws Exception {
+    void cancelarPeloEcraNaoTemVoltaAtras() throws Exception {
         var jogador = user("c1").roles("JOGADOR");
         registar(utilizadores, "c1");
 
@@ -480,10 +492,12 @@ class PaginasTest {
             .andExpect(content().string(not(containsString("Inscrever-me"))));
         mvc.perform(get("/").with(jogador))
             .andExpect(content().string(containsString("Cancelado")));
+        mvc.perform(get("/jogos/" + jogo).with(comoOrganizador()))
+            .andExpect(content().string(not(containsString("Reativar"))));
         mvc.perform(post("/jogos/" + jogo + "/gestao/reativar").with(comoOrganizador()).with(csrf()))
-            .andExpect(redirectedUrl("/jogos/" + jogo));
+            .andExpect(status().isNotFound());
         mvc.perform(get("/jogos/" + jogo).with(jogador))
-            .andExpect(content().string(containsString("Inscrever-me")));
+            .andExpect(content().string(containsString("Jogo cancelado")));
     }
 
     @Test
@@ -507,11 +521,68 @@ class PaginasTest {
     }
 
     @Test
+    void oAdminRemoveUmMembroNaPaginaDeMembros() throws Exception {
+        String j1 = registar(utilizadores, "j1");
+        String j2 = registar(utilizadores, "j2");
+        Long id = utilizadores.vista(j1).orElseThrow().id();
+
+        mvc.perform(get("/admin/membros").with(comoOrganizador()))
+            .andExpect(content().string(containsString("/admin/membros/" + id + "/remover")));
+        mvc.perform(post("/admin/membros/" + id + "/remover").with(user(j2).roles("JOGADOR")).with(csrf()))
+            .andExpect(status().isForbidden());
+        mvc.perform(post("/admin/membros/" + id + "/remover").with(comoOrganizador()).with(csrf()))
+            .andExpect(redirectedUrl("/admin/membros"))
+            .andExpect(flash().attribute("sucesso", containsString("Membro removido")));
+        mvc.perform(get("/admin/membros").with(comoOrganizador()))
+            .andExpect(content().string(not(containsString("Nome j1"))));
+        // uma sessão aberta da conta removida termina
+        mvc.perform(get("/").with(user(j1).roles("JOGADOR")))
+            .andExpect(redirectedUrl("/login?bloqueado"));
+    }
+
+    @Test
     void criarJogoComDadosInvalidosMostraOFormularioOutraVez() throws Exception {
         mvc.perform(post("/jogos/novo").with(comoOrganizador()).with(csrf())
                 .param("local", "")
                 .param("vagas", "12"))
             .andExpect(status().isOk());
+    }
+
+    @Test
+    void oIndicadorDeCarregamentoEstaEmTodasAsPaginasEAbreSemLogin() throws Exception {
+        mvc.perform(get("/login")).andExpect(content().string(containsString("/js/carregando.js")));
+        mvc.perform(get("/").with(comoOrganizador())).andExpect(content().string(containsString("/js/carregando.js")));
+        mvc.perform(get("/js/carregando.js")).andExpect(status().isOk())
+            .andExpect(content().string(containsString("htmx:beforeRequest")));
+    }
+
+    @Test
+    void aAjudaMostraAVersaoDaAppEAbreAPartirDoPerfil() throws Exception {
+        String versao = new pt.futapp.web.Versao(new org.springframework.beans.factory.support.StaticListableBeanFactory()
+            .getBeanProvider(org.springframework.boot.info.BuildProperties.class)).numero();
+        assertThat(versao).isEqualTo("dev"); // sem build-info
+
+        String j1 = registar(utilizadores, "j1");
+        mvc.perform(get("/perfil").with(user(j1).roles("JOGADOR")))
+            .andExpect(content().string(containsString("href=\"/ajuda\"")));
+        mvc.perform(get("/ajuda").with(user(j1).roles("JOGADOR")))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("Versão ")))
+            .andExpect(content().string(containsString("Marcar golos")));
+        mvc.perform(get("/ajuda")).andExpect(status().is3xxRedirection()); // só com sessão
+    }
+
+    @Test
+    void criarJogoSemLocalFunciona() throws Exception {
+        String destino = mvc.perform(post("/jogos/novo").with(comoOrganizador()).with(csrf())
+                .param("dataHora", "2030-01-10T21:00")
+                .param("local", "")
+                .param("vagas", "12"))
+            .andExpect(status().is3xxRedirection())
+            .andReturn().getResponse().getRedirectedUrl();
+
+        mvc.perform(get(destino).with(comoOrganizador())).andExpect(status().isOk());
+        mvc.perform(get("/").with(comoOrganizador())).andExpect(status().isOk());
     }
 
     // ---------------------------------------------------------------- link para redefinir a password

@@ -97,6 +97,14 @@
                         </select>
                         <div class="invalid-feedback" th:errors="*{defesa}"></div>
                     </div>
+                    <div>
+                        <label class="form-label" for="resistencia">Resistência</label>
+                        <select class="form-select" th:field="*{resistencia}" th:classappend="${#fields.hasErrors('resistencia')} ? 'is-invalid'">
+                            <option value="">—</option>
+                            <option th:each="n : ${#numbers.sequence(1, 10)}" th:value="${n}" th:text="${n}">5</option>
+                        </select>
+                        <div class="invalid-feedback" th:errors="*{resistencia}"></div>
+                    </div>
                 </div>
                 <p class="m-0 small text-secondary">Sê honesto: as equipas equilibradas dependem disto.</p>
             </section>

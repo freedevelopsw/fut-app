@@ -12,7 +12,8 @@ O dono do projeto não escreve código: todo o código é gerado, testado automa
 - Java 17, Spring Boot 4.0.x, Maven (uma só aplicação, um só deploy).
 - Frontend: Thymeleaf + htmx (`hx-boost` no `<body>`) + Bootstrap 5 por CDN. Sem build de frontend, sem SPA.
 - Spring Security: login com utilizador e password, sessão persistente (remember-me, `alwaysRemember`).
-- JPA/Hibernate com `ddl-auto=update`. H2 em ficheiro no perfil `dev`; PostgreSQL no perfil `prod`.
+- JPA/Hibernate com `ddl-auto=validate`: o esquema é versionado com Liquibase (ver "Base de dados").
+  H2 em ficheiro no perfil `dev`; PostgreSQL no perfil `prod`; H2 em memória nos testes (também com o Liquibase).
 
 ## Ambiente local (Windows)
 - JDK 17: `D:\projects\env\jdk-17.0.12`
@@ -29,10 +30,29 @@ O dono do projeto não escreve código: todo o código é gerado, testado automa
 - Cada ação relevante publica um `AuditEvent`; é gravado depois do commit por `AuditListener`.
 - Dados do negócio (inscrições, desistências, golos, votos) nunca dependem do audit, que é apagado ao fim de `futapp.audit.retencao-dias`.
 - Mobile-first: cada ecrã é desenhado para 360–430 px; botões de ação grandes (≥ 44 px) na parte de baixo.
+- Ajuda (`/ajuda`, a partir de Perfil → Sobre): versão da app e explicação curta de cada parte, em texto fixo no
+  template `ajuda.html`. Quando uma regra visível muda (vagas, golos, votação, roles…), atualizar também esse texto.
+- Indicador de carregamento global (`static/js/carregando.js`, incluído no `head` do layout): uma bola a saltar ao
+  centro do ecrã em todos os pedidos htmx com mais de 250 ms, até à resposta. O elemento que fez o pedido fica
+  bloqueado (`.htmx-request`), o que evita cliques duplos. Páginas novas não precisam de nada: basta usarem o `head` do layout.
 - Toda a regra nova vem com testes em `src/test/java` (`@SpringBootTest` + perfil `test`).
 - Enums em entidades: nunca `@Enumerated`; usar `@Convert(converter = XConverter.class)` (`comum/conversores`,
-  `EnumTextoConverter`) para ficarem como VARCHAR. Com ENUM nativo/check constraints, valores novos partem bases antigas.
-  `AjusteEsquema` converte no arranque colunas ENUM antigas do H2.
+  `EnumTextoConverter`). Na base de dados são VARCHAR sem restrições CHECK: um valor novo de enum não precisa de changeset.
+
+## Base de dados (Liquibase)
+- `src/main/resources/db/changelog/db.changelog-master.yaml` lista os ficheiros de `alteracoes/`, por ordem.
+  Corre no arranque, antes do Hibernate; o histórico fica na tabela `DATABASECHANGELOG`.
+- Qualquer mudança ao modelo (entidade nova, coluna nova, coluna que muda) = um ficheiro NOVO em `alteracoes/`
+  (`NNN-aaaa-mm-dd-descricao.yaml`), acrescentado no fim do master, ao mesmo tempo que a mudança na entidade.
+  Nunca editar um changeSet já aplicado (o Liquibase guarda o checksum e a app deixa de arrancar).
+- Tipos portáveis (BIGINT, INT, VARCHAR(n), BOOLEAN, TIMESTAMP): tem de funcionar em H2 e em PostgreSQL.
+  Colunas NOT NULL novas levam valor por omissão (as linhas existentes ficam com ele).
+- Se o Hibernate já pode ter criado a coluna nalguma base de dados, usar pré-condição `columnExists` + `MARK_RAN`.
+- `001-esquema-inicial`: o esquema de produção a 17/11/2026 (commit 52d483a); nas bases existentes fica `MARK_RAN`.
+  `002-enums-como-texto` (`config/migracoes/EnumsComoTexto`): apaga as restrições CHECK que o Hibernate criava nos
+  enums e converte colunas ENUM antigas do H2. `003-…`: resistência, removido, local opcional.
+- `MigracoesTest`: base nova, base antiga criada pelo Hibernate (`src/test/resources/db/esquema-hibernate-2026-11-17-h2.sql`,
+  com dados) e repetição sem efeito. A migração foi também testada à mão em PostgreSQL 16 com o esquema do Neon.
 
 ## Registo
 - O Admin é criado no arranque (`AdminInicial`) se não existir nenhum: `futapp.admin.username|nome|password`.
@@ -46,6 +66,27 @@ O dono do projeto não escreve código: todo o código é gerado, testado automa
   no pedido seguinte (`ContaBloqueadaFilter`), sai das convocatórias abertas. O histórico mantém-se.
 - Ninguém se bloqueia a si próprio; um Admin bloqueado perde os poderes.
 
+## Remover membros (`RemocaoService`) — sem volta atrás
+- Só o Admin, em `/admin/membros` (ícone do caixote, ativos e bloqueados); ninguém se remove a si próprio.
+- Primeiro sai dos jogos ainda por jogar (lista editável: convocatória aberta/fechada, equipas publicadas;
+  `JogoService.retirarDosJogosPorJogar`): desistência registada, a espera sobe, e essas inscrições são apagadas.
+  Assim não fica um "jogador fantasma" a ocupar uma vaga.
+- Sem mais nada ligado à pessoa (inscrições noutros jogos, votos dados/anulados, golos registados, jogos criados/
+  cancelados, inscrições que cancelou) → a conta é apagada de vez.
+- Senão, soft delete (`Utilizador.marcarRemovido`): bloqueada para sempre, username `removido-{id}` (ou
+  `removido-{id}-2`… se já existir), desaparece de Membros, da lista de jogadores e da carta.
+- As inscrições continuam ligadas à conta. `Inscricao.isConvidado()` é true para convidados E para contas removidas
+  (mostradas como convidado, sem link para a carta: `Inscricao.getConta()` devolve null). As estatísticas agregam por
+  conta, por isso um removido nunca se junta a um convidado ou a outro removido com o mesmo nome.
+- Uma conta removida não volta, num só ponto: `UtilizadorRepository.findMembro(id)` (usar sempre, nunca `findById`,
+  para mostrar ou agir sobre alguém) e o próprio `Utilizador` recusa desbloquear, `definirRoles`, mudar dados ou
+  password (`exigirNaoRemovido`). O login recusa (`disabled`).
+- O prefixo `removido-` está reservado: o registo recusa usernames começados por ele.
+- Nas votações abertas dos jogos em que jogou, se todos os outros já votaram, a votação fecha
+  (`VotacaoService.fecharSeTodosVotaram`, também chamado ao bloquear).
+- `UtilizadorService.estaBloqueado` devolve true para um username que já não existe: a sessão aberta termina.
+- Auditoria: `REMOCAO_UTILIZADOR`.
+
 ## Password
 - Cada utilizador muda a própria password em `/perfil/password` (confirma a atual). Depois a sessão termina
   (`Sessoes.terminar`) e entra-se com a nova; os cookies remember-me dos outros dispositivos deixam de valer.
@@ -57,7 +98,8 @@ O dono do projeto não escreve código: todo o código é gerado, testado automa
   Admin nem para contas bloqueadas. Auditoria: `GERACAO_LINK_PASSWORD`, `REDEFINICAO_PASSWORD`.
 
 ## Carta do jogador
-- `Utilizador.alcunha` + `Caracterizacao` (@Embeddable): posição, posição secundária, pé, 5 atributos 1–10. Só o nome é obrigatório.
+- `Utilizador.alcunha` + `Caracterizacao` (@Embeddable): posição, posição secundária, pé, 6 atributos 1–10
+  (velocidade, técnica, remate, passe, defesa, resistência). Só o nome é obrigatório.
 - Rating = média arredondada dos atributos preenchidos. Nas listas usa-se `getNomeVisivel()` (alcunha ou nome).
 - `/jogadores/{id}`: carta visível a todos; `/jogadores/{id}/editar`: o próprio ou o Admin (`JogadorService`).
 - Lista de jogadores ativos no ecrã Estatísticas; nomes nas convocatórias e nos membros ligam à carta.
@@ -73,8 +115,10 @@ O dono do projeto não escreve código: todo o código é gerado, testado automa
 
 ## Registo do jogo (Fase 3)
 - `Golo` (equipa, marcador e assistência = inscrições, ambos opcionais) e `Inscricao.faltou`. `RegistoService`.
-- `/jogos/{id}/registo` (Organizador/Admin): "+ Golo" por equipa → escolher marcador (assistência opcional);
-  apagar golos; "Introduzir só o resultado" cria/retira golos sem marcador; marcar faltas.
+- `/jogos/{id}/registo`: qualquer membro marca golos ("+ Golo" por equipa → marcador, assistência opcional) e apaga
+  qualquer golo (`POST /jogos/{id}/registo/golos[/{g}/apagar]`); na convocatória aparece o botão "Marcar golos" a quem
+  não é Organizador/Admin. Só o Organizador/Admin (`/gestao/registo/**`): "Introduzir só o resultado", faltas, fechar
+  e reabrir. `RegistoView.podeMarcarGolos` (membro) vs `podeRegistar` (gestor).
 - Só com as equipas publicadas. A primeira ação passa o jogo para EM_REGISTO: a partir daí equipas e lista ficam fixas.
 - Fechar o jogo → VOTACAO_ABERTA (não exige golos). Enquanto a votação está aberta, pode-se reabrir o registo.
 - O resultado (placar + marcadores) aparece na convocatória de todos a partir de EM_REGISTO.
@@ -82,6 +126,9 @@ O dono do projeto não escreve código: todo o código é gerado, testado automa
 ## Votação (Fase 4) — pacote `votacao`
 - `Premio` (prémios brincadeira; 10 criados no 1.º arranque por `PremiosIniciais`); `/gestao/premios` para Organizador e Admin:
   criar, editar, ativar/desativar (não se apagam). O MVP é fixo (`Voto.premio` null).
+- No boletim aparece o nome verdadeiro e a alcunha: na lista do MVP, "Nome (alcunha)" numa linha; se a alcunha não
+  couber, fica escondida (`.nome-voto` no CSS). Nos dropdowns e na página de votos do Admin, `Nomes.nomeComAlcunha`
+  ("Nome (alcunha)" até 30 caracteres, senão só o nome).
 - `Voto` (eleitor = utilizador, votado = inscrição, `anulado`). Votam os presentes com conta (não convidados, não faltas);
   ninguém vota em si. Boletim `/jogos/{id}/votar`: MVP obrigatório (radio), prémios opcionais (dropdowns); voltar a votar substitui.
 - Fecha sozinha quando todos votaram, ou pelo Organizador/Admin; pode ser reaberta. Resultados só com o jogo FECHADO.
@@ -95,10 +142,26 @@ O dono do projeto não escreve código: todo o código é gerado, testado automa
   assistências, MVPs, prémios, faltas. Convidados contam (agregados pelo nome, sem carta); bloqueados contam. Rankings com no máximo 5 nomes.
 - Ecrã Estatísticas: rankings, tabela de todos os jogadores, cartas. A carta mostra os números do jogador.
 
+## Lista de jogos e histórico
+- Ecrã Jogos: os próximos aparecem sempre (todos os jogos ainda não fechados nem cancelados, mesmo do mês seguinte);
+  os anteriores só os do mês atual (fechados/cancelados com data a partir do dia 1; inclui cancelados com data futura).
+- `/jogos/historico` (Organizador/Admin): jogos fechados e cancelados do ano corrente (de 1 de janeiro a 31 de dezembro;
+  um cancelado do ano seguinte não entra), agrupados por mês. Botão "Histórico de jogos" no ecrã Jogos só para eles.
+  Qualquer jogo continua a abrir pelo link.
+- As listas de jogos usam `JogoService.resumos`: contagens de inscritos e golos em duas consultas para todos os jogos
+  (nunca uma por jogo). `Jogo.criadoPor`/`canceladoPor` são LAZY.
+
+## Convocatória
+- O local é opcional. A regra vive só em `Jogo.getLocal()`: devolve o local sem espaços à volta, ou null quando está
+  vazio ou só com espaços (também em linhas antigas). Vistas e WhatsApp usam esse valor: null = não mostrar
+  (changeset `003-jogo-local-opcional`).
+
 ## Jogo cancelado
 - Estado CANCELADO (Organizador/Admin, qualquer estado exceto FECHADO), com motivo obrigatório
-  (`JogoService.MOTIVO_CANCELAMENTO_OMISSAO` = "Falta de jogadores"), quem e quando; guarda o estado anterior.
-- Reativar volta ao estado anterior. Cancelado sai dos próximos (aparece nos anteriores) e não conta nas estatísticas.
+  (`JogoService.MOTIVO_CANCELAMENTO_OMISSAO` = "Falta de jogadores"), quem e quando.
+- Sem volta atrás: um jogo cancelado não se reativa (a reativação foi retirada; o valor de auditoria `REATIVACAO_JOGO`
+  fica só por causa dos registos antigos). Cancelado sai dos próximos (aparece nos anteriores) e não conta nas
+  estatísticas.
 - Mensagem de cancelamento para o WhatsApp na página do jogo.
 
 ## Roles
@@ -107,6 +170,24 @@ Cumulativas: `JOGADOR`, `ORGANIZADOR`, `ADMIN`. Convidado = inscrição sem cont
   cumulativos) via `POST /jogadores/{id}/nivel`, não na lista de Membros.
 - Admin escolhe qualquer nível; Organizador só Jogador/Organizador e não mexe em Admins; Jogador não muda nada
   (`UtilizadorService.opcoesNivel`). O Admin não muda o próprio nível.
+
+## Publicar uma versão (produção)
+- A app está em produção com dados reais. Um push para `main` faz deploy automático (Cloud Build → Cloud Run).
+- Versão semântica no `pom.xml` (MAJOR.MINOR.PATCH, sem `-SNAPSHOT`): PATCH = correções, MINOR = funcionalidades,
+  MAJOR = mudanças grandes. Aparece no Perfil ("FutApp · versão x.y.z") e no registo do arranque ("FutApp versão x.y.z"),
+  lida do `build-info` do Maven (`web/Versao`). Primeira versão: 1.0.0 (inclui o Liquibase).
+- Passos de cada publicação:
+  1. `mvn clean verify` a passar e funcionalidades testadas localmente pelo dono.
+  2. Mudar a versão no `pom.xml`.
+  3. Cópia de segurança antes do push: no Neon, Branches → Create branch a partir da principal, com o nome `antes-x.y.z`.
+  4. Commit e push para `main` → deploy.
+  5. Nos registos do Cloud Run: as linhas do Liquibase (`Running Changeset` / `Marking ChangeSet … as ran`),
+     `FutApp versão x.y.z` e `Started FutappApplication`. Se a revisão nova não arrancar (por exemplo, o Hibernate
+     `validate` falha), o Cloud Run continua a servir a revisão anterior.
+  6. Abrir a app e confirmar a versão no Perfil.
+  7. Criar a tag `version/x.y.z` nesse commit e enviá-la para o GitHub.
+- Os changeSets têm de ser compatíveis com a versão anterior, que continua a correr durante o deploy: colunas novas
+  opcionais ou com valor por omissão; não apagar nem renomear colunas na mesma versão em que o código deixa de as usar.
 
 ## Publicação (Google Cloud Run + Neon)
 - `Dockerfile` multi-stage (Maven + Temurin 17 JRE), `SPRING_PROFILES_ACTIVE=prod`, `JAVA_TOOL_OPTIONS` com

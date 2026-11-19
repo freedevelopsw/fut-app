@@ -45,6 +45,14 @@
             </ul>
         </section>
 
+        <section class="seccao">
+            <h2 class="etiqueta">Sobre</h2>
+            <ul class="lista">
+                <li><a class="nome text-reset text-decoration-none py-3" th:href="@{/ajuda}">Ajuda</a>
+                    <span class="quando" th:text="|versão ${versao}|">versão 1.0.0</span></li>
+            </ul>
+        </section>
+
         <form th:action="@{/logout}" method="post" hx-boost="false">
             <button type="submit" class="btn btn-fa btn-fa-sm btn-contorno">Sair da conta</button>
         </form>

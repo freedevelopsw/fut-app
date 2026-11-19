@@ -3,8 +3,11 @@ package pt.futapp.jogo;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.springframework.context.ApplicationEventPublisher;
@@ -49,14 +52,38 @@ public class JogoService {
 
     @Transactional(readOnly = true)
     public List<JogoResumo> proximosJogos() {
-        return jogos.findByEstadoNotInOrderByDataHoraAsc(List.of(EstadoJogo.FECHADO, EstadoJogo.CANCELADO))
-            .stream().map(this::resumo).toList();
+        return resumos(jogos.findByEstadoNotInOrderByDataHoraAsc(List.of(EstadoJogo.FECHADO, EstadoJogo.CANCELADO)));
     }
 
+    /** Jogos fechados ou cancelados do mês atual (e cancelados com data futura). Os mais antigos estão no histórico. */
     @Transactional(readOnly = true)
     public List<JogoResumo> jogosAnteriores() {
-        return jogos.findTop10ByEstadoInOrderByDataHoraDesc(List.of(EstadoJogo.FECHADO, EstadoJogo.CANCELADO))
-            .stream().map(this::resumo).toList();
+        LocalDateTime inicioMes = agora().toLocalDate().withDayOfMonth(1).atStartOfDay();
+        return resumos(jogos.findByEstadoInAndDataHoraGreaterThanEqualOrderByDataHoraDesc(
+            List.of(EstadoJogo.FECHADO, EstadoJogo.CANCELADO), inicioMes));
+    }
+
+    /**
+     * Histórico (Organizador/Admin): jogos fechados ou cancelados do ano corrente (de 1 de janeiro a 31 de dezembro;
+     * um jogo cancelado do ano seguinte não entra), por mês, do mais recente para trás.
+     * Três consultas no total, seja qual for o número de jogos.
+     */
+    @Transactional(readOnly = true)
+    public List<MesHistorico> historico(String username) {
+        exigirGestor(carregarUtilizador(username));
+        LocalDateTime inicioAno = agora().toLocalDate().withDayOfYear(1).atStartOfDay();
+        List<Jogo> doAno = jogos.findByEstadoInAndDataHoraGreaterThanEqualAndDataHoraLessThanOrderByDataHoraDesc(
+            List.of(EstadoJogo.FECHADO, EstadoJogo.CANCELADO), inicioAno, inicioAno.plusYears(1));
+        List<JogoResumo> resumos = resumos(doAno);
+        Map<String, List<JogoResumo>> porMes = new LinkedHashMap<>();
+        for (int i = 0; i < doAno.size(); i++) {
+            porMes.computeIfAbsent(fmt.mes(doAno.get(i).getDataHora()), m -> new ArrayList<>()).add(resumos.get(i));
+        }
+        return porMes.entrySet().stream().map(e -> new MesHistorico(e.getKey(), e.getValue())).toList();
+    }
+
+    /** Um mês do histórico, por exemplo "Novembro". */
+    public record MesHistorico(String mes, List<JogoResumo> jogos) {
     }
 
     @Transactional(readOnly = true)
@@ -79,7 +106,7 @@ public class JogoService {
                 jaInscritos.add(ins.getJogador().getId());
             }
             Convocatoria.Linha linha = new Convocatoria.Linha(ins.getId(),
-                ins.getJogador() != null ? ins.getJogador().getId() : null, i + 1, ins.getNomeVisivel(),
+                ins.getConta() != null ? ins.getConta().getId() : null, i + 1, ins.getNomeVisivel(),
                 Nomes.iniciais(ins.getNomeVisivel()), ins.isConvidado(), fmt.curto(ins.getInscritoEm()), minha);
             (i < jogo.getVagas() ? inscritos : espera).add(linha);
         }
@@ -111,8 +138,8 @@ public class JogoService {
             jogo.getMotivoCancelamento(),
             jogo.cancelado() ? fmt.dataHora(jogo.getCanceladoEm()) : null,
             jogo.getCanceladoPor() != null ? jogo.getCanceladoPor().getNomeVisivel() : null,
-            jogo.cancelado() ? MensagemWhatsApp.url("O jogo de " + dia + ", " + hora + " (" + jogo.getLocal()
-                + ") foi cancelado.\nMotivo: " + jogo.getMotivoCancelamento() + "\n\n" + link) : null);
+            jogo.cancelado() ? MensagemWhatsApp.url("O jogo de " + dia + ", " + hora
+                + (jogo.temLocal() ? " (" + jogo.getLocal() + ")" : "") + " foi cancelado.\nMotivo: " + jogo.getMotivoCancelamento() + "\n\n" + link) : null);
     }
 
     // ---------------------------------------------------------------- ações do jogador
@@ -153,10 +180,10 @@ public class JogoService {
     public Long criar(NovoJogoForm form, String username) {
         Utilizador ator = carregarUtilizador(username);
         exigirGestor(ator);
-        Jogo jogo = jogos.save(new Jogo(form.getDataHora(), form.getLocal().trim(), form.getVagas(), ator, agora()));
+        Jogo jogo = jogos.save(new Jogo(form.getDataHora(), form.getLocal(), form.getVagas(), ator, agora()));
         audit(ator, Acao.CRIACAO_JOGO, jogo, jogo.getId(),
             "Jogo criado para " + fmt.dia(jogo.getDataHora()) + ", " + fmt.hora(jogo.getDataHora())
-                + " em " + jogo.getLocal() + " (" + jogo.getVagas() + " vagas)");
+                + (jogo.temLocal() ? " em " + jogo.getLocal() : "") + " (" + jogo.getVagas() + " vagas)");
         return jogo.getId();
     }
 
@@ -180,7 +207,7 @@ public class JogoService {
         exigirGestor(ator);
         Jogo jogo = carregarJogo(jogoId);
         exigirListaEditavel(jogo);
-        Utilizador jogador = utilizadores.findById(utilizadorId)
+        Utilizador jogador = utilizadores.findMembro(utilizadorId)
             .orElseThrow(() -> new OperacaoInvalidaException("Jogador não encontrado."));
         if (jogador.isBloqueado()) {
             throw new OperacaoInvalidaException(jogador.getNome() + " está bloqueado.");
@@ -237,6 +264,23 @@ public class JogoService {
         return abertas.size();
     }
 
+    /**
+     * Retira um membro removido dos jogos que ainda não se jogaram (lista ainda editável: convocatória aberta ou
+     * fechada, equipas publicadas), para não ficar a ocupar uma vaga. Cada saída fica registada como desistência e
+     * quem está em espera sobe. Depois, as inscrições dele nesses jogos são apagadas: não são histórico.
+     */
+    @Transactional
+    public void retirarDosJogosPorJogar(Utilizador jogador, Utilizador ator) {
+        List<Inscricao> todas = inscricoes.findByJogador(jogador);
+        for (Inscricao ins : todas) {
+            if (ins.getJogo().permiteEquipas() && ins.getEstado() == EstadoInscricao.ATIVA) {
+                cancelar(ins.getJogo(), ins, ator);
+            }
+        }
+        inscricoes.deleteAll(todas.stream().filter(i -> i.getJogo().permiteEquipas()).toList());
+        inscricoes.flush();
+    }
+
     /** Motivo usado quando não é indicado nenhum. */
     public static final String MOTIVO_CANCELAMENTO_OMISSAO = "Falta de jogadores";
 
@@ -253,17 +297,6 @@ public class JogoService {
         jogo.cancelar(m, ator, agora());
         eventos.publishEvent(new AuditEvent(ator.getUsername(), Acao.CANCELAMENTO_JOGO, jogo.getId(), "JOGO", jogo.getId(),
             "Jogo de " + fmt.dia(jogo.getDataHora()) + " cancelado. Motivo: " + m));
-    }
-
-    /** Desfaz o cancelamento: o jogo volta ao estado em que estava. */
-    @Transactional
-    public void reativar(Long jogoId, String username) {
-        Utilizador ator = carregarUtilizador(username);
-        exigirGestor(ator);
-        Jogo jogo = carregarJogo(jogoId);
-        jogo.reativar();
-        eventos.publishEvent(new AuditEvent(ator.getUsername(), Acao.REATIVACAO_JOGO, jogo.getId(), "JOGO", jogo.getId(),
-            "Jogo de " + fmt.dia(jogo.getDataHora()) + " reativado (" + jogo.getEstado().getDescricao() + ")"));
     }
 
     // ---------------------------------------------------------------- regras internas
@@ -323,13 +356,30 @@ public class JogoService {
             .orElseThrow(() -> new OperacaoInvalidaException("Utilizador desconhecido."));
     }
 
-    private JogoResumo resumo(Jogo jogo) {
-        long ativos = inscricoes.countByJogoAndEstado(jogo, EstadoInscricao.ATIVA);
-        return new JogoResumo(jogo.getId(), fmt.dia(jogo.getDataHora()), fmt.hora(jogo.getDataHora()),
-            jogo.getLocal(), jogo.getEstado().getDescricao(), jogo.cancelado(), jogo.convocatoriaAberta(),
-            Math.min(ativos, jogo.getVagas()), jogo.getVagas(),
-            jogo.temResultado() ? golos.countByJogoAndEquipa(jogo, Equipa.COLETES) + "–"
-                + golos.countByJogoAndEquipa(jogo, Equipa.SEM_COLETES) : null);
+    /** Resumos de vários jogos, pela mesma ordem, com as contagens em duas consultas (e não três por jogo). */
+    private List<JogoResumo> resumos(List<Jogo> lista) {
+        if (lista.isEmpty()) {
+            return List.of();
+        }
+        Map<Long, Long> ativos = new HashMap<>();
+        for (Object[] linha : inscricoes.contarPorJogo(lista, EstadoInscricao.ATIVA)) {
+            ativos.put((Long) linha[0], (Long) linha[1]);
+        }
+        Map<String, Long> golosPorEquipa = new HashMap<>();
+        for (Object[] linha : golos.contarPorJogoEEquipa(lista)) {
+            String equipa = linha[1] instanceof Equipa e ? e.name() : String.valueOf(linha[1]);
+            golosPorEquipa.put(linha[0] + ":" + equipa, (Long) linha[2]);
+        }
+        return lista.stream().map(jogo -> {
+            long inscritos = ativos.getOrDefault(jogo.getId(), 0L);
+            String resultado = jogo.temResultado()
+                ? golosPorEquipa.getOrDefault(jogo.getId() + ":" + Equipa.COLETES.name(), 0L) + "–"
+                    + golosPorEquipa.getOrDefault(jogo.getId() + ":" + Equipa.SEM_COLETES.name(), 0L)
+                : null;
+            return new JogoResumo(jogo.getId(), fmt.dia(jogo.getDataHora()), fmt.hora(jogo.getDataHora()),
+                jogo.getLocal(), jogo.getEstado().getDescricao(), jogo.cancelado(), jogo.convocatoriaAberta(),
+                Math.min(inscritos, jogo.getVagas()), jogo.getVagas(), resultado);
+        }).toList();
     }
 
     private static String descricaoPosicao(Jogo jogo, long posicao) {

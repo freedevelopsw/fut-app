@@ -1,0 +1,48 @@
+# 18/11/2026: atributo Resistência, remover membros (soft delete) e local do jogo opcional.
+# Cada coluna tem uma pré-condição: numa base de dados onde o Hibernate (ddl-auto=update, antes do Liquibase)
+# já a tinha criado, o changeSet fica só marcado como aplicado.
+databaseChangeLog:
+  - changeSet:
+      id: 003-utilizador-resistencia
+      author: futapp
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists: { tableName: utilizador, columnName: resistencia }
+      changes:
+        - addColumn:
+            tableName: utilizador
+            columns:
+              - column: { name: resistencia, type: INT }
+  - changeSet:
+      id: 003-utilizador-removido
+      author: futapp
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists: { tableName: utilizador, columnName: removido }
+      changes:
+        - addColumn:
+            tableName: utilizador
+            columns:
+              - column: { name: removido, type: BOOLEAN, defaultValueBoolean: false, constraints: { nullable: false } }
+  - changeSet:
+      id: 003-utilizador-removido-em
+      author: futapp
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists: { tableName: utilizador, columnName: removido_em }
+      changes:
+        - addColumn:
+            tableName: utilizador
+            columns:
+              - column: { name: removido_em, type: TIMESTAMP }
+  - changeSet:
+      id: 003-jogo-local-opcional
+      author: futapp
+      changes:
+        - dropNotNullConstraint:
+            tableName: jogo
+            columnName: local_jogo
+            columnDataType: VARCHAR(120)

@@ -49,7 +49,8 @@ public class JogadorService {
             new CartaView.Atributo("Técnica", c.getTecnica()),
             new CartaView.Atributo("Remate", c.getRemate()),
             new CartaView.Atributo("Passe", c.getPasse()),
-            new CartaView.Atributo("Defesa", c.getDefesa()));
+            new CartaView.Atributo("Defesa", c.getDefesa()),
+            new CartaView.Atributo("Resistência", c.getResistencia()));
         boolean eu = u.getId().equals(atual.getId());
         List<NivelAcesso> opcoes = UtilizadorService.opcoesNivel(atual, u);
         return new CartaView(u.getId(), u.getNome(), u.getAlcunha(), u.getNomeVisivel(), Nomes.iniciais(u.getNomeVisivel()),
@@ -87,14 +88,16 @@ public class JogadorService {
         if (form.getPosicao() != null && form.getPosicao() == form.getPosicaoSecundaria()) {
             throw new OperacaoInvalidaException("A posição secundária tem de ser diferente da principal.");
         }
-        for (Integer v : new Integer[] {form.getVelocidade(), form.getTecnica(), form.getRemate(), form.getPasse(), form.getDefesa()}) {
+        for (Integer v : new Integer[] {form.getVelocidade(), form.getTecnica(), form.getRemate(), form.getPasse(), form.getDefesa(),
+                form.getResistencia()}) {
             if (v != null && (v < 1 || v > 10)) {
                 throw new OperacaoInvalidaException("Os atributos são de 1 a 10.");
             }
         }
         Posicao secundaria = form.getPosicao() == null ? null : form.getPosicaoSecundaria();
         u.atualizarDados(nome, alcunha, new Caracterizacao(form.getPosicao(), secundaria, form.getPe(),
-            form.getVelocidade(), form.getTecnica(), form.getRemate(), form.getPasse(), form.getDefesa()));
+            form.getVelocidade(), form.getTecnica(), form.getRemate(), form.getPasse(), form.getDefesa(),
+            form.getResistencia()));
 
         String texto = Objects.equals(atual.getId(), u.getId())
             ? u.getNome() + " atualizou os seus dados"
@@ -120,7 +123,8 @@ public class JogadorService {
     }
 
     private Utilizador carregar(Long id) {
-        return repo.findById(id).orElseThrow(() -> new OperacaoInvalidaException("Jogador não encontrado."));
+        return repo.findMembro(id)
+            .orElseThrow(() -> new OperacaoInvalidaException("Jogador não encontrado."));
     }
 
     private Utilizador carregarPorUsername(String username) {

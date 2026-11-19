@@ -23,10 +23,12 @@ import pt.futapp.web.Formatos;
 public class MembrosController {
 
     private final UtilizadorService utilizadores;
+    private final RemocaoService remocao;
     private final Formatos fmt;
 
-    public MembrosController(UtilizadorService utilizadores, Formatos fmt) {
+    public MembrosController(UtilizadorService utilizadores, RemocaoService remocao, Formatos fmt) {
         this.utilizadores = utilizadores;
+        this.remocao = remocao;
         this.fmt = fmt;
     }
 
@@ -53,6 +55,21 @@ public class MembrosController {
                 utilizadores.desbloquear(id, principal.getName());
                 redirect.addFlashAttribute("sucesso", "Membro desbloqueado. Já pode voltar a entrar.");
             }
+        } catch (OperacaoInvalidaException e) {
+            redirect.addFlashAttribute("erro", e.getMessage());
+        }
+        return "redirect:/admin/membros";
+    }
+
+    // ---------------------------------------------------------------- remover
+
+    @PostMapping("/admin/membros/{id}/remover")
+    public String remover(@PathVariable Long id, Principal principal, RedirectAttributes redirect) {
+        try {
+            RemocaoService.Resultado r = remocao.remover(id, principal.getName());
+            redirect.addFlashAttribute("sucesso", r == RemocaoService.Resultado.APAGADO
+                ? "Membro removido. Não tinha jogos, por isso a conta foi apagada."
+                : "Membro removido. Nos jogos antigos passa a aparecer como convidado.");
         } catch (OperacaoInvalidaException e) {
             redirect.addFlashAttribute("erro", e.getMessage());
         }

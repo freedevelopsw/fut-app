@@ -9,6 +9,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import pt.futapp.comum.conversores.EstadoJogoConverter;
@@ -26,7 +27,8 @@ public class Jogo {
     @Column(name = "data_hora", nullable = false)
     private LocalDateTime dataHora;
 
-    @Column(name = "local_jogo", nullable = false, length = 120)
+    /** Opcional. A regra "tem local" vive só aqui: ver {@link #getLocal()}. */
+    @Column(name = "local_jogo", length = 120)
     private String local;
 
     @Column(nullable = false)
@@ -36,18 +38,18 @@ public class Jogo {
     @Column(nullable = false, length = 30)
     private EstadoJogo estado;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "criado_por_id")
     private Utilizador criadoPor;
 
-    /** Cancelamento: motivo, quem e quando, e o estado em que estava (para poder reativar). */
+    /** Cancelamento: motivo, quem e quando, e o estado em que estava (só informativo: não há reativação). */
     @Column(name = "motivo_cancelamento", length = 200)
     private String motivoCancelamento;
 
     @Column(name = "cancelado_em")
     private LocalDateTime canceladoEm;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cancelado_por_id")
     private Utilizador canceladoPor;
 
@@ -63,7 +65,7 @@ public class Jogo {
 
     public Jogo(LocalDateTime dataHora, String local, int vagas, Utilizador criadoPor, LocalDateTime criadoEm) {
         this.dataHora = dataHora;
-        this.local = local;
+        this.local = normalizarLocal(local);
         this.vagas = vagas;
         this.criadoPor = criadoPor;
         this.criadoEm = criadoEm;
@@ -161,7 +163,7 @@ public class Jogo {
         return estado == EstadoJogo.CANCELADO;
     }
 
-    /** Cancela o jogo (com motivo). Um jogo já fechado não se cancela. */
+    /** Cancela o jogo (com motivo), sem volta atrás: um jogo cancelado não se reativa. Um jogo fechado não se cancela. */
     public void cancelar(String motivo, Utilizador por, LocalDateTime quando) {
         if (estado == EstadoJogo.FECHADO) {
             throw new OperacaoInvalidaException("Um jogo já fechado não pode ser cancelado.");
@@ -176,17 +178,6 @@ public class Jogo {
         this.canceladoEm = quando;
     }
 
-    /** Desfaz o cancelamento: o jogo volta ao estado em que estava. */
-    public void reativar() {
-        if (estado != EstadoJogo.CANCELADO) {
-            throw new OperacaoInvalidaException("O jogo não está cancelado.");
-        }
-        this.estado = estadoAntesCancelamento != null ? estadoAntesCancelamento : EstadoJogo.CONVOCATORIA_ABERTA;
-        this.estadoAntesCancelamento = null;
-        this.motivoCancelamento = null;
-        this.canceladoPor = null;
-        this.canceladoEm = null;
-    }
 
     public String getMotivoCancelamento() { return motivoCancelamento; }
     public LocalDateTime getCanceladoEm() { return canceladoEm; }
@@ -194,7 +185,21 @@ public class Jogo {
 
     public Long getId() { return id; }
     public LocalDateTime getDataHora() { return dataHora; }
-    public String getLocal() { return local; }
+    /**
+     * O local sem espaços à volta, ou null quando não há local (vazio ou só espaços, também em linhas antigas).
+     * Todas as vistas e mensagens usam este valor: null = não mostrar local.
+     */
+    public String getLocal() {
+        return normalizarLocal(local);
+    }
+
+    public boolean temLocal() {
+        return getLocal() != null;
+    }
+
+    private static String normalizarLocal(String local) {
+        return local == null || local.isBlank() ? null : local.trim();
+    }
     public int getVagas() { return vagas; }
     public EstadoJogo getEstado() { return estado; }
     public Utilizador getCriadoPor() { return criadoPor; }

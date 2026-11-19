@@ -9,7 +9,10 @@ public record RegistoView(
     String hora,
     EstadoJogo estado,
     boolean gestor,
+    /** Organizador/Admin: resultado, faltas, fechar o jogo. */
     boolean podeRegistar,
+    /** Qualquer membro: adicionar e apagar golos. */
+    boolean podeMarcarGolos,
     boolean podeReabrir,
     boolean mostrarResultado,
     int golosColetes,

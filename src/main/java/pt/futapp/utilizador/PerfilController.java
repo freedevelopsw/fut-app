@@ -34,6 +34,13 @@ public class PerfilController {
         return "perfil";
     }
 
+    /** Ajuda: versão da app e explicação curta de como funciona (texto fixo no template). */
+    @GetMapping("/ajuda")
+    public String ajuda(Model model) {
+        model.addAttribute("nav", "perfil");
+        return "ajuda";
+    }
+
     @GetMapping("/perfil/password")
     public String password(Model model) {
         model.addAttribute("form", new AlterarPasswordForm());

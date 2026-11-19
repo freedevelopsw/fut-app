@@ -6,7 +6,7 @@
     <header class="app-header">
         <a th:href="@{/perfil}" class="etiqueta text-decoration-none">← Perfil</a>
         <h1 class="titulo">Membros</h1>
-        <p class="m-0 small text-secondary">Todos são jogadores. Para mudar as roles de alguém, abre a carta dessa pessoa. Novos membros entram por link de convite.</p>
+        <p class="m-0 small text-secondary">Todos são jogadores. Para mudar as roles de alguém, abre a carta dessa pessoa. Novos membros entram por link de convite. Bloquear impede de entrar e pode ser desfeito; remover tira a pessoa da app de vez.</p>
     </header>
 
     <main class="app-main">
@@ -17,12 +17,12 @@
         <section class="seccao">
             <h2 class="etiqueta" th:text="|Ativos (${ativos.size()})|">Ativos</h2>
             <ul class="lista">
-                <li th:each="m : ${ativos}" class="py-2 pe-2 flex-wrap">
+                <li th:each="m : ${ativos}" class="py-2 pe-2">
                     <div class="d-flex flex-column flex-grow-1" style="min-width: 0">
                         <a class="fw-semibold text-truncate text-reset" th:href="@{/jogadores/{id}(id=${m.id()})}" th:text="${m.eu()} ? |${m.nome()} (tu)| : ${m.nome()}">Nome</a>
                         <span class="small text-secondary" th:text="${m.username()}">utilizador</span>
                     </div>
-                    <div class="d-flex gap-1 align-items-center">
+                    <div class="d-flex gap-1 align-items-center flex-shrink-0">
                         <span class="tag" th:if="${m.organizador() and !m.admin()}">Organizador</span>
                         <span class="tag" th:if="${m.admin()}">Admin</span>
                         <form th:unless="${m.eu()}" th:action="@{/admin/membros/{id}/bloqueio(id=${m.id()})}" method="post"
@@ -30,6 +30,12 @@
                             <input type="hidden" name="bloquear" value="true">
                             <button type="submit" class="btn-icone" th:aria-label="|Bloquear ${m.nome()}|" title="Bloquear">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg>
+                            </button>
+                        </form>
+                        <form th:unless="${m.eu()}" th:action="@{/admin/membros/{id}/remover(id=${m.id()})}" method="post"
+                              th:hx-confirm="|Remover ${m.nome()}? Sai da app e das convocatórias abertas. Se já jogou, nos jogos antigos passa a aparecer como convidado; se nunca jogou, a conta é apagada. Não dá para desfazer.|">
+                            <button type="submit" class="btn-icone" th:aria-label="|Remover ${m.nome()}|" title="Remover">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>
                             </button>
                         </form>
                     </div>
@@ -50,6 +56,12 @@
                         <input type="hidden" name="bloquear" value="false">
                         <button type="submit" class="btn btn-sm btn-contorno fw-semibold px-3" style="min-height: 44px; border-radius: 10px">Desbloquear</button>
                     </form>
+                    <form th:action="@{/admin/membros/{id}/remover(id=${m.id()})}" method="post"
+                              th:hx-confirm="|Remover ${m.nome()}? Sai da app e das convocatórias abertas. Se já jogou, nos jogos antigos passa a aparecer como convidado; se nunca jogou, a conta é apagada. Não dá para desfazer.|">
+                            <button type="submit" class="btn-icone" th:aria-label="|Remover ${m.nome()}|" title="Remover">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>
+                            </button>
+                        </form>
                 </li>
             </ul>
         </section>

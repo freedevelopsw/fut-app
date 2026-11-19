@@ -154,11 +154,37 @@ class RegistoServiceTest {
     }
 
     @Test
-    void soOOrganizadorOuOAdminRegistam() {
+    void soOOrganizadorOuOAdminFecham_MarcamFaltasEDefinemOResultado() {
+        assertThatThrownBy(() -> registo.fechar(jogo, "j1")).isInstanceOf(OperacaoInvalidaException.class);
+        assertThatThrownBy(() -> registo.definirResultado(jogo, 1, 0, "j1")).isInstanceOf(OperacaoInvalidaException.class);
+        assertThatThrownBy(() -> registo.marcarFalta(jogo, c1.inscricaoId(), true, "j1"))
+            .isInstanceOf(OperacaoInvalidaException.class);
+        assertThat(registo.vista(jogo, "j1").podeRegistar()).isFalse();
+    }
+
+    @Test
+    void qualquerJogadorAdicionaEApagaGolos() {
+        assertThat(registo.vista(jogo, "j1").podeMarcarGolos()).isTrue();
+
+        registo.adicionarGolo(jogo, Equipa.COLETES, c1.inscricaoId(), null, "j1");
+        registo.adicionarGolo(jogo, Equipa.SEM_COLETES, null, null, ADMIN);
+
+        RegistoView v = vista();
+        assertThat(v.estado()).isEqualTo(EstadoJogo.EM_REGISTO);
+        assertThat(v.golosColetes()).isEqualTo(1);
+        // um jogador também apaga golos registados por outros
+        Long doAdmin = v.golos().stream().filter(g -> g.equipa() == Equipa.SEM_COLETES).findFirst().orElseThrow().id();
+        registo.apagarGolo(jogo, doAdmin, "j2");
+        assertThat(vista().golosSemColetes()).isZero();
+    }
+
+    @Test
+    void comOJogoFechadoNinguemMarcaGolos() {
+        registo.fechar(jogo, ADMIN);
+
+        assertThat(registo.vista(jogo, "j1").podeMarcarGolos()).isFalse();
         assertThatThrownBy(() -> registo.adicionarGolo(jogo, Equipa.COLETES, null, null, "j1"))
             .isInstanceOf(OperacaoInvalidaException.class);
-        assertThatThrownBy(() -> registo.fechar(jogo, "j1")).isInstanceOf(OperacaoInvalidaException.class);
-        assertThat(registo.vista(jogo, "j1").podeRegistar()).isFalse();
     }
 
     @Test

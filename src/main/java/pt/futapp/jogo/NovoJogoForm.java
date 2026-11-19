@@ -6,7 +6,6 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -16,7 +15,7 @@ public class NovoJogoForm {
     @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm")
     private LocalDateTime dataHora;
 
-    @NotBlank(message = "Indica o local do jogo.")
+    /** Opcional. */
     @Size(max = 120, message = "O local tem no máximo 120 caracteres.")
     private String local;
 

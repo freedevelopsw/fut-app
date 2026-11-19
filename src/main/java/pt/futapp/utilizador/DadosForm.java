@@ -29,6 +29,8 @@ public class DadosForm {
     private Integer passe;
     @Min(value = 1, message = "Entre 1 e 10.") @Max(value = 10, message = "Entre 1 e 10.")
     private Integer defesa;
+    @Min(value = 1, message = "Entre 1 e 10.") @Max(value = 10, message = "Entre 1 e 10.")
+    private Integer resistencia;
 
     public static DadosForm de(Utilizador u) {
         DadosForm f = new DadosForm();
@@ -43,6 +45,7 @@ public class DadosForm {
         f.remate = c.getRemate();
         f.passe = c.getPasse();
         f.defesa = c.getDefesa();
+        f.resistencia = c.getResistencia();
         return f;
     }
 
@@ -66,4 +69,6 @@ public class DadosForm {
     public void setPasse(Integer passe) { this.passe = passe; }
     public Integer getDefesa() { return defesa; }
     public void setDefesa(Integer defesa) { this.defesa = defesa; }
+    public Integer getResistencia() { return resistencia; }
+    public void setResistencia(Integer resistencia) { this.resistencia = resistencia; }
 }

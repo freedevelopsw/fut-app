@@ -79,7 +79,7 @@ public class EstatisticasService {
     /** Números de um jogador (para a carta). */
     @Transactional(readOnly = true)
     public EstatisticasView.Linha doJogador(Long jogadorId, String usernameAtual) {
-        Utilizador jogador = utilizadores.findById(jogadorId)
+        Utilizador jogador = utilizadores.findMembro(jogadorId)
             .orElseThrow(() -> new pt.futapp.comum.OperacaoInvalidaException("Jogador não encontrado."));
         Acumulado a = calcular(jogos.findByEstadoOrderByDataHoraAsc(EstadoJogo.FECHADO)).get(chave(jogador.getId(), null));
         return a != null ? a.linha(usernameAtual)
@@ -89,7 +89,10 @@ public class EstatisticasService {
 
     // ---------------------------------------------------------------- cálculo
 
-    /** Chave de agregação: o utilizador, ou o nome do convidado (sem diferenças de maiúsculas e espaços). */
+    /**
+     * Chave de agregação: o utilizador (também quando a conta foi removida: cada pessoa fica na sua linha), ou o nome
+     * do convidado sem conta (sem diferenças de maiúsculas e espaços).
+     */
     private static String chave(Long jogadorId, String nomeConvidado) {
         return jogadorId != null ? "u:" + jogadorId : "c:" + nomeConvidado.trim().toLowerCase();
     }
@@ -188,9 +191,10 @@ public class EstatisticasService {
         }
 
         EstatisticasView.Linha linha(String usernameAtual) {
-            boolean convidado = jogador == null;
+            // membro removido: mostrado como convidado (sem carta), mas numa linha só dele
+            boolean convidado = jogador == null || jogador.isRemovido();
             return new EstatisticasView.Linha(convidado ? null : jogador.getId(),
-                convidado ? nomeConvidado : jogador.getNomeVisivel(), jogos, vitorias, empates, derrotas,
+                jogador == null ? nomeConvidado : jogador.getNomeVisivel(), jogos, vitorias, empates, derrotas,
                 golos, assistencias, mvps, premios, faltas,
                 !convidado && jogador.getUsername().equalsIgnoreCase(usernameAtual), convidado);
         }

@@ -23,6 +23,7 @@ import pt.futapp.audit.Acao;
 import pt.futapp.audit.AuditEvent;
 import pt.futapp.comum.OperacaoInvalidaException;
 import pt.futapp.jogo.JogoService;
+import pt.futapp.votacao.VotacaoService;
 import pt.futapp.web.Formatos;
 
 @Service
@@ -38,11 +39,13 @@ public class UtilizadorService implements UserDetailsService {
     private final ConviteService convites;
     private final LinkPasswordService linksPassword;
     private final JogoService jogos;
+    private final VotacaoService votacao;
     private final Formatos fmt;
 
     public UtilizadorService(UtilizadorRepository repo, PasswordEncoder passwordEncoder,
                              ApplicationEventPublisher eventos, Clock clock, ConviteService convites,
-                             LinkPasswordService linksPassword, JogoService jogos, Formatos fmt) {
+                             LinkPasswordService linksPassword, JogoService jogos, VotacaoService votacao,
+                             Formatos fmt) {
         this.repo = repo;
         this.passwordEncoder = passwordEncoder;
         this.eventos = eventos;
@@ -50,6 +53,7 @@ public class UtilizadorService implements UserDetailsService {
         this.convites = convites;
         this.linksPassword = linksPassword;
         this.jogos = jogos;
+        this.votacao = votacao;
         this.fmt = fmt;
     }
 
@@ -70,8 +74,10 @@ public class UtilizadorService implements UserDetailsService {
         Optional<Utilizador> existente = repo.findByUsernameIgnoreCase(limpo);
         if (existente.isPresent()) {
             Utilizador u = existente.get();
-            u.getRoles().add(Role.ADMIN);
-            u.getRoles().add(Role.ORGANIZADOR);
+            EnumSet<Role> roles = EnumSet.copyOf(u.getRoles());
+            roles.add(Role.ADMIN);
+            roles.add(Role.ORGANIZADOR);
+            u.definirRoles(roles);
             u.desbloquear();
             eventos.publishEvent(new AuditEvent(SISTEMA, Acao.ALTERACAO_ROLE, null, "UTILIZADOR", u.getId(),
                 "Sem nenhum Admin: " + u.getNome() + " passou a Admin no arranque"));
@@ -96,6 +102,9 @@ public class UtilizadorService implements UserDetailsService {
         String username = form.getUsername().trim().toLowerCase(Locale.ROOT);
         if (repo.existsByUsernameIgnoreCase(username)) {
             throw new OperacaoInvalidaException("Esse nome de utilizador já existe.");
+        }
+        if (Utilizador.usernameReservado(username)) {
+            throw new OperacaoInvalidaException("Esse nome de utilizador não está disponível.");
         }
         Utilizador novo = repo.save(new Utilizador(username, form.getNome().trim(),
             passwordEncoder.encode(form.getPassword()), EnumSet.of(Role.JOGADOR), LocalDateTime.now(clock)));
@@ -127,14 +136,15 @@ public class UtilizadorService implements UserDetailsService {
             .orElseThrow(() -> new UsernameNotFoundException("Utilizador não encontrado: " + username));
         return User.withUsername(u.getUsername())
             .password(u.getPasswordHash())
-            .disabled(u.isBloqueado())
+            .disabled(u.isBloqueado() || u.isRemovido())
             .authorities(u.getRoles().stream().map(r -> new SimpleGrantedAuthority("ROLE_" + r.name())).toList())
             .build();
     }
 
     @Transactional(readOnly = true)
     public boolean estaBloqueado(String username) {
-        return repo.findByUsernameIgnoreCase(username).map(Utilizador::isBloqueado).orElse(false);
+        // Uma conta que já não existe (removida: o username mudou) conta como bloqueada: a sessão termina.
+        return repo.findByUsernameIgnoreCase(username).map(Utilizador::isBloqueado).orElse(true);
     }
 
     @Transactional(readOnly = true)
@@ -223,7 +233,7 @@ public class UtilizadorService implements UserDetailsService {
             throw new LinkPasswordInvalidoException("Este link para mudar a password expirou. Pede um novo ao administrador.");
         }
         Optional<Utilizador> dono = leitura.estado() == LinkPasswordService.Estado.VALIDO
-            ? repo.findById(leitura.utilizadorId()) : Optional.empty();
+            ? repo.findMembro(leitura.utilizadorId()) : Optional.empty();
         if (dono.isEmpty()) {
             throw new LinkPasswordInvalidoException("Este link não é válido. Confirma que o copiaste inteiro, ou pede um novo ao administrador.");
         }
@@ -247,10 +257,10 @@ public class UtilizadorService implements UserDetailsService {
 
     // ---------------------------------------------------------------- gestão de membros (Admin)
 
-    /** Membros ativos primeiro, depois os bloqueados; cada grupo por nome. */
+    /** Membros ativos primeiro, depois os bloqueados; cada grupo por nome. Os removidos não aparecem. */
     @Transactional(readOnly = true)
     public List<MembroView> membros(String usernameAtual) {
-        return repo.findAllByOrderByNomeAsc().stream()
+        return repo.findByRemovidoFalseOrderByNomeAsc().stream()
             .sorted(Comparator.comparing(Utilizador::isBloqueado))
             .map(u -> new MembroView(u.getId(), u.getNome(), u.getUsername(),
                 u.temRole(Role.ORGANIZADOR), u.temRole(Role.ADMIN),
@@ -276,8 +286,7 @@ public class UtilizadorService implements UserDetailsService {
         if (nivel == anterior && membro.getRoles().equals(nivel.roles())) {
             return;
         }
-        membro.getRoles().clear();
-        membro.getRoles().addAll(nivel.roles());
+        membro.definirRoles(nivel.roles());
         eventos.publishEvent(new AuditEvent(ator.getUsername(), Acao.ALTERACAO_ROLE, null, "UTILIZADOR",
             membro.getId(), "Nível de " + membro.getNome() + ": " + anterior.getDescricao() + " → " + nivel.getDescricao()));
     }
@@ -323,6 +332,7 @@ public class UtilizadorService implements UserDetailsService {
         }
         membro.bloquear(LocalDateTime.now(clock));
         int removidas = jogos.removerDeConvocatoriasAbertas(membro, admin);
+        votacao.fecharSeTodosVotaram(membro, admin);
         eventos.publishEvent(new AuditEvent(admin.getUsername(), Acao.BLOQUEIO_UTILIZADOR, null, "UTILIZADOR",
             membro.getId(), membro.getNome() + " bloqueado"
                 + (removidas > 0 ? " e retirado de " + removidas + (removidas == 1 ? " convocatória aberta" : " convocatórias abertas") : "")));
@@ -343,7 +353,7 @@ public class UtilizadorService implements UserDetailsService {
     // ---------------------------------------------------------------- apoio
 
     private Utilizador carregarMembro(Long id) {
-        return repo.findById(id).orElseThrow(() -> new OperacaoInvalidaException("Membro não encontrado."));
+        return repo.findMembro(id).orElseThrow(() -> new OperacaoInvalidaException("Membro não encontrado."));
     }
 
     private Utilizador exigirAdmin(String username) {

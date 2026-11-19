@@ -161,7 +161,7 @@ public class EquipasService {
 
     private static EquipasView.JogadorEquipa jogador(Inscricao ins) {
         Caracterizacao c = ins.getJogador() != null ? ins.getJogador().getCaracterizacao() : new Caracterizacao();
-        return new EquipasView.JogadorEquipa(ins.getId(), ins.getJogador() != null ? ins.getJogador().getId() : null,
+        return new EquipasView.JogadorEquipa(ins.getId(), ins.getConta() != null ? ins.getConta().getId() : null,
             ins.getNomeVisivel(), Nomes.iniciais(ins.getNomeVisivel()),
             c.getPosicao() != null ? c.getPosicao().getSigla() : null, c.rating(), ins.isConvidado());
     }

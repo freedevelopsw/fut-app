@@ -24,7 +24,7 @@
                 </div>
                 <div class="meta">
                     <span th:text="${j.hora()}">21:00</span>
-                    <span th:text="${j.local()}">Local</span>
+                    <span th:if="${j.local() != null}" th:text="${j.local()}">Local</span>
                     <span th:if="${j.resultado()}" class="fw-semibold text-body" th:text="|Resultado ${j.resultado()}|">Resultado 3–2</span>
                 </div>
                 <div class="d-flex align-items-center gap-3">
@@ -35,15 +35,17 @@
         </section>
 
         <section th:unless="${#lists.isEmpty(anteriores)}" class="seccao">
-            <h2 class="etiqueta">Anteriores</h2>
+            <h2 class="etiqueta">Anteriores · este mês</h2>
             <ul class="lista">
                 <li th:each="j : ${anteriores}">
-                    <a class="nome text-reset text-decoration-none py-2" th:href="@{/jogos/{id}(id=${j.id()})}" th:text="|${j.dia()} · ${j.local()}|">Jogo</a>
+                    <a class="nome text-reset text-decoration-none py-2" th:href="@{/jogos/{id}(id=${j.id()})}" th:text="${j.local() != null} ? |${j.dia()} · ${j.local()}| : ${j.dia()}">Jogo</a>
                     <span th:if="${j.resultado() != null and !j.cancelado()}" class="numero pe-3" th:text="${j.resultado()}">3–2</span>
                     <span th:if="${j.cancelado()}" class="tag tag-espera me-3">Cancelado</span>
                 </li>
             </ul>
         </section>
+
+        <a th:if="${eu.gestor()}" th:href="@{/jogos/historico}" class="btn btn-fa btn-fa-sm btn-contorno">Histórico de jogos</a>
     </main>
 
     <div class="rodape">

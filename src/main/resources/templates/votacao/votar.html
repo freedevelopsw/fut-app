@@ -39,7 +39,11 @@
                         <input type="radio" th:name="${cat.campo()}" th:value="${c.inscricaoId()}" th:checked="${c.inscricaoId() == cat.meuVoto()}" required>
                         <span class="ponto-equipa" th:classappend="${c.equipa().name() == 'COLETES'} ? 'coletes' : 'sem'" aria-hidden="true"></span>
                         <span class="info">
-                            <span class="fw-semibold" th:text="${c.nome()}">Rui</span>
+                            <!-- Nome e alcunha; se a alcunha não couber na linha, fica só o nome (ver .nome-voto no CSS) -->
+                            <span class="nome-voto">
+                                <span class="fw-semibold" th:text="${c.nome()}">Rui Costa</span>
+                                <span th:if="${c.alcunha()}" class="alcunha" th:text="|(${c.alcunha()})|">(Maestro)</span>
+                            </span>
                             <span class="sub" th:text="${c.equipa().descricao} + (${c.golos() > 0} ? (${c.golos() == 1} ? ' · 1 golo' : ' · ' + ${c.golos()} + ' golos') : '') + (${c.convidado()} ? ' · convidado' : '')">Coletes · 2 golos</span>
                         </span>
                     </label>
@@ -54,7 +58,7 @@
                         <div class="small text-secondary mb-1" th:if="${cat.descricao()}" th:text="${cat.descricao()}">Descrição</div>
                         <select class="form-select" th:id="${cat.campo()}" th:name="${cat.campo()}">
                             <option value="">—</option>
-                            <option th:each="c : ${v.candidatos()}" th:value="${c.inscricaoId()}" th:text="${c.nome()}"
+                            <option th:each="c : ${v.candidatos()}" th:value="${c.inscricaoId()}" th:text="${c.nomeComAlcunha()}"
                                     th:selected="${c.inscricaoId() == cat.meuVoto()}">Rui</option>
                         </select>
                     </div>

@@ -1,0 +1,12 @@
+# Os enums ficam como texto livre (VARCHAR), sem restrições.
+# O Hibernate criava, em cada coluna de enum, uma restrição CHECK com os valores que existiam nesse dia (e, em bases
+# H2 mais antigas, colunas do tipo ENUM). Um valor novo (por exemplo a ação de auditoria REMOCAO_UTILIZADOR) era
+# recusado. Este changeSet apaga essas restrições e converte as colunas ENUM do H2 para VARCHAR.
+# Numa base de dados nova não faz nada (o 001 já não cria restrições).
+databaseChangeLog:
+  - changeSet:
+      id: 002-enums-como-texto
+      author: futapp
+      changes:
+        - customChange:
+            class: pt.futapp.config.migracoes.EnumsComoTexto

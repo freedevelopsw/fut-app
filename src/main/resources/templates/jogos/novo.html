@@ -16,8 +16,8 @@
                 <div class="invalid-feedback" th:errors="*{dataHora}"></div>
             </div>
             <div>
-                <label class="form-label" for="local">Local</label>
-                <input class="form-control" th:field="*{local}" th:classappend="${#fields.hasErrors('local')} ? 'is-invalid'" placeholder="Pavilhão, campo…" required>
+                <label class="form-label" for="local">Local <span class="text-secondary fw-normal">(opcional)</span></label>
+                <input class="form-control" th:field="*{local}" th:classappend="${#fields.hasErrors('local')} ? 'is-invalid'" placeholder="Pavilhão, campo…">
                 <div class="invalid-feedback" th:errors="*{local}"></div>
             </div>
             <div>

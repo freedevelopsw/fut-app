@@ -6,9 +6,9 @@
     <header class="app-header">
         <div class="d-flex justify-content-between align-items-center gap-2">
             <a th:href="@{/jogos/{id}(id=${r.jogoId()})}" class="etiqueta text-decoration-none">← Convocatória</a>
-            <span class="chip" th:classappend="${r.podeRegistar()} ? 'chip-verde' : 'chip-cinza'" th:text="${r.estado().descricao}">Em registo</span>
+            <span class="chip" th:classappend="${r.podeMarcarGolos()} ? 'chip-verde' : 'chip-cinza'" th:text="${r.estado().descricao}">Em registo</span>
         </div>
-        <h1 class="titulo">Registo do jogo</h1>
+        <h1 class="titulo" th:text="${r.gestor()} ? 'Registo do jogo' : 'Marcar golos'">Registo do jogo</h1>
         <p class="m-0 small text-secondary" th:text="|${r.dia()} · ${r.hora()}|">Quinta-feira, 12 nov. · 21:00</p>
     </header>
 
@@ -23,13 +23,13 @@
         <section th:replace="~{fragments/placar :: placar(${r})}"></section>
 
         <!-- Botões de golo -->
-        <div th:if="${r.podeRegistar() and goloDe == null}" class="d-grid gap-3" style="grid-template-columns: repeat(2, minmax(0, 1fr))">
+        <div th:if="${r.podeMarcarGolos() and goloDe == null}" class="d-grid gap-3" style="grid-template-columns: repeat(2, minmax(0, 1fr))">
             <a th:href="@{/jogos/{id}/registo(id=${r.jogoId()},golo='COLETES')}" class="btn-golo"><span>+ Golo</span><small>Coletes</small></a>
             <a th:href="@{/jogos/{id}/registo(id=${r.jogoId()},golo='SEM_COLETES')}" class="btn-golo"><span>+ Golo</span><small>Sem coletes</small></a>
         </div>
 
         <!-- Quem marcou? -->
-        <form th:if="${r.podeRegistar() and goloDe != null}" th:action="@{/jogos/{id}/gestao/registo/golos(id=${r.jogoId()})}" method="post"
+        <form th:if="${r.podeMarcarGolos() and goloDe != null}" th:action="@{/jogos/{id}/registo/golos(id=${r.jogoId()})}" method="post"
               class="cartao d-flex flex-column gap-3" style="border: 2px solid var(--fa-verde)">
             <input type="hidden" name="equipa" th:value="${goloDe}">
             <h2 class="m-0 fs-6 fw-bold" th:text="|Quem marcou? · ${goloDe.descricao}|">Quem marcou? · Coletes</h2>
@@ -62,7 +62,7 @@
                         <span th:text="${g.marcador()} ?: 'Sem marcador'" th:classappend="${g.marcador() == null} ? 'text-secondary'">Rui</span>
                         <span th:if="${g.assistencia()}" class="small text-secondary" th:text="|· assist. ${g.assistencia()}|">· assist. Nuno</span>
                     </span>
-                    <form th:if="${r.podeRegistar()}" th:action="@{/jogos/{id}/gestao/registo/golos/{g}/apagar(id=${r.jogoId()},g=${g.id()})}" method="post"
+                    <form th:if="${r.podeMarcarGolos()}" th:action="@{/jogos/{id}/registo/golos/{g}/apagar(id=${r.jogoId()},g=${g.id()})}" method="post"
                           hx-confirm="Apagar este golo?">
                         <button type="submit" class="btn-icone" aria-label="Apagar golo">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>

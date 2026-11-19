@@ -14,11 +14,17 @@ public class Formatos {
     private static final DateTimeFormatter DIA = DateTimeFormatter.ofPattern("EEEE, d MMM", PT);
     private static final DateTimeFormatter HORA = DateTimeFormatter.ofPattern("HH:mm", PT);
     private static final DateTimeFormatter CURTO = DateTimeFormatter.ofPattern("EEE HH:mm", PT);
+    private static final DateTimeFormatter MES = DateTimeFormatter.ofPattern("LLLL", PT);
     private static final DateTimeFormatter COMPLETO = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm", PT);
 
     /** Por exemplo "Quinta-feira, 12 nov.". */
     public String dia(LocalDateTime data) {
         return data == null ? "" : maiuscula(DIA.format(data));
+    }
+
+    /** Por exemplo "Novembro". */
+    public String mes(LocalDateTime data) {
+        return data == null ? "" : maiuscula(MES.format(data));
     }
 
     public String hora(LocalDateTime data) {

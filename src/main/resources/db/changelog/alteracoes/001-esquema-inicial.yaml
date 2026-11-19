@@ -1,0 +1,123 @@
+# Versão 1: o esquema tal como estava em produção a 17/11/2026 (commit 52d483a), criado até aí pelo Hibernate.
+# Numa base de dados que já tem as tabelas, este changeSet fica só marcado como aplicado (MARK_RAN).
+databaseChangeLog:
+  - changeSet:
+      id: 001-esquema-inicial
+      author: futapp
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: utilizador
+      changes:
+        - createTable:
+            tableName: utilizador
+            columns:
+              - column: { name: id, type: BIGINT, autoIncrement: true, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: username, type: VARCHAR(40), constraints: { nullable: false, unique: true, uniqueConstraintName: uk_utilizador_username } }
+              - column: { name: nome, type: VARCHAR(60), constraints: { nullable: false } }
+              - column: { name: alcunha, type: VARCHAR(30) }
+              - column: { name: password_hash, type: VARCHAR(255), constraints: { nullable: false } }
+              - column: { name: posicao, type: VARCHAR(20) }
+              - column: { name: posicao_secundaria, type: VARCHAR(20) }
+              - column: { name: pe, type: VARCHAR(10) }
+              - column: { name: velocidade, type: INT }
+              - column: { name: tecnica, type: INT }
+              - column: { name: remate, type: INT }
+              - column: { name: passe, type: INT }
+              - column: { name: defesa, type: INT }
+              - column: { name: criado_em, type: TIMESTAMP, constraints: { nullable: false } }
+              - column: { name: bloqueado, type: BOOLEAN, defaultValueBoolean: false, constraints: { nullable: false } }
+              - column: { name: bloqueado_em, type: TIMESTAMP }
+        - createTable:
+            tableName: utilizador_role
+            columns:
+              - column: { name: utilizador_id, type: BIGINT, constraints: { nullable: false, foreignKeyName: fk_utilizador_role_utilizador, references: utilizador(id) } }
+              - column: { name: role, type: VARCHAR(20), constraints: { nullable: false } }
+        - addPrimaryKey:
+            tableName: utilizador_role
+            columnNames: utilizador_id, role
+            constraintName: pk_utilizador_role
+        - createTable:
+            tableName: jogo
+            columns:
+              - column: { name: id, type: BIGINT, autoIncrement: true, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: data_hora, type: TIMESTAMP, constraints: { nullable: false } }
+              - column: { name: local_jogo, type: VARCHAR(120), constraints: { nullable: false } }
+              - column: { name: vagas, type: INT, constraints: { nullable: false } }
+              - column: { name: estado, type: VARCHAR(30), constraints: { nullable: false } }
+              - column: { name: criado_por_id, type: BIGINT, constraints: { nullable: false, foreignKeyName: fk_jogo_criado_por, references: utilizador(id) } }
+              - column: { name: motivo_cancelamento, type: VARCHAR(200) }
+              - column: { name: cancelado_em, type: TIMESTAMP }
+              - column: { name: cancelado_por_id, type: BIGINT, constraints: { foreignKeyName: fk_jogo_cancelado_por, references: utilizador(id) } }
+              - column: { name: estado_antes_cancelamento, type: VARCHAR(30) }
+              - column: { name: criado_em, type: TIMESTAMP, constraints: { nullable: false } }
+        - createTable:
+            tableName: inscricao
+            columns:
+              - column: { name: id, type: BIGINT, autoIncrement: true, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: jogo_id, type: BIGINT, constraints: { nullable: false, foreignKeyName: fk_inscricao_jogo, references: jogo(id) } }
+              - column: { name: jogador_id, type: BIGINT, constraints: { foreignKeyName: fk_inscricao_jogador, references: utilizador(id) } }
+              - column: { name: nome_convidado, type: VARCHAR(60) }
+              - column: { name: estado, type: VARCHAR(20), constraints: { nullable: false } }
+              - column: { name: inscrito_em, type: TIMESTAMP, constraints: { nullable: false } }
+              - column: { name: equipa, type: VARCHAR(20) }
+              - column: { name: faltou, type: BOOLEAN, defaultValueBoolean: false, constraints: { nullable: false } }
+              - column: { name: cancelado_em, type: TIMESTAMP }
+              - column: { name: cancelado_por_id, type: BIGINT, constraints: { foreignKeyName: fk_inscricao_cancelado_por, references: utilizador(id) } }
+        - createTable:
+            tableName: golo
+            columns:
+              - column: { name: id, type: BIGINT, autoIncrement: true, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: jogo_id, type: BIGINT, constraints: { nullable: false, foreignKeyName: fk_golo_jogo, references: jogo(id) } }
+              - column: { name: equipa, type: VARCHAR(20), constraints: { nullable: false } }
+              - column: { name: marcador_id, type: BIGINT, constraints: { foreignKeyName: fk_golo_marcador, references: inscricao(id) } }
+              - column: { name: assistencia_id, type: BIGINT, constraints: { foreignKeyName: fk_golo_assistencia, references: inscricao(id) } }
+              - column: { name: registado_em, type: TIMESTAMP, constraints: { nullable: false } }
+              - column: { name: registado_por_id, type: BIGINT, constraints: { foreignKeyName: fk_golo_registado_por, references: utilizador(id) } }
+        - createTable:
+            tableName: premio
+            columns:
+              - column: { name: id, type: BIGINT, autoIncrement: true, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: nome, type: VARCHAR(40), constraints: { nullable: false, unique: true, uniqueConstraintName: uk_premio_nome } }
+              - column: { name: descricao, type: VARCHAR(120) }
+              - column: { name: ativo, type: BOOLEAN, constraints: { nullable: false } }
+              - column: { name: ordem, type: INT, constraints: { nullable: false } }
+              - column: { name: criado_em, type: TIMESTAMP, constraints: { nullable: false } }
+        - createTable:
+            tableName: voto
+            columns:
+              - column: { name: id, type: BIGINT, autoIncrement: true, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: jogo_id, type: BIGINT, constraints: { nullable: false, foreignKeyName: fk_voto_jogo, references: jogo(id) } }
+              - column: { name: premio_id, type: BIGINT, constraints: { foreignKeyName: fk_voto_premio, references: premio(id) } }
+              - column: { name: eleitor_id, type: BIGINT, constraints: { nullable: false, foreignKeyName: fk_voto_eleitor, references: utilizador(id) } }
+              - column: { name: votado_id, type: BIGINT, constraints: { nullable: false, foreignKeyName: fk_voto_votado, references: inscricao(id) } }
+              - column: { name: criado_em, type: TIMESTAMP, constraints: { nullable: false } }
+              - column: { name: anulado, type: BOOLEAN, defaultValueBoolean: false, constraints: { nullable: false } }
+              - column: { name: anulado_por_id, type: BIGINT, constraints: { foreignKeyName: fk_voto_anulado_por, references: utilizador(id) } }
+        - createTable:
+            tableName: audit_evento
+            columns:
+              - column: { name: id, type: BIGINT, autoIncrement: true, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: data_hora, type: TIMESTAMP, constraints: { nullable: false } }
+              - column: { name: ator, type: VARCHAR(40) }
+              - column: { name: acao, type: VARCHAR(40), constraints: { nullable: false } }
+              - column: { name: jogo_id, type: BIGINT }
+              - column: { name: entidade_tipo, type: VARCHAR(30) }
+              - column: { name: entidade_id, type: BIGINT }
+              - column: { name: detalhes, type: VARCHAR(500) }
+        - createIndex:
+            tableName: audit_evento
+            indexName: idx_audit_data_hora
+            columns:
+              - column: { name: data_hora }
+        - createIndex:
+            tableName: audit_evento
+            indexName: idx_audit_jogo
+            columns:
+              - column: { name: jogo_id }
+        - createIndex:
+            tableName: audit_evento
+            indexName: idx_audit_ator
+            columns:
+              - column: { name: ator }

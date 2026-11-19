@@ -95,8 +95,17 @@ public class Inscricao {
         this.faltou = faltou;
     }
 
+    /**
+     * Convidado = sem conta, ou com uma conta que foi removida. A inscrição de um membro removido continua ligada
+     * a ele (as estatísticas ficam separadas por pessoa), mas é mostrada como a de um convidado: sem carta.
+     */
     public boolean isConvidado() {
-        return jogador == null;
+        return jogador == null || jogador.isRemovido();
+    }
+
+    /** O jogador, se tiver uma conta ativa (não removida); null para convidados. Para links para a carta. */
+    public Utilizador getConta() {
+        return isConvidado() ? null : jogador;
     }
 
     public boolean ehDe(Utilizador utilizador) {
@@ -105,6 +114,16 @@ public class Inscricao {
 
     public String getNomeVisivel() {
         return jogador != null ? jogador.getNomeVisivel() : nomeConvidado;
+    }
+
+    /** Nome verdadeiro (do jogador ou do convidado), sem alcunha. */
+    public String getNomeCompleto() {
+        return jogador != null ? jogador.getNome() : nomeConvidado;
+    }
+
+    /** Alcunha do jogador; null para convidados ou sem alcunha. */
+    public String getAlcunha() {
+        return jogador != null ? jogador.getAlcunha() : null;
     }
 
     public Long getId() { return id; }

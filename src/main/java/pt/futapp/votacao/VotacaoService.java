@@ -21,6 +21,7 @@ import pt.futapp.audit.AuditEvent;
 import pt.futapp.comum.Nomes;
 import pt.futapp.comum.OperacaoInvalidaException;
 import pt.futapp.jogo.EstadoInscricao;
+import pt.futapp.jogo.EstadoJogo;
 import pt.futapp.jogo.Golo;
 import pt.futapp.jogo.GoloRepository;
 import pt.futapp.jogo.Inscricao;
@@ -92,7 +93,9 @@ public class VotacaoService {
 
         List<VotacaoView.Candidato> candidatos = presentes.stream()
             .filter(i -> minha == null || !i.getId().equals(minha.getId()))
-            .map(i -> new VotacaoView.Candidato(i.getId(), i.getNomeVisivel(), i.getEquipa(),
+            .map(i -> new VotacaoView.Candidato(i.getId(), i.getNomeCompleto(),
+                Nomes.alcunhaDistinta(i.getNomeCompleto(), i.getAlcunha()),
+                Nomes.nomeComAlcunha(i.getNomeCompleto(), i.getAlcunha()), i.getEquipa(),
                 golosPorInscricao.getOrDefault(i.getId(), 0L), i.isConvidado()))
             .toList();
 
@@ -172,6 +175,29 @@ public class VotacaoService {
         return false;
     }
 
+    /**
+     * Alguém deixou de poder votar (bloqueado ou removido). Nas votações abertas dos jogos em que jogou, se todos
+     * os que ainda podem votar já votaram, a votação fecha como se o último voto tivesse acabado de chegar.
+     *
+     * @return número de votações fechadas
+     */
+    @Transactional
+    public int fecharSeTodosVotaram(Utilizador saiu, Utilizador ator) {
+        int fechadas = 0;
+        for (Inscricao ins : inscricoes.findByJogadorAndEstadoAndJogo_Estado(
+                saiu, EstadoInscricao.ATIVA, EstadoJogo.VOTACAO_ABERTA)) {
+            Jogo jogo = ins.getJogo();
+            if (todosVotaram(jogo, presentes(jogo))) {
+                jogo.fecharVotacao();
+                eventos.publishEvent(new AuditEvent(ator.getUsername(), Acao.FECHO_VOTACAO, jogo.getId(), "JOGO",
+                    jogo.getId(), "Votação fechada automaticamente: " + saiu.getNome()
+                        + " deixou de poder votar e todos os outros já votaram"));
+                fechadas++;
+            }
+        }
+        return fechadas;
+    }
+
     @Transactional
     public void fechar(Long jogoId, String username) {
         Utilizador ator = exigirGestor(username);
@@ -201,10 +227,11 @@ public class VotacaoService {
         exigirAdmin(username);
         Jogo jogo = carregarJogo(jogoId);
         return votos.findByJogoOrderByIdAsc(jogo).stream()
-            .sorted(Comparator.comparing((Voto v) -> v.getEleitor().getNomeVisivel().toLowerCase())
+            .sorted(Comparator.comparing((Voto v) -> v.getEleitor().getNome().toLowerCase())
                 .thenComparing(v -> v.getPremio() == null ? -1 : v.getPremio().getOrdem()))
-            .map(v -> new VotoAdmin(v.getId(), v.getEleitor().getNomeVisivel(),
-                v.getPremio() == null ? "MVP" : v.getPremio().getNome(), v.getVotado().getNomeVisivel(), v.isAnulado()))
+            .map(v -> new VotoAdmin(v.getId(), Nomes.nomeComAlcunha(v.getEleitor().getNome(), v.getEleitor().getAlcunha()),
+                v.getPremio() == null ? "MVP" : v.getPremio().getNome(),
+                Nomes.nomeComAlcunha(v.getVotado().getNomeCompleto(), v.getVotado().getAlcunha()), v.isAnulado()))
             .toList();
     }
 

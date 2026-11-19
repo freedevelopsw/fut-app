@@ -22,7 +22,8 @@ import pt.futapp.utilizador.UtilizadorRepository;
 import pt.futapp.web.Formatos;
 
 /**
- * Fase 3 (Jogo e estatísticas): golos, resultado e faltas, registados pelo Organizador ou pelo Admin.
+ * Fase 3 (Jogo e estatísticas): golos, resultado e faltas. Os golos (adicionar e apagar) podem ser marcados por
+ * qualquer membro; o resultado, as faltas, fechar e reabrir são do Organizador ou do Admin.
  * O registo pode ficar incompleto. Fechar o jogo abre a votação; enquanto a votação está aberta, o registo pode ser reaberto.
  */
 @Service
@@ -54,6 +55,7 @@ public class RegistoService {
         Jogo jogo = carregarJogo(jogoId);
         Utilizador eu = carregarUtilizador(username);
         boolean gestor = eu.ehGestor() && !eu.isBloqueado();
+        boolean membro = !eu.isBloqueado();
 
         List<Golo> todos = golos.findByJogoOrderByIdAsc(jogo);
         List<RegistoView.GoloView> lista = new ArrayList<>();
@@ -93,15 +95,18 @@ public class RegistoService {
             };
         }
         return new RegistoView(jogo.getId(), fmt.dia(jogo.getDataHora()), fmt.hora(jogo.getDataHora()), jogo.getEstado(),
-            gestor, gestor && jogo.permiteRegisto(), gestor && jogo.getEstado() == EstadoJogo.VOTACAO_ABERTA,
+            gestor, gestor && jogo.permiteRegisto(), membro && jogo.permiteRegisto(),
+            gestor && jogo.getEstado() == EstadoJogo.VOTACAO_ABERTA,
             jogo.temResultado(), c, s, lista, marcadores(todos, Equipa.COLETES), marcadores(todos, Equipa.SEM_COLETES),
             coletes, semColetes, faltas, motivo);
     }
 
-    /** Regista um golo. O marcador e a assistência, se existirem, têm de ser da equipa que marcou. */
+    /**
+     * Regista um golo (qualquer membro). O marcador e a assistência, se existirem, têm de ser da equipa que marcou.
+     */
     @Transactional
     public void adicionarGolo(Long jogoId, Equipa equipa, Long marcadorId, Long assistenciaId, String username) {
-        Utilizador ator = exigirGestor(username);
+        Utilizador ator = exigirMembro(username);
         Jogo jogo = carregarJogo(jogoId);
         jogo.iniciarRegisto();
         if (equipa == null) {
@@ -121,9 +126,10 @@ public class RegistoService {
                 + (assistencia != null ? " (assistência de " + assistencia.getNomeVisivel() + ")" : "")));
     }
 
+    /** Apaga um golo (qualquer membro, qualquer golo). */
     @Transactional
     public void apagarGolo(Long jogoId, Long goloId, String username) {
-        Utilizador ator = exigirGestor(username);
+        Utilizador ator = exigirMembro(username);
         Jogo jogo = carregarJogo(jogoId);
         jogo.iniciarRegisto();
         Golo golo = golos.findById(goloId).filter(g -> g.getJogo().getId().equals(jogo.getId()))
@@ -232,6 +238,14 @@ public class RegistoService {
             throw new OperacaoInvalidaException(quem + " não é da equipa " + equipa.getDescricao() + ".");
         }
         return ins;
+    }
+
+    private Utilizador exigirMembro(String username) {
+        Utilizador u = carregarUtilizador(username);
+        if (u.isBloqueado()) {
+            throw new OperacaoInvalidaException("A tua conta está bloqueada.");
+        }
+        return u;
     }
 
     private Utilizador exigirGestor(String username) {

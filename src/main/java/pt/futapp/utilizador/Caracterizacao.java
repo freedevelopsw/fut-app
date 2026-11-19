@@ -43,11 +43,15 @@ public class Caracterizacao {
     @Column(name = "defesa")
     private Integer defesa;
 
+    @Column(name = "resistencia")
+    private Integer resistencia;
+
     public Caracterizacao() {
     }
 
     public Caracterizacao(Posicao posicao, Posicao posicaoSecundaria, Pe pe,
-                          Integer velocidade, Integer tecnica, Integer remate, Integer passe, Integer defesa) {
+                          Integer velocidade, Integer tecnica, Integer remate, Integer passe, Integer defesa,
+                          Integer resistencia) {
         this.posicao = posicao;
         this.posicaoSecundaria = posicaoSecundaria;
         this.pe = pe;
@@ -56,11 +60,12 @@ public class Caracterizacao {
         this.remate = remate;
         this.passe = passe;
         this.defesa = defesa;
+        this.resistencia = resistencia;
     }
 
     /** Média dos atributos preenchidos, arredondada; null se nenhum estiver preenchido. */
     public Integer rating() {
-        var valores = Stream.of(velocidade, tecnica, remate, passe, defesa).filter(Objects::nonNull).toList();
+        var valores = Stream.of(velocidade, tecnica, remate, passe, defesa, resistencia).filter(Objects::nonNull).toList();
         if (valores.isEmpty()) {
             return null;
         }
@@ -79,4 +84,5 @@ public class Caracterizacao {
     public Integer getRemate() { return remate; }
     public Integer getPasse() { return passe; }
     public Integer getDefesa() { return defesa; }
+    public Integer getResistencia() { return resistencia; }
 }

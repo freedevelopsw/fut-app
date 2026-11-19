@@ -13,5 +13,7 @@ public interface VotoRepository extends JpaRepository<Voto, Long> {
 
     List<Voto> findByJogoAndAnuladoFalse(Jogo jogo);
 
+    boolean existsByEleitorOrAnuladoPor(Utilizador eleitor, Utilizador anuladoPor);
+
     List<Voto> findByJogoAndEleitorAndAnuladoFalse(Jogo jogo, Utilizador eleitor);
 }

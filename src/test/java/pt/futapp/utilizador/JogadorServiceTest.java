@@ -72,7 +72,28 @@ class JogadorServiceTest {
         assertThat(carta.rating()).isEqualTo(8); // (8 + 9 + 6) / 3 = 7,67
         assertThat(carta.posicaoSigla()).isEqualTo("MED");
         assertThat(carta.pe()).isEqualTo("Esquerdo");
-        assertThat(carta.atributos()).extracting(CartaView.Atributo::valor).containsExactly(8, null, 6, 9, null);
+        assertThat(carta.atributos()).extracting(CartaView.Atributo::valor).containsExactly(8, null, 6, 9, null, null);
+    }
+
+    @Test
+    void aResistenciaEntraNaCartaENoRating() {
+        String rui = registar(utilizadores, "rui");
+        Long id = jogadores.idDe(rui);
+        DadosForm f = dados("Rui");
+        f.setVelocidade(6);
+        f.setResistencia(10);
+
+        jogadores.atualizar(id, f, rui);
+
+        CartaView carta = jogadores.carta(id, rui);
+        assertThat(carta.rating()).isEqualTo(8); // (6 + 10) / 2
+        assertThat(carta.atributos()).extracting(CartaView.Atributo::nome).last().isEqualTo("Resistência");
+        assertThat(carta.atributos()).extracting(CartaView.Atributo::valor).last().isEqualTo(10);
+        assertThat(jogadores.formulario(id, rui).getResistencia()).isEqualTo(10);
+
+        DadosForm invalido = dados("Rui");
+        invalido.setResistencia(11);
+        assertThatThrownBy(() -> jogadores.atualizar(id, invalido, rui)).isInstanceOf(OperacaoInvalidaException.class);
     }
 
     @Test

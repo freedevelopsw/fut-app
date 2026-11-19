@@ -52,7 +52,17 @@ public class JogoController {
         return "jogos/detalhe";
     }
 
-    // ---------------------------------------------------------------- registo do jogo (Organizador / Admin)
+    // ---------------------------------------------------------------- histórico (Organizador / Admin)
+
+    @GetMapping("/historico")
+    public String historico(Principal principal, Model model) {
+        model.addAttribute("meses", jogos.historico(principal.getName()));
+        model.addAttribute("nav", "jogo");
+        return "jogos/historico";
+    }
+
+    // ---------------------------------------------------------------- registo do jogo
+    // Golos: qualquer membro. Resultado, faltas, fechar e reabrir: Organizador / Admin (/gestao/**).
 
     @GetMapping("/{id}/registo")
     public String registo(@PathVariable Long id, @RequestParam(required = false) Equipa golo,
@@ -63,7 +73,7 @@ public class JogoController {
         return "jogos/registo";
     }
 
-    @PostMapping("/{id}/gestao/registo/golos")
+    @PostMapping("/{id}/registo/golos")
     public String adicionarGolo(@PathVariable Long id, @RequestParam Equipa equipa,
                                 @RequestParam(required = false) Long marcador,
                                 @RequestParam(required = false) Long assistencia,
@@ -72,7 +82,7 @@ public class JogoController {
             () -> registo.adicionarGolo(id, equipa, marcador, assistencia, principal.getName()));
     }
 
-    @PostMapping("/{id}/gestao/registo/golos/{goloId}/apagar")
+    @PostMapping("/{id}/registo/golos/{goloId}/apagar")
     public String apagarGolo(@PathVariable Long id, @PathVariable Long goloId,
                              Principal principal, RedirectAttributes redirect) {
         return executarRegisto(id, redirect, "Golo apagado.", () -> registo.apagarGolo(id, goloId, principal.getName()));
@@ -212,11 +222,6 @@ public class JogoController {
                                Principal principal, RedirectAttributes redirect) {
         return executar(id, redirect, "Jogo cancelado. Avisa o grupo no WhatsApp.", false,
             () -> jogos.cancelar(id, motivo, principal.getName()));
-    }
-
-    @PostMapping("/{id}/gestao/reativar")
-    public String reativarJogo(@PathVariable Long id, Principal principal, RedirectAttributes redirect) {
-        return executar(id, redirect, "Jogo reativado.", false, () -> jogos.reativar(id, principal.getName()));
     }
 
     @PostMapping("/{id}/gestao/fechar")

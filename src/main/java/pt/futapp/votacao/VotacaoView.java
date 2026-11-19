@@ -40,7 +40,12 @@ public record VotacaoView(
     public record Eleitor(String nome, String iniciais) {
     }
 
-    public record Candidato(Long inscricaoId, String nome, Equipa equipa, long golos, boolean convidado) {
+    /**
+     * Um candidato no boletim. {@code nome} = nome verdadeiro; {@code alcunha} só quando é diferente do nome;
+     * {@code nomeComAlcunha} = texto para as listas de escolha ("Nome (alcunha)" se couber, senão só o nome).
+     */
+    public record Candidato(Long inscricaoId, String nome, String alcunha, String nomeComAlcunha, Equipa equipa,
+                            long golos, boolean convidado) {
     }
 
     /** Uma categoria do boletim: o MVP ({@code premioId} null) ou um prémio. {@code meuVoto} = inscrição em que votei. */

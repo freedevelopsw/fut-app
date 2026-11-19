@@ -39,6 +39,8 @@ class EstatisticasServiceTest {
     @Autowired private VotacaoService votacao;
     @Autowired private EstatisticasService estatisticas;
     @Autowired private ResumoService resumo;
+    @Autowired private pt.futapp.utilizador.RemocaoService remocao;
+    @Autowired private pt.futapp.utilizador.JogadorService jogadores;
 
     private Long jogo;
     private final Map<String, Long> ins = new HashMap<>();
@@ -167,5 +169,43 @@ class EstatisticasServiceTest {
             .contains("MVP: Nome j1 (2 votos)")
             .contains("4 jogaram · 1 falta")
             .contains(URL + "/jogos/" + jogo);
+    }
+
+    @Test
+    void quemERemovidoFicaNasEstatisticasComoConvidado() {
+        Long idJ1 = utilizadores.vista("j1").orElseThrow().id();
+
+        assertThat(remocao.remover(idJ1, ADMIN)).isEqualTo(pt.futapp.utilizador.RemocaoService.Resultado.REMOVIDO);
+
+        EstatisticasView.Linha j1 = linha("j1");
+        assertThat(j1.convidado()).isTrue();
+        assertThat(j1.jogadorId()).isNull();
+        assertThat(j1.golos()).isEqualTo(2);
+        assertThat(j1.mvps()).isEqualTo(1);
+        assertThat(j1.vitorias()).isEqualTo(1);
+        // o voto que deu continua a contar
+        assertThat(linha("j3").golos()).isEqualTo(1);
+        assertThat(votacao.vista(jogo, ADMIN).mvpResultado().vencedores()).containsExactly("Nome j1");
+        assertThat(jogos.convocatoria(jogo, ADMIN, URL).inscritos())
+            .anySatisfy(l -> {
+                assertThat(l.nome()).isEqualTo("Nome j1");
+                assertThat(l.convidado()).isTrue();
+                assertThat(l.jogadorId()).isNull();
+            });
+    }
+
+    // review 5: um membro removido não se junta a um convidado com o mesmo nome
+    @Test
+    void umRemovidoComAMesmaAlcunhaDeUmConvidadoFicaNumaLinhaSo() {
+        pt.futapp.utilizador.DadosForm f = new pt.futapp.utilizador.DadosForm();
+        f.setNome("Nome j3");
+        f.setAlcunha("Zé");
+        jogadores.atualizar(utilizadores.vista("j3").orElseThrow().id(), f, "j3");
+
+        remocao.remover(utilizadores.vista("j3").orElseThrow().id(), ADMIN);
+
+        var zes = estatisticas.temporada(ADMIN).tabela().stream().filter(l -> l.nome().equals("Zé")).toList();
+        assertThat(zes).hasSize(2).allSatisfy(l -> assertThat(l.convidado()).isTrue());
+        assertThat(zes).extracting(EstatisticasView.Linha::golos).containsExactlyInAnyOrder(1, 0);
     }
 }

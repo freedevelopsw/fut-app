@@ -18,9 +18,17 @@ import pt.futapp.utilizador.UtilizadorService;
 public class GlobalModelAdvice {
 
     private final UtilizadorService utilizadores;
+    private final Versao versao;
 
-    public GlobalModelAdvice(UtilizadorService utilizadores) {
+    public GlobalModelAdvice(UtilizadorService utilizadores, Versao versao) {
         this.utilizadores = utilizadores;
+        this.versao = versao;
+    }
+
+    /** Versão da app (por exemplo "1.0.0"), mostrada no Perfil. */
+    @ModelAttribute("versao")
+    public String versao() {
+        return versao.numero();
     }
 
     @ModelAttribute("eu")

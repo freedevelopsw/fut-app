@@ -1,0 +1,17 @@
+# Versões da base de dados (Liquibase). Corre no arranque, antes do Hibernate.
+#
+# Regras:
+# - Cada alteração ao modelo de dados é um ficheiro NOVO em alteracoes/, acrescentado no fim desta lista.
+# - Nunca alterar um changeSet que já foi aplicado (o Liquibase guarda um checksum de cada um em DATABASECHANGELOG).
+# - Os changeSets têm de funcionar em H2 (desenvolvimento e testes) e em PostgreSQL (produção).
+# - O Hibernate só valida (ddl-auto=validate): se uma entidade não bater certo com as tabelas, a app não arranca.
+databaseChangeLog:
+  - include:
+      file: alteracoes/001-esquema-inicial.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: alteracoes/002-enums-como-texto.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: alteracoes/003-2026-11-18-resistencia-remover-local.yaml
+      relativeToChangelogFile: true

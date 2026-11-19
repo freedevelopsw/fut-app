@@ -12,8 +12,10 @@ public enum Acao {
     ALTERACAO_DADOS,
     BLOQUEIO_UTILIZADOR,
     DESBLOQUEIO_UTILIZADOR,
+    REMOCAO_UTILIZADOR,
     CRIACAO_JOGO,
     CANCELAMENTO_JOGO,
+    /** Só no histórico da auditoria: os jogos cancelados já não se reativam. Não apagar (há registos antigos). */
     REATIVACAO_JOGO,
     INSCRICAO_JOGO,
     CANCELAMENTO_INSCRICAO,

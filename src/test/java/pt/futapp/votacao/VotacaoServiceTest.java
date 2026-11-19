@@ -37,6 +37,8 @@ class VotacaoServiceTest {
     @Autowired private RegistoService registo;
     @Autowired private VotacaoService votacao;
     @Autowired private PremiosService premios;
+    @Autowired private pt.futapp.utilizador.JogadorService jogadores;
+    @Autowired private pt.futapp.utilizador.RemocaoService remocao;
 
     private Long jogo;
     /** username → inscrição */
@@ -222,5 +224,49 @@ class VotacaoServiceTest {
         votacao.fechar(jogo, ADMIN);
 
         assertThat(votacao.vista(jogo, "j1").mvpResultado()).isNull();
+    }
+
+    private void alcunha(String username, String nome, String alcunha) {
+        pt.futapp.utilizador.DadosForm f = new pt.futapp.utilizador.DadosForm();
+        f.setNome(nome);
+        f.setAlcunha(alcunha);
+        jogadores.atualizar(jogadores.idDe(username), f, username);
+    }
+
+    @Test
+    void oBoletimMostraONomeVerdadeiroEAAlcunha() {
+        alcunha("j2", "João Silva", "Jota");
+        alcunha("j3", "Bartolomeu Fernandes Albuquerque", "Bartolomeu, o Grande");
+        fecharJogo();
+
+        var candidatos = votacao.vista(jogo, "j1").candidatos();
+        VotacaoView.Candidato j2 = candidatos.stream().filter(c -> c.inscricaoId().equals(id("j2"))).findFirst().orElseThrow();
+        assertThat(j2.nome()).isEqualTo("João Silva");
+        assertThat(j2.alcunha()).isEqualTo("Jota");
+        assertThat(j2.nomeComAlcunha()).isEqualTo("João Silva (Jota)");
+        // nome e alcunha juntos não cabem numa lista de escolha no telefone: fica só o nome
+        VotacaoView.Candidato j3 = candidatos.stream().filter(c -> c.inscricaoId().equals(id("j3"))).findFirst().orElseThrow();
+        assertThat(j3.nomeComAlcunha()).isEqualTo("Bartolomeu Fernandes Albuquerque");
+        VotacaoView.Candidato j4 = candidatos.stream().filter(c -> c.inscricaoId().equals(id("j4"))).findFirst().orElseThrow();
+        assertThat(j4.alcunha()).isNull();
+        assertThat(j4.nomeComAlcunha()).isEqualTo("Nome j4");
+
+        votacao.votar(jogo, mvp(id("j2")), "j1");
+        assertThat(votacao.votosDoJogo(jogo, ADMIN)).extracting(VotacaoService.VotoAdmin::votado).contains("João Silva (Jota)");
+    }
+
+    // review 7: se o removido era o único que faltava votar, a votação fecha sozinha
+    @Test
+    void quandoOUnicoQueFaltavaVotarERemovidoAVotacaoFecha() {
+        fecharJogo();
+        votacao.votar(jogo, mvp(id("j1")), "j2");
+        votacao.votar(jogo, mvp(id("j1")), "j3");
+        votacao.votar(jogo, mvp(id("j1")), "j4");
+        assertThat(votacao.vista(jogo, ADMIN).aberta()).isTrue();
+
+        remocao.remover(utilizadores.vista("j1").orElseThrow().id(), ADMIN);
+
+        assertThat(votacao.vista(jogo, ADMIN).aberta()).isFalse();
+        assertThat(votacao.vista(jogo, ADMIN).mvpResultado().vencedores()).containsExactly("Nome j1");
     }
 }

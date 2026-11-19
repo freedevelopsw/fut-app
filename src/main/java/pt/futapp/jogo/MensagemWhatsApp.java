@@ -17,7 +17,10 @@ final class MensagemWhatsApp {
                         List<Convocatoria.Linha> inscritos, List<Convocatoria.Linha> espera, String link) {
         StringBuilder sb = new StringBuilder();
         sb.append("Futebol — ").append(dia).append(", ").append(hora).append('\n');
-        sb.append("Local: ").append(local).append("\n\n");
+        if (local != null) { // já normalizado por Jogo.getLocal()
+            sb.append("Local: ").append(local).append('\n');
+        }
+        sb.append('\n');
         sb.append("Inscritos (").append(inscritos.size()).append('/').append(vagas).append("):\n");
         for (Convocatoria.Linha l : inscritos) {
             sb.append(l.posicao()).append(". ").append(l.nome()).append(l.convidado() ? " (convidado)" : "").append('\n');

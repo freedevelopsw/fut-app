@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt-PT" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Histórico')}"></head>
+<body hx-boost="true">
+<div class="app">
+    <header class="app-header">
+        <a th:href="@{/}" class="etiqueta text-decoration-none">← Jogos</a>
+        <h1 class="titulo">Histórico</h1>
+        <p class="m-0 small text-secondary">Jogos fechados e cancelados deste ano. Só o Organizador e o Admin veem esta página.</p>
+    </header>
+
+    <main class="app-main">
+        <div th:replace="~{fragments/layout :: mensagens}"></div>
+
+        <p th:if="${#lists.isEmpty(meses)}" class="lista-vazia">Ainda não há jogos fechados este ano.</p>
+
+        <section th:each="m : ${meses}" class="seccao">
+            <h2 class="etiqueta" th:text="|${m.mes()} (${m.jogos().size()})|">Novembro (4)</h2>
+            <ul class="lista">
+                <li th:each="j : ${m.jogos()}">
+                    <a class="nome text-reset text-decoration-none py-2" th:href="@{/jogos/{id}(id=${j.id()})}"
+                       th:text="${j.local() != null} ? |${j.dia()} · ${j.local()}| : ${j.dia()}">Jogo</a>
+                    <span th:if="${j.resultado() != null and !j.cancelado()}" class="numero pe-3" th:text="${j.resultado()}">3–2</span>
+                    <span th:if="${j.cancelado()}" class="tag tag-espera me-3">Cancelado</span>
+                </li>
+            </ul>
+        </section>
+    </main>
+
+    <div class="rodape">
+        <nav th:replace="~{fragments/layout :: nav}"></nav>
+    </div>
+</div>
+</body>
+</html>

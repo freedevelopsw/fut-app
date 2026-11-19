@@ -15,7 +15,7 @@
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
                 <span th:text="${c.hora()}">21:00</span>
             </span>
-            <span>
+            <span th:if="${c.local() != null}">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
                 <span th:text="${c.local()}">Local</span>
             </span>
@@ -32,10 +32,6 @@
             <span class="small text-secondary" th:text="|Cancelado por ${c.canceladoPor()} em ${c.canceladoEm()}|">Cancelado por Admin</span>
             <div th:if="${c.gestor()}" class="d-flex flex-column gap-2 mt-1">
                 <a th:href="${c.whatsappCancelamentoUrl()}" target="_blank" rel="noopener" hx-boost="false" class="btn btn-fa btn-fa-sm btn-verde">Avisar o grupo no WhatsApp</a>
-                <form th:action="@{/jogos/{id}/gestao/reativar(id=${c.jogoId()})}" method="post"
-                      hx-confirm="Reativar o jogo? Volta ao estado em que estava antes de ser cancelado.">
-                    <button type="submit" class="btn btn-fa btn-fa-sm btn-contorno">Reativar jogo</button>
-                </form>
             </div>
         </section>
 
@@ -137,6 +133,10 @@
             <p th:if="${resumo != null}" class="m-0 small text-secondary text-center"
                th:text="|${resumo.jogaram()} jogaram| + (${resumo.faltas() > 0} ? (${resumo.faltas() == 1} ? ' · 1 falta' : | · ${resumo.faltas()} faltas|) : '') + (${resumo.votaram() == 1} ? ' · 1 votou' : | · ${resumo.votaram()} votaram|) + (${resumo.desistencias() > 0} ? (${resumo.desistencias() == 1} ? ' · 1 desistência' : | · ${resumo.desistencias()} desistências|) : '')">12 jogaram</p>
         </section>
+
+        <!-- Marcar golos: qualquer membro (o Organizador/Admin usa "Registar jogo" na gestão) -->
+        <a th:if="${registo.podeMarcarGolos() and !registo.gestor()}" th:href="@{/jogos/{id}/registo(id=${c.jogoId()})}"
+           class="btn btn-fa btn-fa-sm btn-verde">Marcar golos</a>
 
         <!-- Equipas publicadas (visíveis a todos) -->
         <section th:if="${equipas.publicadas()}" class="seccao">
@@ -248,7 +248,7 @@
                 <details class="mt-1">
                     <summary class="small fw-semibold" style="color: var(--fa-laranja); cursor: pointer; min-height: 32px">Cancelar jogo</summary>
                     <form th:action="@{/jogos/{id}/gestao/cancelar(id=${c.jogoId()})}" method="post" class="d-flex flex-column gap-2 mt-2"
-                          hx-confirm="Cancelar este jogo? Podes reativá-lo depois, se for preciso.">
+                          hx-confirm="Cancelar este jogo? Não dá para desfazer: um jogo cancelado não volta a abrir.">
                         <label class="form-label m-0" for="motivo">Motivo</label>
                         <textarea class="form-control" id="motivo" name="motivo" rows="2" maxlength="200" required>Falta de jogadores</textarea>
                         <button type="submit" class="btn btn-fa btn-fa-sm btn-contorno" style="color: var(--fa-laranja); border-color: #E9C9A6">Cancelar jogo</button>
