@@ -50,10 +50,11 @@
             <artifactId>spring-boot-starter-liquibase</artifactId>
         </dependency>
 
+        <!-- H2: só para desenvolvimento (mvn spring-boot:run) e testes. Não vai no jar de produção. -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
-            <scope>runtime</scope>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>
@@ -88,6 +89,10 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <!-- mvn spring-boot:run (desenvolvimento) usa também as dependências de teste, onde está o H2 -->
+                    <useTestClasspath>true</useTestClasspath>
+                </configuration>
                 <executions>
                     <!-- META-INF/build-info.properties: versão e data do build, mostradas no Perfil e no arranque -->
                     <execution>

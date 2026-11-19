@@ -35,6 +35,12 @@ O dono do projeto não escreve código: todo o código é gerado, testado automa
 - Indicador de carregamento global (`static/js/carregando.js`, incluído no `head` do layout): uma bola a saltar ao
   centro do ecrã em todos os pedidos htmx com mais de 250 ms, até à resposta. O elemento que fez o pedido fica
   bloqueado (`.htmx-request`), o que evita cliques duplos. Páginas novas não precisam de nada: basta usarem o `head` do layout.
+- Cache dos ficheiros estáticos (`static/`): cadeia de recursos do Spring com impressão digital do conteúdo
+  (`/css/app-<md5>.css`) e `Cache-Control: max-age=7 dias, public`; cada deploy muda os endereços dos ficheiros alterados, por isso nunca se vê uma versão antiga; as páginas continuam sem cache (`no-store`).
+  Nos templates, ligar sempre com `@{/css/...}` (nunca `href="/css/..."` à mão), para o endereço mudar quando o
+  ficheiro muda. O `manifest.webmanifest` aponta para `/img/icone.svg` sem impressão: se o ícone mudar, mudar o
+  nome do ficheiro. Em `dev` a cache está desligada. Endereços com impressão no `SecurityConfig` (`/manifest*.webmanifest`).
+  Teste: `CacheEstaticosTest` (servidor a sério, porque é o filtro do servidor que reescreve os endereços).
 - Toda a regra nova vem com testes em `src/test/java` (`@SpringBootTest` + perfil `test`).
 - Enums em entidades: nunca `@Enumerated`; usar `@Convert(converter = XConverter.class)` (`comum/conversores`,
   `EnumTextoConverter`). Na base de dados são VARCHAR sem restrições CHECK: um valor novo de enum não precisa de changeset.
@@ -194,11 +200,10 @@ Cumulativas: `JOGADOR`, `ORGANIZADOR`, `ADMIN`. Convidado = inscrição sem cont
   `MaxRAMPercentage=75`, SerialGC e `TieredStopAtLevel=1` (arranque rápido quando a app acorda).
 - `application-prod.properties`: porta `${PORT:8080}`, `forward-headers-strategy=framework` (links em https atrás do
   proxy), cookies de sessão `secure`, Hikari com no máximo 3 ligações e `minimum-idle=0` (o Neon pode adormecer).
-- Sem `DATABASE_URL`, o perfil prod usa H2 em ficheiro na pasta `FUTAPP_DADOS` (por omissão `/tmp/futapp`;
-  `FILE_LOCK=NO`, `TRACE_LEVEL_FILE=0`). Escolha do dono, por agora. No Cloud Run, `/tmp` perde-se quando a instância
-  se desliga: os dados ficam guardados com um bucket do Cloud Storage montado em `/dados` (Cloud Storage FUSE,
-  execução gen2) e `FUTAPP_DADOS=/dados`. Máximo 1 instância. `AvisoBaseDados` regista no arranque onde estão os dados
-  e avisa se estiverem numa pasta temporária. Com `DATABASE_URL`, PostgreSQL.
+- Produção é sempre PostgreSQL (Neon) e nada em produção tem ligação ao H2 (decisão do dono, 19/11/2026):
+  `DATABASE_URL` é obrigatória e sem valor por omissão (sem ela a app não arranca e o Cloud Run mantém a revisão
+  anterior; `BaseDadosProducao` dá a mensagem clara e exige `jdbc:postgresql:`); o H2 tem `scope test` no pom, por isso não vai no jar de produção. O `mvn spring-boot:run` local usa o
+  classpath de teste (`useTestClasspath`) para ter o H2 em desenvolvimento.
 - `UrlBaseDados` (chamado no `main`): aceita `DATABASE_URL` no formato do Neon (`postgresql://user:pass@host/db?...`)
   e converte para `spring.datasource.*`; um URL `jdbc:` fica como está.
 - Cloud Run: europe-west1, faturação por pedido, 1 GiB, 1 CPU, min 0 / max 1 instâncias, startup CPU boost,

@@ -25,7 +25,7 @@ public class SecurityConfig {
                                                    @Value("${futapp.remember-me.dias:30}") int dias) throws Exception {
         http
             .authorizeHttpRequests(pedidos -> pedidos
-                .requestMatchers("/login", "/registo", "/redefinir-password", "/css/**", "/js/**", "/img/**", "/manifest.webmanifest", "/error").permitAll()
+                .requestMatchers("/login", "/registo", "/redefinir-password", "/css/**", "/js/**", "/img/**", "/manifest*.webmanifest", "/error").permitAll()
                 .requestMatchers("/admin/**", "/jogadores/*/link-password").hasRole("ADMIN")
                 .requestMatchers("/jogos/*/votos", "/jogos/*/votos/**").hasRole("ADMIN")
                 .requestMatchers("/jogos/novo", "/jogos/historico", "/jogos/*/equipas", "/jogos/*/gestao/**", "/gestao/**")
