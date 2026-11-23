@@ -32,8 +32,8 @@ import pt.futapp.utilizador.UtilizadorRepository;
  *   <li>A média dos colegas aparece logo a partir do primeiro voto, sempre com o número de votos.</li>
  *   <li>Quem deu cada nota: o Admin vê sempre; os outros só com o interruptor do Admin ligado
  *       ({@link InterruptorDetalhesAvaliacoes}, temporário).</li>
- *   <li>A autoavaliação continua a ser a da carta e é a que se vê e ordena por omissão. As equipas continuam a ser
- *       geradas com a autoavaliação.</li>
+ *   <li>A autoavaliação continua a ser a da carta (média com uma casa decimal) e é a que se vê e ordena por
+ *       omissão. As equipas continuam a ser geradas com a autoavaliação (arredondada às unidades).</li>
  * </ul>
  */
 @Service
@@ -113,7 +113,7 @@ public class AvaliacaoService {
     public List<CartaResumo> cartas(String usernameAtual, OrdemCartas ordem) {
         Map<Long, MediaColegas> medias = medias();
         Comparator<CartaResumo> porAuto = Comparator.comparing(CartaResumo::auto,
-            Comparator.nullsLast(Comparator.<Integer>reverseOrder()));
+            Comparator.nullsLast(Comparator.<Double>reverseOrder()));
         Comparator<CartaResumo> porColegas = Comparator.comparing(CartaResumo::colegas,
             Comparator.nullsLast(Comparator.<Double>reverseOrder()));
         Comparator<CartaResumo> porNome = Comparator.comparing((CartaResumo c) -> c.nomeVisivel().toLowerCase());

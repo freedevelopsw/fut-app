@@ -1,14 +1,14 @@
 package pt.futapp.avaliacao;
 
 /**
- * Uma linha das Cartas dos jogadores (ecrã Estatísticas): a autoavaliação ({@code auto}, rating inteiro da carta) e a
- * média dos colegas ({@code colegas}, com uma casa decimal) com o número de votos.
+ * Uma linha das Cartas dos jogadores (ecrã Estatísticas): a autoavaliação ({@code auto}) e a média dos colegas
+ * ({@code colegas}) com o número de votos. As duas aparecem com uma casa decimal.
  */
-public record CartaResumo(Long id, String nomeVisivel, String iniciais, String posicaoSigla, Integer auto,
+public record CartaResumo(Long id, String nomeVisivel, String iniciais, String posicaoSigla, Double auto,
                           Double colegas, int votos, boolean eu) {
 
     public String autoTexto() {
-        return auto == null ? "–" : auto.toString();
+        return MediaColegas.decimal(auto);
     }
 
     public String colegasTexto() {

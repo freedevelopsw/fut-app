@@ -106,7 +106,9 @@ O dono do projeto não escreve código: todo o código é gerado, testado automa
 ## Carta do jogador
 - `Utilizador.alcunha` + `Caracterizacao` (@Embeddable): posição, posição secundária, pé, 6 atributos 1–10
   (velocidade, técnica, remate, passe, defesa, resistência). Só o nome é obrigatório.
-- Rating = média arredondada dos atributos preenchidos. Nas listas usa-se `getNomeVisivel()` (alcunha ou nome).
+- Rating = média dos atributos preenchidos (`Caracterizacao.media()`), mostrada com uma casa decimal ("8,2") na carta
+  e nas Cartas (pedido do dono, 23/11/2026); as equipas usam a média arredondada (`rating()`). Os atributos são
+  inteiros 1–10. Nas listas usa-se `getNomeVisivel()` (alcunha ou nome).
 - `/jogadores/{id}`: carta visível a todos; `/jogadores/{id}/editar`: o próprio ou o Admin (`JogadorService`).
 - Lista de jogadores ativos no ecrã Estatísticas; nomes nas convocatórias e nos membros ligam à carta.
 

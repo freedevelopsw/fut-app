@@ -190,7 +190,7 @@ class AvaliacaoServiceTest {
             .startsWith("Nome ana", "Nome rui", "Nome bia");
         CartaResumo ruiNaLista = avaliacoes.cartas(rui, OrdemCartas.AUTO).stream()
             .filter(c -> c.nomeVisivel().equals("Nome rui")).findFirst().orElseThrow();
-        assertThat(ruiNaLista.autoTexto()).isEqualTo("9");
+        assertThat(ruiNaLista.autoTexto()).isEqualTo("9,0");
         assertThat(ruiNaLista.colegasTexto()).isEqualTo("4,0");
         assertThat(ruiNaLista.votosTexto()).isEqualTo("1 voto");
         assertThat(ruiNaLista.eu()).isTrue();

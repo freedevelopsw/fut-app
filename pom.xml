@@ -14,7 +14,7 @@
     <groupId>pt.futapp</groupId>
     <artifactId>futapp</artifactId>
     <!-- Versão da app (semântica: MAJOR.MINOR.PATCH). Muda no commit de cada publicação; ver CLAUDE.md, "Publicar uma versão". -->
-    <version>1.2.0</version>
+    <version>1.2.1</version>
     <name>FutApp</name>
     <description>Organização dos jogos de futebol de um grupo de amigos</description>
 

@@ -14,6 +14,7 @@ public record CartaView(
     String posicaoSecundaria,
     String pe,
     Integer rating,
+    Double media,
     List<Atributo> atributos,
     boolean preenchida,
     boolean bloqueado,
@@ -23,6 +24,11 @@ public record CartaView(
     boolean mostraNivel,
     List<NivelAcesso> opcoesNivel,
     String motivoNivelFixo) {
+
+    /** O rating da autoavaliação com uma casa decimal ("8,2"); "–" sem atributos preenchidos. */
+    public String ratingTexto() {
+        return pt.futapp.comum.Decimais.umaCasa(media);
+    }
 
     public boolean podeMudarNivel() {
         return !opcoesNivel.isEmpty();

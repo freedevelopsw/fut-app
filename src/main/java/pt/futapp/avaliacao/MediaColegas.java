@@ -3,7 +3,6 @@ package pt.futapp.avaliacao;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.OptionalDouble;
 
@@ -13,8 +12,6 @@ import java.util.OptionalDouble;
  * {@code votos}: quantos colegas avaliaram (nunca "X de Y", porque o número de jogadores muda).
  */
 public record MediaColegas(List<Double> atributos, Double rating, int votos) {
-
-    private static final Locale PT = Locale.forLanguageTag("pt-PT");
 
     public static final MediaColegas SEM_VOTOS = new MediaColegas(Collections.nCopies(Notas.NOMES.size(), null), null, 0);
 
@@ -54,6 +51,6 @@ public record MediaColegas(List<Double> atributos, Double rating, int votos) {
 
     /** Uma casa decimal com vírgula ("7,3"); "–" quando não há valor. */
     public static String decimal(Double valor) {
-        return valor == null ? "–" : String.format(PT, "%.1f", valor);
+        return pt.futapp.comum.Decimais.umaCasa(valor);
     }
 }

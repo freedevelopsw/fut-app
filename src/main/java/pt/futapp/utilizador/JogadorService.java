@@ -32,10 +32,10 @@ public class JogadorService {
             .map(u -> {
                 Caracterizacao c = u.getCaracterizacao();
                 return new JogadorResumo(u.getId(), u.getNomeVisivel(), u.getNome(), Nomes.iniciais(u.getNomeVisivel()),
-                    c.getPosicao() != null ? c.getPosicao().getSigla() : null, c.rating(),
+                    c.getPosicao() != null ? c.getPosicao().getSigla() : null, c.media(),
                     u.getUsername().equalsIgnoreCase(usernameAtual));
             })
-            .sorted(Comparator.comparing(JogadorResumo::rating, Comparator.nullsLast(Comparator.<Integer>reverseOrder()))
+            .sorted(Comparator.comparing(JogadorResumo::rating, Comparator.nullsLast(Comparator.<Double>reverseOrder()))
                 .thenComparing(j -> j.nomeVisivel().toLowerCase()))
             .toList();
     }
@@ -59,7 +59,7 @@ public class JogadorService {
             c.getPosicao() != null ? c.getPosicao().getDescricao() : null,
             c.getPosicaoSecundaria() != null ? c.getPosicaoSecundaria().getDescricao() : null,
             c.getPe() != null ? c.getPe().getDescricao() : null,
-            c.rating(), atributos, !c.vazia(), u.isBloqueado(), eu, podeEditar(atual, u),
+            c.rating(), c.media(), atributos, !c.vazia(), u.isBloqueado(), eu, podeEditar(atual, u),
             NivelAcesso.de(u), atual.ehGestor() && !atual.isBloqueado(), opcoes,
             opcoes.isEmpty() ? UtilizadorService.motivoSemPermissao(atual, u) : null);
     }
@@ -103,9 +103,9 @@ public class JogadorService {
         String texto = Objects.equals(atual.getId(), u.getId())
             ? u.getNome() + " atualizou os seus dados"
             : atual.getNome() + " atualizou os dados de " + u.getNome();
-        Integer rating = u.getCaracterizacao().rating();
+        Double media = u.getCaracterizacao().media();
         eventos.publishEvent(new AuditEvent(atual.getUsername(), Acao.ALTERACAO_DADOS, null, "UTILIZADOR", u.getId(),
-            texto + (rating != null ? " (rating " + rating + ")" : "")));
+            texto + (media != null ? " (rating " + pt.futapp.comum.Decimais.umaCasa(media) + ")" : "")));
     }
 
     @Transactional(readOnly = true)

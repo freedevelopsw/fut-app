@@ -63,13 +63,22 @@ public class Caracterizacao {
         this.resistencia = resistencia;
     }
 
-    /** Média dos atributos preenchidos, arredondada; null se nenhum estiver preenchido. */
-    public Integer rating() {
+    /**
+     * Média dos atributos preenchidos, sem arredondar; null se nenhum estiver preenchido. É o rating que a carta e as
+     * Cartas mostram, com uma casa decimal (8,2).
+     */
+    public Double media() {
         var valores = Stream.of(velocidade, tecnica, remate, passe, defesa, resistencia).filter(Objects::nonNull).toList();
         if (valores.isEmpty()) {
             return null;
         }
-        return (int) Math.round(valores.stream().mapToInt(Integer::intValue).average().orElse(0));
+        return valores.stream().mapToInt(Integer::intValue).average().orElse(0);
+    }
+
+    /** A média arredondada às unidades; null se nenhum atributo estiver preenchido. Usada a gerar as equipas. */
+    public Integer rating() {
+        Double media = media();
+        return media == null ? null : (int) Math.round(media);
     }
 
     public boolean vazia() {

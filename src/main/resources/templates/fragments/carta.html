@@ -5,7 +5,7 @@
 <section th:fragment="carta(c)" class="carta" th:aria-label="|Carta de ${c.nomeVisivel()}|">
     <div class="carta-topo">
         <div class="carta-rating">
-            <span class="valor" th:text="${c.rating()} ?: '–'">78</span>
+            <span class="valor" th:text="${c.ratingTexto()}">7,8</span>
             <span class="sigla" th:text="${c.posicaoSigla()} ?: '—'">MED</span>
         </div>
         <span class="carta-avatar" aria-hidden="true" th:text="${c.iniciais()}">RU</span>

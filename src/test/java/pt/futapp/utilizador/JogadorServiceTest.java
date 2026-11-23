@@ -39,6 +39,7 @@ class JogadorServiceTest {
 
         assertThat(carta.preenchida()).isFalse();
         assertThat(carta.rating()).isNull();
+        assertThat(carta.ratingTexto()).isEqualTo("–");
         assertThat(carta.nomeVisivel()).isEqualTo("Nome rui");
         assertThat(carta.eu()).isTrue();
         assertThat(carta.podeEditar()).isTrue();
@@ -70,6 +71,8 @@ class JogadorServiceTest {
 
         CartaView carta = jogadores.carta(id, rui);
         assertThat(carta.rating()).isEqualTo(8); // (8 + 9 + 6) / 3 = 7,67
+        // a carta mostra a média com uma casa decimal (pedido do dono, 23/11/2026)
+        assertThat(carta.ratingTexto()).isEqualTo("7,7");
         assertThat(carta.posicaoSigla()).isEqualTo("MED");
         assertThat(carta.pe()).isEqualTo("Esquerdo");
         assertThat(carta.atributos()).extracting(CartaView.Atributo::valor).containsExactly(8, null, 6, 9, null, null);
