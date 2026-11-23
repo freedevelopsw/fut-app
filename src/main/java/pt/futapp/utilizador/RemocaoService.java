@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import pt.futapp.audit.Acao;
 import pt.futapp.audit.AuditEvent;
+import pt.futapp.avaliacao.AvaliacaoColegaRepository;
 import pt.futapp.comum.OperacaoInvalidaException;
 import pt.futapp.jogo.GoloRepository;
 import pt.futapp.jogo.InscricaoRepository;
@@ -28,6 +29,7 @@ import pt.futapp.votacao.VotoRepository;
  *       fica livre e nos jogos antigos é mostrada como convidado ({@code Inscricao.isConvidado}). As inscrições
  *       continuam ligadas à conta, por isso as estatísticas, os resultados e os votos antigos não mudam.</li>
  *   <li>Nas votações abertas dos jogos em que jogou, se todos os outros já votaram, a votação fecha.</li>
+ *   <li>As avaliações de colegas que deu e recebeu são apagadas (as médias deixam de contar com elas).</li>
  * </ul>
  */
 @Service
@@ -38,19 +40,21 @@ public class RemocaoService {
     private final GoloRepository golos;
     private final JogoRepository jogos;
     private final VotoRepository votos;
+    private final AvaliacaoColegaRepository avaliacoes;
     private final JogoService jogoService;
     private final VotacaoService votacao;
     private final ApplicationEventPublisher eventos;
     private final Clock clock;
 
     public RemocaoService(UtilizadorRepository utilizadores, InscricaoRepository inscricoes, GoloRepository golos,
-                          JogoRepository jogos, VotoRepository votos, JogoService jogoService, VotacaoService votacao,
-                          ApplicationEventPublisher eventos, Clock clock) {
+                          JogoRepository jogos, VotoRepository votos, AvaliacaoColegaRepository avaliacoes,
+                          JogoService jogoService, VotacaoService votacao, ApplicationEventPublisher eventos, Clock clock) {
         this.utilizadores = utilizadores;
         this.inscricoes = inscricoes;
         this.golos = golos;
         this.jogos = jogos;
         this.votos = votos;
+        this.avaliacoes = avaliacoes;
         this.jogoService = jogoService;
         this.votacao = votacao;
         this.eventos = eventos;
@@ -79,6 +83,8 @@ public class RemocaoService {
         String nome = membro.getNome();
 
         jogoService.retirarDosJogosPorJogar(membro, admin);
+        // as avaliações de colegas (dadas e recebidas) saem com o membro e não contam como histórico
+        avaliacoes.deleteByAvaliadorOrAvaliado(membro, membro);
 
         boolean temHistorico = !inscricoes.findByJogador(membro).isEmpty()
             || inscricoes.existsByCanceladoPor(membro)

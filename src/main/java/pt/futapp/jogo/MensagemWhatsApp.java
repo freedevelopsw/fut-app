@@ -13,6 +13,11 @@ final class MensagemWhatsApp {
     private MensagemWhatsApp() {
     }
 
+    /**
+     * Modelo pedido pelo dono (22/11/2026): os inscritos numerados até ao número de vagas, com as linhas das vagas
+     * livres vazias ("9."), para se ver quantas faltam; a lista de espera só quando existe, numerada a partir de 1;
+     * no fim, o link para a inscrição.
+     */
     static String texto(String dia, String hora, String local, int vagas,
                         List<Convocatoria.Linha> inscritos, List<Convocatoria.Linha> espera, String link) {
         StringBuilder sb = new StringBuilder();
@@ -22,18 +27,21 @@ final class MensagemWhatsApp {
         }
         sb.append('\n');
         sb.append("Inscritos (").append(inscritos.size()).append('/').append(vagas).append("):\n");
-        for (Convocatoria.Linha l : inscritos) {
-            sb.append(l.posicao()).append(". ").append(l.nome()).append(l.convidado() ? " (convidado)" : "").append('\n');
+        for (int i = 0; i < Math.max(vagas, inscritos.size()); i++) {
+            sb.append(i + 1).append('.');
+            if (i < inscritos.size()) {
+                Convocatoria.Linha l = inscritos.get(i);
+                sb.append(' ').append(l.nome()).append(l.convidado() ? " (convidado)" : "");
+            }
+            sb.append('\n');
         }
         if (!espera.isEmpty()) {
             sb.append("\nLista de espera:\n");
-            for (Convocatoria.Linha l : espera) {
-                sb.append(l.posicao()).append(". ").append(l.nome()).append('\n');
+            for (int i = 0; i < espera.size(); i++) {
+                Convocatoria.Linha l = espera.get(i);
+                sb.append(' ').append(i + 1).append(". ").append(l.nome()).append(l.convidado() ? " (convidado)" : "")
+                    .append('\n');
             }
-        }
-        int livres = vagas - inscritos.size();
-        if (livres > 0) {
-            sb.append('\n').append(livres == 1 ? "Falta 1 jogador!" : "Faltam " + livres + " jogadores!").append('\n');
         }
         sb.append("\nInscreve-te aqui: ").append(link);
         return sb.toString();

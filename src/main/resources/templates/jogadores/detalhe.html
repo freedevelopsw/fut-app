@@ -10,7 +10,29 @@
 
     <main class="app-main">
         <div th:replace="~{fragments/layout :: mensagens}"></div>
-        <section th:replace="~{fragments/carta :: carta(${carta})}"></section>
+
+        <!-- Duas avaliações da carta: Eu (autoavaliação, omissão) e Colegas -->
+        <nav class="segmentos" aria-label="Tipo de avaliação">
+            <a th:href="@{/jogadores/{id}(id=${carta.id()})}" th:classappend="${vista == 'eu'} ? 'ativo'" th:aria-current="${vista == 'eu'} ? 'page'">Eu</a>
+            <a th:href="@{/jogadores/{id}(id=${carta.id()},vista='colegas')}" th:classappend="${vista == 'colegas'} ? 'ativo'" th:aria-current="${vista == 'colegas'} ? 'page'">Colegas</a>
+        </nav>
+
+        <!-- th:if num th:block: no mesmo elemento, o th:replace corria primeiro e o th:if era ignorado -->
+        <th:block th:if="${vista == 'eu'}"><section th:replace="~{fragments/carta :: carta(${carta})}"></section></th:block>
+        <th:block th:if="${vista == 'colegas'}"><section th:replace="~{fragments/carta :: cartaColegas(${carta}, ${avaliacoes})}"></section></th:block>
+
+        <section th:if="${vista == 'colegas'}" class="cartao d-flex flex-column gap-2" aria-label="Quem avaliou e como">
+            <div class="d-flex align-items-center gap-2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="text-secondary"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+                <h2 class="m-0 fs-6 fw-semibold">Quem avaliou e como</h2>
+            </div>
+            <p th:unless="${avaliacoes.podeVerDetalhes()}" class="m-0 small text-secondary">Fica visível quando o Admin der permissão.</p>
+            <div class="d-flex justify-content-between align-items-center gap-2 small">
+                <span class="text-secondary" th:text="${avaliacoes.jaVotaramTexto()}">Já votaram 12 colegas</span>
+                <a th:if="${avaliacoes.podeVerDetalhes() and avaliacoes.temVotos()}" th:href="@{/jogadores/{id}/avaliacoes(id=${carta.id()})}"
+                   class="fw-semibold d-inline-flex align-items-center" style="min-height: 44px">Ver detalhes</a>
+            </div>
+        </section>
 
         <section class="seccao" aria-label="Números nos jogos fechados">
             <div class="numeros">
@@ -23,7 +45,8 @@
                th:text="(${numeros.vitorias() == 1} ? '1 vitória' : |${numeros.vitorias()} vitórias|) + ' · ' + (${numeros.empates() == 1} ? '1 empate' : |${numeros.empates()} empates|) + ' · ' + (${numeros.derrotas() == 1} ? '1 derrota' : |${numeros.derrotas()} derrotas|) + (${numeros.premios() > 0} ? (${numeros.premios() == 1} ? ' · 1 prémio' : | · ${numeros.premios()} prémios|) : '') + (${numeros.faltas() > 0} ? (${numeros.faltas() == 1} ? ' · 1 falta' : | · ${numeros.faltas()} faltas|) : '')">5 vitórias</p>
             <p class="m-0 small text-secondary" th:unless="${numeros.temJogos()}">Ainda sem jogos fechados.</p>
         </section>
-        <p class="m-0 small text-secondary">Os atributos são uma auto-avaliação de 1 a 10. O rating é a média dos atributos preenchidos.</p>
+        <p th:if="${vista == 'eu'}" class="m-0 small text-secondary">Os atributos são uma auto-avaliação de 1 a 10. O rating é a média dos atributos preenchidos.</p>
+        <p th:if="${vista == 'colegas'}" class="m-0 small text-secondary">Cada atributo é a média das notas dos colegas (de 1 a 10). O rating é a média dos atributos.</p>
 
         <!-- Nível de acesso: visível ao Organizador e ao Admin; o dropdown só tem as opções que cada um pode escolher -->
         <section th:if="${carta.mostraNivel()}" class="seccao">
@@ -56,8 +79,11 @@
     </main>
 
     <div class="rodape">
-        <div class="barra-acao" th:if="${carta.podeEditar()}">
-            <a th:href="@{/jogadores/{id}/editar(id=${carta.id()})}" class="btn btn-fa btn-verde"
+        <div class="barra-acao d-flex flex-column gap-2" th:if="${carta.podeEditar() or avaliacoes.podeAvaliar()}">
+            <a th:if="${avaliacoes.podeAvaliar()}" th:href="@{/jogadores/{id}/avaliar(id=${carta.id()})}" class="btn btn-fa btn-verde"
+               th:text="${avaliacoes.jaAvaliei()} ? 'Alterar a minha avaliação' : |Avaliar ${carta.nomeVisivel()}|">Avaliar Rui</a>
+            <a th:if="${carta.podeEditar()}" th:href="@{/jogadores/{id}/editar(id=${carta.id()})}" class="btn btn-fa"
+               th:classappend="${avaliacoes.podeAvaliar()} ? 'btn-contorno' : 'btn-verde'"
                th:text="${carta.eu()} ? 'Editar os meus dados' : 'Editar dados (Admin)'">Editar</a>
         </div>
         <nav th:replace="~{fragments/layout :: nav}"></nav>

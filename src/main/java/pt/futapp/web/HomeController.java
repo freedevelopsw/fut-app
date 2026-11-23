@@ -7,22 +7,27 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.security.Principal;
 
+import pt.futapp.avaliacao.AvaliacaoService;
+import pt.futapp.avaliacao.InterruptorDetalhesAvaliacoes;
+import pt.futapp.avaliacao.OrdemCartas;
 import pt.futapp.estatisticas.EstatisticasService;
 import pt.futapp.estatisticas.OrdemTabela;
 import pt.futapp.jogo.JogoService;
-import pt.futapp.utilizador.JogadorService;
 
 @Controller
 public class HomeController {
 
     private final JogoService jogos;
-    private final JogadorService jogadores;
     private final EstatisticasService estatisticas;
+    private final AvaliacaoService avaliacoes;
+    private final InterruptorDetalhesAvaliacoes interruptor;
 
-    public HomeController(JogoService jogos, JogadorService jogadores, EstatisticasService estatisticas) {
+    public HomeController(JogoService jogos, EstatisticasService estatisticas, AvaliacaoService avaliacoes,
+                          InterruptorDetalhesAvaliacoes interruptor) {
         this.jogos = jogos;
-        this.jogadores = jogadores;
         this.estatisticas = estatisticas;
+        this.avaliacoes = avaliacoes;
+        this.interruptor = interruptor;
     }
 
     @GetMapping("/")
@@ -33,10 +38,18 @@ public class HomeController {
         return "inicio";
     }
 
-    /** {@code ordem}: ordenação da tabela (vitorias / golos); quando vem no endereço, a tabela aparece aberta. */
+    /**
+     * {@code ordem}: ordenação da tabela (vitorias / golos); {@code cartas}: ordenação das cartas (auto / colegas).
+     * Quando vêm no endereço, a secção correspondente aparece aberta.
+     */
     @GetMapping("/estatisticas")
-    public String estatisticas(@RequestParam(required = false) String ordem, Principal principal, Model model) {
-        model.addAttribute("jogadores", jogadores.jogadores(principal.getName()));
+    public String estatisticas(@RequestParam(required = false) String ordem, @RequestParam(required = false) String cartas,
+                               Principal principal, Model model) {
+        OrdemCartas ordemCartas = OrdemCartas.de(cartas);
+        model.addAttribute("cartas", avaliacoes.cartas(principal.getName(), ordemCartas));
+        model.addAttribute("ordemCartas", ordemCartas);
+        model.addAttribute("cartasAbertas", cartas != null);
+        model.addAttribute("detalhesVisiveis", interruptor.ligado());
         model.addAttribute("estatisticas", estatisticas.temporada(principal.getName(), OrdemTabela.de(ordem)));
         model.addAttribute("tabelaAberta", ordem != null);
         model.addAttribute("nav", "estatisticas");

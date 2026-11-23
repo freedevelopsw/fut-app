@@ -1,0 +1,38 @@
+# 23/11/2026: avaliação das cartas pelos colegas e configuração da app (interruptor do Admin).
+# Tabelas novas: o Hibernate nunca as criou, por isso não precisam de pré-condição.
+databaseChangeLog:
+  - changeSet:
+      id: 004-avaliacao-colega
+      author: futapp
+      changes:
+        - createTable:
+            tableName: avaliacao_colega
+            columns:
+              - column: { name: id, type: BIGINT, autoIncrement: true, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: avaliador_id, type: BIGINT, constraints: { nullable: false, foreignKeyName: fk_avaliacao_avaliador, references: utilizador(id) } }
+              - column: { name: avaliado_id, type: BIGINT, constraints: { nullable: false, foreignKeyName: fk_avaliacao_avaliado, references: utilizador(id) } }
+              - column: { name: velocidade, type: INT }
+              - column: { name: tecnica, type: INT }
+              - column: { name: remate, type: INT }
+              - column: { name: passe, type: INT }
+              - column: { name: defesa, type: INT }
+              - column: { name: resistencia, type: INT }
+              - column: { name: atualizada_em, type: TIMESTAMP, constraints: { nullable: false } }
+        - addUniqueConstraint:
+            tableName: avaliacao_colega
+            columnNames: avaliador_id,avaliado_id
+            constraintName: uk_avaliacao_avaliador_avaliado
+        - createIndex:
+            tableName: avaliacao_colega
+            indexName: idx_avaliacao_avaliado
+            columns:
+              - column: { name: avaliado_id }
+  - changeSet:
+      id: 004-configuracao
+      author: futapp
+      changes:
+        - createTable:
+            tableName: configuracao
+            columns:
+              - column: { name: chave, type: VARCHAR(60), constraints: { primaryKey: true, nullable: false } }
+              - column: { name: valor, type: VARCHAR(200) }

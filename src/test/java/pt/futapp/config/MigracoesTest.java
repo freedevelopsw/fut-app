@@ -41,7 +41,8 @@ class MigracoesTest {
         List<String> ids = jdbc.queryForList("SELECT ID FROM DATABASECHANGELOG ORDER BY ORDEREXECUTED", String.class);
 
         assertThat(ids).containsExactly("001-esquema-inicial", "002-enums-como-texto", "003-utilizador-resistencia",
-            "003-utilizador-removido", "003-utilizador-removido-em", "003-jogo-local-opcional");
+            "003-utilizador-removido", "003-utilizador-removido-em", "003-jogo-local-opcional",
+            "004-avaliacao-colega", "004-configuracao");
         assertThat(jdbc.queryForList("SELECT EXECTYPE FROM DATABASECHANGELOG", String.class)).containsOnly("EXECUTED");
         // o Hibernate valida as entidades contra estas tabelas (ddl-auto=validate): se a app arrancou, batem certo
         Integer checks = jdbc.queryForObject("SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS "
@@ -69,7 +70,7 @@ class MigracoesTest {
 
         assertThat(db.queryForMap("SELECT ID, EXECTYPE FROM DATABASECHANGELOG WHERE ID = '001-esquema-inicial'"))
             .containsEntry("EXECTYPE", "MARK_RAN");
-        assertThat(db.queryForObject("SELECT COUNT(*) FROM DATABASECHANGELOG", Integer.class)).isEqualTo(6);
+        assertThat(db.queryForObject("SELECT COUNT(*) FROM DATABASECHANGELOG", Integer.class)).isEqualTo(8);
         // dados mantidos e colunas novas com os valores por omissão
         assertThat(db.queryForMap("SELECT nome, removido, resistencia FROM utilizador"))
             .containsEntry("NOME", "Rui").containsEntry("REMOVIDO", false).containsEntry("RESISTENCIA", null);
@@ -79,7 +80,7 @@ class MigracoesTest {
         db.update("INSERT INTO audit_evento (data_hora, acao) VALUES (NOW(), 'REMOCAO_UTILIZADOR')");
 
         migrar(antiga); // correr outra vez não faz nada
-        assertThat(db.queryForObject("SELECT COUNT(*) FROM DATABASECHANGELOG", Integer.class)).isEqualTo(6);
+        assertThat(db.queryForObject("SELECT COUNT(*) FROM DATABASECHANGELOG", Integer.class)).isEqualTo(8);
         antiga.destroy();
     }
 

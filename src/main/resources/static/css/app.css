@@ -251,3 +251,22 @@ a.htmx-request, button.htmx-request, form.htmx-request button[type="submit"], fo
   .carregando-salto, .carregando-sombra { animation: none; }
   .carregando-bola { animation-duration: 3s; }
 }
+
+/* Avaliação das cartas (23/11/2026): separadores Eu · Colegas, média dos colegas e interruptor do Admin */
+.segmentos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 4px; background: #E4E7E1; border-radius: 14px; }
+.segmentos a { min-height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 10px; font-weight: 600; color: #4A525C; text-decoration: none; }
+.segmentos a.ativo { background: var(--fa-cartao); color: var(--fa-tinta); box-shadow: 0 1px 2px rgba(21, 25, 30, .12); }
+.barra-com-marca { position: relative; display: block; }
+.barra-com-marca .carta-barra { display: block; }
+.carta-atributos-colegas { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.carta-atributos-colegas .linha { gap: 8px; }
+.barra-com-marca .marca { position: absolute; top: -3px; width: 3px; height: 12px; margin-left: -1px; border-radius: 2px; background: #F5A962; }
+.carta-atributos .auto { font-weight: 400; color: #CFE8D9; margin-right: 8px; }
+.carta-legenda { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 12px; color: #CFE8D9; }
+.marca-amostra { display: inline-block; width: 3px; height: 12px; border-radius: 2px; background: #F5A962; }
+.tabela-cartas td .votos { display: block; font-size: 11px; font-weight: 400; color: var(--fa-suave); }
+.tabela-stats tr.linha-media td { font-weight: 700; color: var(--fa-verde-escuro); background: var(--fa-verde-claro); }
+.tag-admin { background: #E8EEF7; color: #1F4E8C; letter-spacing: .04em; }
+.cartao-ligado { border-color: var(--fa-verde); }
+.tabela-detalhes th, .tabela-detalhes td { padding: 10px 4px; }
+.tabela-detalhes td:first-child, .tabela-detalhes th:first-child { padding-left: 12px; max-width: 112px; overflow: hidden; text-overflow: ellipsis; }

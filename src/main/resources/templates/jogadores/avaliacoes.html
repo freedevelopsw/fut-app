@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-PT" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Quem avaliou e como')}"></head>
+<body hx-boost="true">
+<div class="app" th:with="d=${detalhes}">
+    <header class="app-header">
+        <a th:href="@{/jogadores/{id}(id=${d.jogadorId()},vista='colegas')}" class="etiqueta text-decoration-none">← Carta</a>
+        <h1 class="titulo" th:text="|Quem avaliou ${d.nomeVisivel()}|">Quem avaliou Rui</h1>
+        <p class="m-0 small text-secondary" th:text="${d.votosTexto()}">12 votos</p>
+    </header>
+
+    <main class="app-main">
+        <div th:replace="~{fragments/layout :: mensagens}"></div>
+
+        <p th:if="${d.linhas().isEmpty()}" class="lista-vazia">Ainda nenhum colega avaliou esta carta.</p>
+
+        <div th:unless="${d.linhas().isEmpty()}" class="tabela-caixa">
+            <table class="tabela-stats tabela-detalhes">
+                <thead>
+                    <tr>
+                        <th scope="col">Colega</th>
+                        <th scope="col" th:each="s : ${d.siglas()}" th:text="${s}">VEL</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="l : ${d.linhas()}">
+                        <td th:text="${l.avaliador()}">Rui</td>
+                        <td th:each="n : ${l.notas()}" th:text="${n}">8</td>
+                    </tr>
+                    <tr class="linha-media">
+                        <td>Média</td>
+                        <td th:each="m : ${d.medias()}" th:text="${m}">7,5</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <p class="m-0 small text-secondary">VEL velocidade · TÉC técnica · REM remate · PAS passe · DEF defesa · RES resistência</p>
+    </main>
+
+    <div class="rodape">
+        <nav th:replace="~{fragments/layout :: nav}"></nav>
+    </div>
+</div>
+</body>
+</html>

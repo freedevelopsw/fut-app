@@ -11,6 +11,7 @@
     </header>
 
     <main class="app-main">
+        <div th:replace="~{fragments/layout :: mensagens}"></div>
         <p th:if="${e.jogosFechados() == 0}" class="lista-vazia">Ainda não há jogos fechados. Os rankings aparecem quando o primeiro jogo terminar a votação.</p>
 
         <!-- Rankings -->
@@ -86,24 +87,66 @@
             </div>
         </details>
 
-        <!-- Cartas -->
-        <details id="cartas" class="colapsavel">
+        <!-- Cartas: ordenar por Auto ou Colegas troca só esta secção (as outras ficam como estão) -->
+        <details id="cartas" class="colapsavel" th:open="${cartasAbertas}"
+                 th:with="porColegas=${ordemCartas.name() == 'COLEGAS'}">
             <summary>
-                <span class="titulo-seccao" th:text="|Cartas dos jogadores (${jogadores.size()})|">Cartas dos jogadores (14)</span>
+                <span class="titulo-seccao" th:text="|Cartas dos jogadores (${cartas.size()})|">Cartas dos jogadores (14)</span>
                 <span class="seta" aria-hidden="true"></span>
             </summary>
             <div class="corpo">
-                <ul class="lista">
-                    <li th:each="j : ${jogadores}" th:classappend="${j.eu()} ? 'eu'">
-                        <a class="linha-link" th:href="@{/jogadores/{id}(id=${j.id()})}">
-                            <span class="avatar" aria-hidden="true" th:text="${j.iniciais()}">RU</span>
-                            <span class="nome" th:text="${j.eu()} ? |${j.nomeVisivel()} (tu)| : ${j.nomeVisivel()}">Rui</span>
-                            <span class="tag" th:if="${j.posicaoSigla()}" th:text="${j.posicaoSigla()}">MED</span>
-                            <span class="rating-mini me-2" th:classappend="${j.rating() == null} ? 'vazio'" th:text="${j.rating()} ?: '–'"
-                                  th:aria-label="${j.rating() != null} ? |Rating ${j.rating()}| : 'Sem rating'">78</span>
-                        </a>
-                    </li>
-                </ul>
+                <!-- TEMPORÁRIO (InterruptorDetalhesAvaliacoes): um só interruptor do Admin para todas as cartas -->
+                <form th:if="${eu != null and eu.admin()}" id="interruptor-avaliacoes" th:action="@{/admin/avaliacoes/visibilidade}"
+                      method="post" class="cartao d-flex flex-column gap-2" th:classappend="${detalhesVisiveis} ? 'cartao-ligado'">
+                    <input type="hidden" name="ligado" th:value="${!detalhesVisiveis}">
+                    <input type="hidden" name="cartas" th:value="${ordemCartas.parametro}">
+                    <div class="d-flex justify-content-between align-items-center gap-3">
+                        <div class="d-flex flex-column align-items-start gap-1">
+                            <span class="tag tag-admin">SÓ ADMIN</span>
+                            <span class="fw-semibold" id="lbl-detalhes-avaliacoes">Mostrar quem avaliou e como</span>
+                        </div>
+                        <button type="submit" class="interruptor" role="switch" th:aria-checked="${detalhesVisiveis}"
+                                aria-labelledby="lbl-detalhes-avaliacoes">
+                            <span class="trilho" aria-hidden="true"></span>
+                        </button>
+                    </div>
+                    <span class="small text-secondary"
+                          th:text="${detalhesVisiveis} ? 'Ligado: em todas as cartas, os jogadores veem o nome e as notas de cada colega. Podes desligar quando quiseres.' : 'Desligado: em todas as cartas, os jogadores veem só a média e quantos votaram. Tu vês sempre os detalhes ao abrir uma carta.'">Desligado</span>
+                </form>
+
+                <div class="tabela-caixa">
+                    <table class="tabela-stats tabela-cartas">
+                        <thead>
+                            <tr>
+                                <th scope="col">Jogador</th>
+                                <th scope="col" title="Autoavaliação" class="ordenavel" th:classappend="${!porColegas} ? 'ordenada'" th:attr="aria-sort=${!porColegas} ? 'descending' : null">
+                                    <a th:href="@{/estatisticas(cartas='auto')}" th:attr="hx-get=@{/estatisticas(cartas='auto')}"
+                                       hx-select="#cartas" hx-target="#cartas" hx-swap="outerHTML" hx-push-url="false"
+                                       aria-label="Ordenar pela autoavaliação">Auto<span class="seta-ordem" aria-hidden="true"></span></a>
+                                </th>
+                                <th scope="col" title="Média dos colegas" class="ordenavel" th:classappend="${porColegas} ? 'ordenada'" th:attr="aria-sort=${porColegas} ? 'descending' : null">
+                                    <a th:href="@{/estatisticas(cartas='colegas')}" th:attr="hx-get=@{/estatisticas(cartas='colegas')}"
+                                       hx-select="#cartas" hx-target="#cartas" hx-swap="outerHTML" hx-push-url="false"
+                                       aria-label="Ordenar pela média dos colegas">Colegas<span class="seta-ordem" aria-hidden="true"></span></a>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="j : ${cartas}" th:classappend="${j.eu()} ? 'eu'">
+                                <td>
+                                    <a th:href="@{/jogadores/{id}(id=${j.id()})}" th:text="${j.eu()} ? |${j.nomeVisivel()} (tu)| : ${j.nomeVisivel()}">Rui</a>
+                                    <span class="tag ms-1" th:if="${j.posicaoSigla()}" th:text="${j.posicaoSigla()}">MED</span>
+                                </td>
+                                <td th:classappend="${!porColegas} ? 'ordenada'" th:text="${j.autoTexto()}">8</td>
+                                <td th:classappend="${porColegas} ? 'ordenada'">
+                                    <span th:text="${j.colegasTexto()}">7,3</span>
+                                    <span class="votos" th:if="${j.votos() > 0}" th:text="${j.votosTexto()}">12 votos</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="m-0 small text-secondary">Toca em Auto ou Colegas para ordenar · por baixo da nota dos colegas, quantos votaram</p>
             </div>
         </details>
     </main>

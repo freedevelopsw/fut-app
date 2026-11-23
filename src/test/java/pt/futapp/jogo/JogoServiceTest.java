@@ -238,9 +238,27 @@ class JogoServiceTest {
         String texto = URLDecoder.decode(url.substring("https://wa.me/?text=".length()), StandardCharsets.UTF_8);
         assertThat(texto)
             .contains("Inscritos (2/12)")
-            .contains("1. Nome j1")
-            .contains("Faltam 10 jogadores!")
+            .contains("1. Nome j1\n")
+            // as vagas livres aparecem como linhas numeradas vazias (modelo de 22/11/2026)
+            .contains("\n3.\n")
+            .contains("\n12.\n")
+            .doesNotContain("13.")
+            .doesNotContain("Lista de espera")
+            .doesNotContain("Faltam")
             .contains(URL + "/jogos/" + jogo);
+    }
+
+    @Test
+    void comListaDeEsperaAMensagemNumeraAEsperaAPartirDe1() {
+        inscreverJogadores(14);
+
+        String url = convocatoria().whatsappUrl();
+        String texto = URLDecoder.decode(url.substring("https://wa.me/?text=".length()), StandardCharsets.UTF_8);
+        assertThat(texto)
+            .contains("Inscritos (12/12)")
+            .contains("12. Nome j12\n")
+            .contains("\nLista de espera:\n 1. Nome j13\n 2. Nome j14\n")
+            .doesNotContain("13. Nome j13");
     }
 
     @Test

@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.validation.Valid;
+import pt.futapp.avaliacao.AvaliacaoService;
 import pt.futapp.comum.OperacaoInvalidaException;
 import pt.futapp.estatisticas.EstatisticasService;
 
@@ -23,17 +24,24 @@ public class JogadoresController {
     private final JogadorService jogadores;
     private final UtilizadorService utilizadores;
     private final EstatisticasService estatisticas;
+    private final AvaliacaoService avaliacoes;
 
-    public JogadoresController(JogadorService jogadores, UtilizadorService utilizadores, EstatisticasService estatisticas) {
+    public JogadoresController(JogadorService jogadores, UtilizadorService utilizadores, EstatisticasService estatisticas,
+                               AvaliacaoService avaliacoes) {
         this.jogadores = jogadores;
         this.utilizadores = utilizadores;
         this.estatisticas = estatisticas;
+        this.avaliacoes = avaliacoes;
     }
 
+    /** {@code vista}: separador da carta — eu (autoavaliação, omissão) ou colegas. */
     @GetMapping("/jogadores/{id}")
-    public String carta(@PathVariable Long id, Principal principal, Model model) {
+    public String carta(@PathVariable Long id, @RequestParam(required = false) String vista, Principal principal,
+                        Model model) {
         CartaView carta = jogadores.carta(id, principal.getName());
         model.addAttribute("carta", carta);
+        model.addAttribute("avaliacoes", avaliacoes.daCarta(id, principal.getName()));
+        model.addAttribute("vista", "colegas".equals(vista) ? "colegas" : "eu");
         model.addAttribute("numeros", estatisticas.doJogador(id, principal.getName()));
         boolean admin = utilizadores.vista(principal.getName()).map(EuView::admin).orElse(false);
         model.addAttribute("podeGerarLinkPassword", admin && !carta.eu() && !carta.bloqueado());

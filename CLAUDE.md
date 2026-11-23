@@ -110,6 +110,25 @@ O dono do projeto não escreve código: todo o código é gerado, testado automa
 - `/jogadores/{id}`: carta visível a todos; `/jogadores/{id}/editar`: o próprio ou o Admin (`JogadorService`).
 - Lista de jogadores ativos no ecrã Estatísticas; nomes nas convocatórias e nos membros ligam à carta.
 
+## Avaliação das cartas pelos colegas (pacote `avaliacao`, 23/11/2026)
+- A carta tem duas avaliações: autoavaliação (a de sempre, `Caracterizacao`) e média dos colegas. Separadores
+  Eu · Colegas em `/jogadores/{id}?vista=eu|colegas` (omissão: eu). Sem separador "Jogos" (decisão do dono, 23/11;
+  a avaliação pelos jogos fica só como ideia na especificação).
+- `AvaliacaoColega` (tabela `avaliacao_colega`, changeset `004`): uma por par avaliador/avaliado, as mesmas 6 notas
+  1–10, todas opcionais. Voltar a avaliar substitui; tudo em branco apaga. Ninguém se avalia a si próprio nem avalia
+  um bloqueado. `/jogadores/{id}/avaliar` (GET/POST). Auditoria: `AVALIACAO_COLEGA` (sem as notas).
+- `MediaColegas`: cada atributo = média das notas dadas a esse atributo; rating = média dos atributos com nota;
+  uma casa decimal ("7,3"). Aparece logo ao primeiro voto e mostra-se sempre só quantos votaram (nunca "X de Y").
+- Ecrã Estatísticas → Cartas: tabela com Auto e Colegas, ordenada por Auto (omissão) ou Colegas tocando no cabeçalho
+  (`OrdemCartas`, `/estatisticas?cartas=auto|colegas`, troca só a secção com htmx, como V/G).
+- Quem avaliou e como (`/jogadores/{id}/avaliacoes`): o Admin vê sempre; os outros só com o interruptor ligado.
+- TEMPORÁRIO: `InterruptorDetalhesAvaliacoes` (um só interruptor do Admin para todas as cartas, no topo das Cartas,
+  guardado na tabela `configuracao`, chave `avaliacoes.detalhes-visiveis`). Depois de ligado, numa versão futura sai:
+  apagar a classe, o endpoint `/admin/avaliacoes/visibilidade`, o bloco `id="interruptor-avaliacoes"` em
+  `estatisticas.html` e pôr `AvaliacaoService.podeVerDetalhes` a devolver true. Auditoria: `ALTERACAO_VISIBILIDADE_AVALIACOES`.
+- As equipas (`GeradorEquipas`) continuam a usar a autoavaliação.
+- Remover um membro apaga as avaliações que deu e recebeu (`RemocaoService`); não contam como histórico.
+
 ## Equipas (Fase 2)
 - A equipa fica na própria inscrição (`Inscricao.equipa`: COLETES / SEM_COLETES); jogam as primeiras `vagas` inscrições ativas.
 - `GeradorEquipas`: GR separados, distribuição gulosa por rating, trocas que reduzem a diferença de rating e de posições;
@@ -156,7 +175,7 @@ O dono do projeto não escreve código: todo o código é gerado, testado automa
     (as faltas continuam no ranking "Mais faltas" e na carta). Ordena-se tocando nos cabeçalhos V e G (links, com seta no ativo); trocam só a secção da tabela
     (htmx `hx-select`/`hx-target="#todos-jogadores"`), por isso as outras secções ficam abertas/fechadas como estavam;
     com `ordem` no endereço a tabela vem aberta.
-  - Cartas dos jogadores: do rating maior para o menor, sem rating no fim, depois o nome (`JogadorService.jogadores`).
+  - Cartas dos jogadores: pela autoavaliação (omissão) ou pela média dos colegas (ver "Avaliação das cartas").
 
 ## Lista de jogos e histórico
 - Ecrã Jogos: os próximos aparecem sempre (todos os jogos ainda não fechados nem cancelados, mesmo do mês seguinte);
@@ -168,6 +187,11 @@ O dono do projeto não escreve código: todo o código é gerado, testado automa
   (nunca uma por jogo). `Jogo.criadoPor`/`canceladoPor` são LAZY.
 
 ## Convocatória
+- Mensagem do WhatsApp (`MensagemWhatsApp`, modelo do dono de 22/11/2026): inscritos numerados até às vagas, com as
+  vagas livres como linhas vazias ("9."); "Lista de espera:" só quando existe, numerada a partir de 1 (" 1. Nome");
+  no fim o link de inscrição. Depois de inscrever, cancelar ou mudar a lista aparece o cartão "Avisa o grupo" com o
+  botão "Avisar no grupo" (abre o WhatsApp com a mensagem; a pessoa escolhe o grupo). A app não publica sozinha:
+  a API oficial de grupos do WhatsApp exige conta empresarial oficial e no máximo 8 participantes.
 - O local é opcional. A regra vive só em `Jogo.getLocal()`: devolve o local sem espaços à volta, ou null quando está
   vazio ou só com espaços (também em linhas antigas). Vistas e WhatsApp usam esse valor: null = não mostrar
   (changeset `003-jogo-local-opcional`).

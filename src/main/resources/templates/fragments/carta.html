@@ -32,5 +32,37 @@
     <p class="carta-vazia" th:unless="${c.preenchida()}"
        th:text="${c.eu()} ? 'Ainda não preencheste a tua carta. Diz aos outros onde jogas e como te avalias.' : 'Este jogador ainda não preencheu a carta.'">Ainda sem caracterização.</p>
 </section>
+
+<!-- Avaliação dos colegas, com o mesmo aspeto da carta. Parâmetros: c = CartaView, a = CartaAvaliacoesView.
+     Cada barra é a média dos colegas; a marca é a autoavaliação do jogador. -->
+<section th:fragment="cartaColegas(c, a)" class="carta" th:aria-label="|Avaliação dos colegas a ${c.nomeVisivel()}|">
+    <div class="carta-topo">
+        <div class="carta-rating">
+            <span class="valor" th:text="${a.ratingColegasTexto()}">7,3</span>
+            <span class="sigla" th:text="${a.votosTexto()}">12 votos</span>
+        </div>
+        <span class="carta-avatar" aria-hidden="true" th:text="${c.iniciais()}">RU</span>
+        <div class="d-flex flex-column gap-1" style="min-width: 0">
+            <h2 class="carta-nome" th:text="${c.nomeVisivel()}">Rui</h2>
+            <span class="carta-sub">Média dos colegas</span>
+        </div>
+    </div>
+
+    <ul class="carta-atributos carta-atributos-colegas" th:if="${a.temVotos()}">
+        <li th:each="l : ${a.atributos()}">
+            <span class="linha">
+                <span th:text="${l.nome()}">Velocidade</span>
+                <span><span class="auto" th:text="|auto ${l.autoTexto()}|">auto 9</span><span class="num" th:text="${l.colegasTexto()}">7,5</span></span>
+            </span>
+            <span class="barra-com-marca" aria-hidden="true">
+                <span class="carta-barra"><div th:style="|width: ${l.percentagemColegas()}%|"></div></span>
+                <span th:if="${l.auto() != null}" class="marca" th:style="|left: ${l.percentagemAuto()}%|"></span>
+            </span>
+        </li>
+    </ul>
+    <p class="carta-legenda" th:if="${a.temVotos()}"><span class="marca-amostra" aria-hidden="true"></span>Marca: a autoavaliação</p>
+
+    <p class="carta-vazia" th:unless="${a.temVotos()}">Ainda nenhum colega avaliou esta carta.</p>
+</section>
 </body>
 </html>

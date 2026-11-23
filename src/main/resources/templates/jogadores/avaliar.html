@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-PT" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Avaliar colega')}"></head>
+<body hx-boost="true">
+<div class="app">
+    <header class="app-header">
+        <a th:href="@{/jogadores/{id}(id=${carta.id()},vista='colegas')}" class="etiqueta text-decoration-none">← Carta</a>
+        <h1 class="titulo" th:text="|Avaliar ${carta.nomeVisivel()}|">Avaliar Rui</h1>
+        <p class="m-0 small text-secondary">De 1 a 10. Podes deixar atributos em branco e mudar a avaliação quando quiseres.</p>
+    </header>
+
+    <form th:action="@{/jogadores/{id}/avaliar(id=${carta.id()})}" th:object="${form}" method="post" class="d-flex flex-column flex-grow-1" novalidate>
+        <main class="app-main">
+            <div th:replace="~{fragments/layout :: mensagens}"></div>
+
+            <section class="seccao">
+                <h2 class="etiqueta">A tua avaliação (1 a 10)</h2>
+                <div class="d-grid gap-3" style="grid-template-columns: repeat(2, minmax(0, 1fr))">
+                    <div>
+                        <label class="form-label" for="velocidade">Velocidade</label>
+                        <select class="form-select" th:field="*{velocidade}" th:classappend="${#fields.hasErrors('velocidade')} ? 'is-invalid'">
+                            <option value="">—</option>
+                            <option th:each="n : ${#numbers.sequence(1, 10)}" th:value="${n}" th:text="${n}">5</option>
+                        </select>
+                        <div class="invalid-feedback" th:errors="*{velocidade}"></div>
+                    </div>
+                    <div>
+                        <label class="form-label" for="tecnica">Técnica</label>
+                        <select class="form-select" th:field="*{tecnica}" th:classappend="${#fields.hasErrors('tecnica')} ? 'is-invalid'">
+                            <option value="">—</option>
+                            <option th:each="n : ${#numbers.sequence(1, 10)}" th:value="${n}" th:text="${n}">5</option>
+                        </select>
+                        <div class="invalid-feedback" th:errors="*{tecnica}"></div>
+                    </div>
+                    <div>
+                        <label class="form-label" for="remate">Remate</label>
+                        <select class="form-select" th:field="*{remate}" th:classappend="${#fields.hasErrors('remate')} ? 'is-invalid'">
+                            <option value="">—</option>
+                            <option th:each="n : ${#numbers.sequence(1, 10)}" th:value="${n}" th:text="${n}">5</option>
+                        </select>
+                        <div class="invalid-feedback" th:errors="*{remate}"></div>
+                    </div>
+                    <div>
+                        <label class="form-label" for="passe">Passe</label>
+                        <select class="form-select" th:field="*{passe}" th:classappend="${#fields.hasErrors('passe')} ? 'is-invalid'">
+                            <option value="">—</option>
+                            <option th:each="n : ${#numbers.sequence(1, 10)}" th:value="${n}" th:text="${n}">5</option>
+                        </select>
+                        <div class="invalid-feedback" th:errors="*{passe}"></div>
+                    </div>
+                    <div>
+                        <label class="form-label" for="defesa">Defesa</label>
+                        <select class="form-select" th:field="*{defesa}" th:classappend="${#fields.hasErrors('defesa')} ? 'is-invalid'">
+                            <option value="">—</option>
+                            <option th:each="n : ${#numbers.sequence(1, 10)}" th:value="${n}" th:text="${n}">5</option>
+                        </select>
+                        <div class="invalid-feedback" th:errors="*{defesa}"></div>
+                    </div>
+                    <div>
+                        <label class="form-label" for="resistencia">Resistência</label>
+                        <select class="form-select" th:field="*{resistencia}" th:classappend="${#fields.hasErrors('resistencia')} ? 'is-invalid'">
+                            <option value="">—</option>
+                            <option th:each="n : ${#numbers.sequence(1, 10)}" th:value="${n}" th:text="${n}">5</option>
+                        </select>
+                        <div class="invalid-feedback" th:errors="*{resistencia}"></div>
+                    </div>
+                </div>
+                <p class="m-0 small text-secondary">Deixar tudo em branco apaga a tua avaliação.</p>
+            </section>
+
+            <div class="aviso" style="background: var(--fa-linha-suave); color: #4A525C">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+                <span class="small">Os colegas veem só a média. As notas de cada um, com o nome, aparecem quando o Admin der permissão.</span>
+            </div>
+        </main>
+
+        <div class="rodape">
+            <div class="barra-acao">
+                <button type="submit" class="btn btn-fa btn-verde">Guardar avaliação</button>
+            </div>
+            <nav th:replace="~{fragments/layout :: nav}"></nav>
+        </div>
+    </form>
+</div>
+</body>
+</html>
